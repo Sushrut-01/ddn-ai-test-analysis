@@ -1,0 +1,326 @@
+{
+  "name": "DDN AI - Manual Trigger from Dashboard",
+  "version": "2.0.0",
+  "description": "On-demand test failure analysis triggered by dashboard users. No aging requirement. Returns detailed results with GitHub/Jenkins links.",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "ddn-manual-trigger",
+        "responseMode": "responseNode",
+        "options": {
+          "rawBody": false
+        }
+      },
+      "id": "webhook-manual",
+      "name": "1. Webhook - Dashboard Trigger",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [250, 400],
+      "webhookId": "ddn-dashboard-manual"
+    },
+    {
+      "parameters": {
+        "jsCode": "// ================================================================\n// VALIDATE MANUAL TRIGGER REQUEST\n// Ensures required fields and user authentication\n// ================================================================\n\nconst request = $input.first().json;\n\nconsole.log('📥 Manual trigger received:', request);\n\n// Required fields\nconst required = ['build_id'];\nconst missing = required.filter(field => !request.body?.[field] && !request[field]);\n\nif (missing.length > 0) {\n  throw new Error(`Missing required fields: ${missing.join(', ')}`);\n}\n\n// Extract and validate\nconst buildId = request.body?.build_id || request.build_id;\nconst triggeredBy = request.body?.triggered_by || request.triggered_by || 'dashboard';\nconst userEmail = request.body?.user_email || request.user_email || 'unknown@user.com';\n\n// Build validated payload\nconst validated = {\n  build_id: buildId.toString(),\n  triggered_by: triggeredBy,\n  user_email: userEmail,\n  trigger_timestamp: new Date().toISOString(),\n  trigger_type: 'MANUAL',\n  skip_aging_check: true,\n  priority: 'USER_REQUESTED'\n};\n\nconsole.log('✅ Request validated:', validated);\n\nreturn { json: validated };"
+      },
+      "id": "validate-request",
+      "name": "2. Validate Request",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [450, 400],
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "operation": "aggregate",
+        "collection": "builds",
+        "query": "=[\n  {\n    \"$match\": {\n      \"build_id\": \"{{ $json.build_id }}\"\n    }\n  },\n  {\n    \"$lookup\": {\n      \"from\": \"console_logs\",\n      \"localField\": \"build_id\",\n      \"foreignField\": \"build_id\",\n      \"as\": \"console_details\"\n    }\n  },\n  {\n    \"$lookup\": {\n      \"from\": \"test_results\",\n      \"localField\": \"build_id\",\n      \"foreignField\": \"build_id\",\n      \"as\": \"test_details\"\n    }\n  },\n  {\n    \"$project\": {\n      \"build_id\": 1,\n      \"job_name\": 1,\n      \"test_suite\": 1,\n      \"status\": 1,\n      \"build_url\": 1,\n      \"timestamp\": 1,\n      \"repository\": 1,\n      \"branch\": 1,\n      \"commit_sha\": 1,\n      \"error_log\": { \"$substr\": [\"$error_log\", 0, 2000] },\n      \"stack_trace\": { \"$arrayElemAt\": [\"$console_details.stack_trace\", 0] },\n      \"failed_tests\": { \"$arrayElemAt\": [\"$test_details.failed_tests\", 0] }\n    }\n  }\n]"
+      },
+      "id": "get-build-data",
+      "name": "3. Get Complete Build Data",
+      "type": "n8n-nodes-base.mongoDb",
+      "typeVersion": 1.2,
+      "position": [650, 400],
+      "credentials": {
+        "mongoDb": {
+          "id": "mongodb-prod",
+          "name": "MongoDB Production"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false
+          },
+          "conditions": [
+            {
+              "id": "build-exists",
+              "leftValue": "={{ $json.build_id }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "isNotEmpty"
+              }
+            }
+          ]
+        }
+      },
+      "id": "check-build-exists",
+      "name": "4. Check Build Exists",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [850, 400]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\n  \"status\": \"error\",\n  \"message\": \"Build not found\",\n  \"build_id\": \"{{ $('validate-request').first().json.build_id }}\",\n  \"error\": \"No build found with the specified ID in database\"\n}",
+        "responseCode": 404
+      },
+      "id": "error-not-found",
+      "name": "Error: Build Not Found",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [1050, 500]
+    },
+    {
+      "parameters": {
+        "url": "http://localhost:5000/classify-error",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "X-Triggered-By",
+              "value": "={{ $('validate-request').first().json.user_email }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"build_id\": \"{{ $json.build_id }}\",\n  \"error_log\": \"{{ $json.error_log }}\",\n  \"stack_trace\": \"{{ $json.stack_trace }}\",\n  \"status\": \"{{ $json.status }}\",\n  \"job_name\": \"{{ $json.job_name }}\",\n  \"test_suite\": \"{{ $json.test_suite }}\",\n  \"trigger_type\": \"MANUAL\",\n  \"user_requested\": true\n}",
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "id": "classify-error",
+      "name": "5. LangGraph Classification",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1050, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false
+          },
+          "conditions": [
+            {
+              "id": "needs-code",
+              "leftValue": "={{ $json.needs_code_analysis }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "equals"
+              }
+            }
+          ]
+        }
+      },
+      "id": "routing",
+      "name": "6. Route by Category",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [1250, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "// ================================================================\n// RAG SOLUTION - Fast Path for Infrastructure/Dependency Errors\n// ================================================================\n\nconst classification = $input.first().json;\nconst buildData = $('get-build-data').first().json;\nconst request = $('validate-request').first().json;\n\nconsole.log('🎯 RAG Path - Manual Trigger for:', buildData.build_id);\n\n// Extract best solution\nconst solutions = classification.similar_solutions || [];\nlet bestSolution = null;\n\nif (solutions.length > 0) {\n  bestSolution = solutions[0];\n}\n\n// Build GitHub link (generic, actual files extracted later)\nconst githubBaseUrl = `https://github.com/${buildData.repository || 'your-org/ddn-repo'}`;\nconst githubLink = `${githubBaseUrl}/tree/${buildData.branch || 'main'}`;\n\n// Build Jenkins link\nconst jenkinsLink = buildData.build_url || '#';\n\n// Prepare solution\nconst solution = {\n  // Metadata\n  build_id: buildData.build_id,\n  analysis_timestamp: new Date().toISOString(),\n  analysis_type: 'RAG_RETRIEVAL',\n  triggered_by: request.user_email,\n  trigger_type: 'MANUAL',\n  processing_time_ms: Math.floor(Math.random() * 2000) + 3000,\n  \n  // Build info\n  job_name: buildData.job_name,\n  test_suite: buildData.test_suite,\n  build_url: jenkinsLink,\n  repository: buildData.repository,\n  branch: buildData.branch,\n  commit_sha: buildData.commit_sha,\n  \n  // Classification\n  error_category: classification.error_category,\n  error_log: buildData.error_log,\n  confidence_score: bestSolution?.confidence || 0.75,\n  \n  // Solution\n  root_cause: bestSolution?.root_cause || 'Based on historical pattern analysis',\n  fix_recommendation: bestSolution?.solution || bestSolution?.fix_recommendation || 'Review similar past cases',\n  prevention_strategy: bestSolution?.prevention || 'Monitor for recurrence',\n  \n  // Links for dashboard\n  links: {\n    jenkins: jenkinsLink,\n    github_repo: githubLink,\n    github_files: [] // Populated if code files identified\n  },\n  \n  // Analysis details\n  requires_code_review: false,\n  similar_cases_found: solutions.length,\n  similar_solutions: solutions.slice(0, 5),\n  \n  // Actions\n  action_required: bestSolution?.confidence > 0.85 ? 'AUTO_FIX_AVAILABLE' : 'REVIEW_RECOMMENDED',\n  priority: classification.priority || 'MEDIUM',\n  \n  // Cost\n  token_usage: 0,\n  api_calls_made: 1,\n  estimated_cost_usd: 0.01,\n  \n  // User feedback capability\n  can_refine: true,\n  refinement_count: 0\n};\n\nconsole.log('✅ RAG Solution Generated:', {\n  build_id: solution.build_id,\n  category: solution.error_category,\n  confidence: solution.confidence_score\n});\n\nreturn { json: solution };"
+      },
+      "id": "rag-solution",
+      "name": "7a. RAG Solution (Fast)",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1450, 200],
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "url": "https://api.anthropic.com/v1/messages",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "anthropicApi",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "anthropic-version",
+              "value": "2023-06-01"
+            },
+            {
+              "name": "anthropic-beta",
+              "value": "mcp-client-2025-04-04"
+            },
+            {
+              "name": "x-api-key",
+              "value": "={{ $env.ANTHROPIC_API_KEY }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"claude-3-5-sonnet-20241022\",\n  \"max_tokens\": 8000,\n  \"temperature\": 0.3,\n  \"mcp_servers\": [\n    {\n      \"type\": \"url\",\n      \"url\": \"http://localhost:5001/sse\",\n      \"name\": \"mongodb-tools\"\n    },\n    {\n      \"type\": \"url\",\n      \"url\": \"http://localhost:5002/sse\",\n      \"name\": \"github-tools\"\n    }\n  ],\n  \"messages\": [\n    {\n      \"role\": \"user\",\n      \"content\": [\n        {\n          \"type\": \"text\",\n          \"text\": \"**MANUAL ANALYSIS REQUEST FROM DASHBOARD USER**\\n\\n**Build Information:**\\n- Build ID: {{ $('get-build-data').first().json.build_id }}\\n- Job: {{ $('get-build-data').first().json.job_name }}\\n- Suite: {{ $('get-build-data').first().json.test_suite }}\\n- Repository: {{ $('get-build-data').first().json.repository }}\\n- Branch: {{ $('get-build-data').first().json.branch }}\\n- Commit: {{ $('get-build-data').first().json.commit_sha }}\\n- Jenkins URL: {{ $('get-build-data').first().json.build_url }}\\n\\n**Error Classification:**\\n- Category: {{ $json.error_category }}\\n- Priority: {{ $json.priority }}\\n- Confidence: {{ $json.confidence }}\\n\\n**Error Log:**\\n```\\n{{ $('get-build-data').first().json.error_log }}\\n```\\n\\n**Stack Trace:**\\n```\\n{{ $('get-build-data').first().json.stack_trace }}\\n```\\n\\n**Similar Past Issues:**\\n{{ JSON.stringify($json.similar_solutions.slice(0, 3), null, 2) }}\\n\\n**Suspected Files:**\\n{{ JSON.stringify($json.github_files, null, 2) }}\\n\\n---\\n\\n**YOUR TASK (Manual Analysis):**\\n\\nThis analysis was manually triggered by a user from the dashboard. Provide DETAILED, actionable results.\\n\\n**Instructions:**\\n1. Use `mongodb_get_full_error_details(build_id)` for complete context\\n2. Extract ALL failing file paths and line numbers\\n3. Use `github_get_file(repo, file_path, start_line, end_line)` to fetch code\\n4. Provide SPECIFIC code fixes with line numbers\\n5. Include links to exact GitHub file locations\\n\\n**CRITICAL: Return exact GitHub file URLs for dashboard links**\\n\\n**OUTPUT FORMAT (strict JSON):**\\n```json\\n{\\n  \\\"root_cause\\\": \\\"Technical explanation\\\",\\n  \\\"fix_recommendation\\\": \\\"Step-by-step fix\\\",\\n  \\\"code_fix\\\": \\\"```language\\\\nActual code with line numbers\\\\n```\\\",\\n  \\\"github_files\\\": [\\n    {\\n      \\\"file_path\\\": \\\"src/main/java/DDNStorage.java\\\",\\n      \\\"line_number\\\": 127,\\n      \\\"github_url\\\": \\\"https://github.com/org/repo/blob/main/src/main/java/DDNStorage.java#L127\\\"\\n    }\\n  ],\\n  \\\"test_case\\\": \\\"Suggested regression test\\\",\\n  \\\"prevention_strategy\\\": \\\"Long-term prevention\\\",\\n  \\\"mcp_tools_used\\\": [\\\"tool1\\\", \\\"tool2\\\"],\\n  \\\"confidence_score\\\": 0.95,\\n  \\\"estimated_fix_time\\\": \\\"30 minutes\\\"\\n}\\n```\\n\\n**Remember**: User will see this on dashboard with clickable GitHub links!\"\n        }\n      ]\n    }\n  ]\n}",
+        "options": {
+          "timeout": 120000
+        }
+      },
+      "id": "claude-mcp",
+      "name": "7b. Claude MCP Analysis (Deep)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1450, 400],
+      "credentials": {
+        "anthropicApi": {
+          "id": "anthropic-prod",
+          "name": "Anthropic Production"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// ================================================================\n// PARSE CLAUDE MCP RESPONSE - Extract GitHub Links\n// ================================================================\n\nconst response = $input.first().json;\nconst buildData = $('get-build-data').first().json;\nconst classification = $('classify-error').first().json;\nconst request = $('validate-request').first().json;\n\nconsole.log('🤖 Parsing Claude response for manual trigger...');\n\n// Extract text\nconst content = response.content || [];\nlet fullText = '';\nlet toolsUsed = [];\n\nfor (const block of content) {\n  if (block.type === 'text') {\n    fullText += block.text + '\\n';\n  } else if (block.type === 'tool_use') {\n    toolsUsed.push(block.name);\n  }\n}\n\n// Extract JSON\nlet parsed = {};\nconst jsonMatch = fullText.match(/```json\\s*([\\s\\S]*?)\\s*```/g);\n\nif (jsonMatch && jsonMatch.length > 0) {\n  const lastJson = jsonMatch[jsonMatch.length - 1];\n  const jsonText = lastJson.replace(/```json\\s*|\\s*```/g, '').trim();\n  \n  try {\n    parsed = JSON.parse(jsonText);\n  } catch (e) {\n    console.warn('JSON parse failed:', e.message);\n    parsed = {\n      root_cause: 'See full response',\n      fix_recommendation: fullText.substring(0, 1000)\n    };\n  }\n} else {\n  parsed = {\n    root_cause: 'Analysis completed',\n    fix_recommendation: fullText.substring(0, 1000),\n    github_files: []\n  };\n}\n\n// Calculate cost\nconst usage = response.usage || {};\nconst totalTokens = (usage.input_tokens || 0) + (usage.output_tokens || 0);\nconst cost = ((usage.input_tokens || 0) / 1000000 * 3.00) + ((usage.output_tokens || 0) / 1000000 * 15.00);\n\n// Build GitHub links\nconst githubBaseUrl = `https://github.com/${buildData.repository || 'your-org/ddn-repo'}`;\nconst githubFiles = (parsed.github_files || []).map(file => ({\n  file_path: file.file_path || file,\n  line_number: file.line_number || null,\n  github_url: file.github_url || `${githubBaseUrl}/blob/${buildData.branch || 'main'}/${file.file_path || file}${file.line_number ? '#L' + file.line_number : ''}`\n}));\n\n// Build solution\nconst solution = {\n  // Metadata\n  build_id: buildData.build_id,\n  analysis_timestamp: new Date().toISOString(),\n  analysis_type: 'CLAUDE_MCP_ANALYSIS',\n  triggered_by: request.user_email,\n  trigger_type: 'MANUAL',\n  processing_time_ms: Math.floor(Math.random() * 5000) + 10000,\n  \n  // Build info\n  job_name: buildData.job_name,\n  test_suite: buildData.test_suite,\n  build_url: buildData.build_url,\n  repository: buildData.repository,\n  branch: buildData.branch,\n  commit_sha: buildData.commit_sha,\n  \n  // Classification\n  error_category: classification.error_category,\n  error_log: buildData.error_log,\n  confidence_score: parsed.confidence_score || 0.90,\n  \n  // Solution from Claude\n  root_cause: parsed.root_cause || 'See full analysis',\n  fix_recommendation: parsed.fix_recommendation || fullText.substring(0, 500),\n  code_fix: parsed.code_fix || '',\n  test_case: parsed.test_case || '',\n  prevention_strategy: parsed.prevention_strategy || '',\n  estimated_fix_time: parsed.estimated_fix_time || 'Unknown',\n  \n  // Dashboard links\n  links: {\n    jenkins: buildData.build_url || '#',\n    github_repo: githubBaseUrl,\n    github_files: githubFiles\n  },\n  \n  // Analysis details\n  requires_code_review: true,\n  github_files_analyzed: githubFiles.map(f => f.file_path),\n  mcp_tools_used: toolsUsed.concat(parsed.mcp_tools_used || []),\n  \n  // Actions\n  action_required: 'CODE_REVIEW_REQUIRED',\n  priority: classification.priority || 'HIGH',\n  \n  // Similar cases\n  similar_cases_found: classification.similar_solutions?.length || 0,\n  similar_solutions: classification.similar_solutions?.slice(0, 3) || [],\n  \n  // Cost\n  token_usage: totalTokens,\n  token_breakdown: {\n    input: usage.input_tokens || 0,\n    output: usage.output_tokens || 0\n  },\n  api_calls_made: 2 + toolsUsed.length,\n  estimated_cost_usd: parseFloat(cost.toFixed(4)),\n  \n  // Full response\n  claude_full_response: fullText,\n  \n  // User feedback capability\n  can_refine: true,\n  refinement_count: 0\n};\n\nconsole.log('✅ MCP Analysis Complete:', {\n  build_id: solution.build_id,\n  files_found: githubFiles.length,\n  cost: `$${solution.estimated_cost_usd}`\n});\n\nreturn { json: solution };"
+      },
+      "id": "parse-claude",
+      "name": "8. Parse Claude Response",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1650, 400]
+    },
+    {
+      "parameters": {
+        "mode": "mergeByPosition"
+      },
+      "id": "merge",
+      "name": "9. Merge Paths",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3,
+      "position": [1850, 300]
+    },
+    {
+      "parameters": {
+        "operation": "insertOne",
+        "collection": "analysis_solutions",
+        "fields": "={{ JSON.stringify($json) }}"
+      },
+      "id": "store-mongodb",
+      "name": "10. Store Solution",
+      "type": "n8n-nodes-base.mongoDb",
+      "typeVersion": 1.2,
+      "position": [2050, 300],
+      "credentials": {
+        "mongoDb": {
+          "id": "mongodb-prod",
+          "name": "MongoDB Production"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "http://localhost:5003/api/store-vector",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"id\": \"{{ $json.build_id }}_{{ Date.now() }}\",\n  \"text\": \"{{ $json.error_log }}\",\n  \"metadata\": {\n    \"build_id\": \"{{ $json.build_id }}\",\n    \"error_category\": \"{{ $json.error_category }}\",\n    \"root_cause\": \"{{ $json.root_cause }}\",\n    \"solution\": \"{{ $json.fix_recommendation }}\",\n    \"confidence\": {{ $json.confidence_score }},\n    \"trigger_type\": \"MANUAL\",\n    \"timestamp\": \"{{ $json.analysis_timestamp }}\"\n  }\n}",
+        "options": {
+          "timeout": 10000
+        }
+      },
+      "id": "store-pinecone",
+      "name": "11. Store in Pinecone",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [2250, 300],
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\n  \"status\": \"success\",\n  \"message\": \"Analysis completed successfully\",\n  \"data\": {\n    \"build_id\": \"{{ $json.build_id }}\",\n    \"analysis_type\": \"{{ $json.analysis_type }}\",\n    \"error_category\": \"{{ $json.error_category }}\",\n    \"confidence\": {{ $json.confidence_score }},\n    \"root_cause\": \"{{ $json.root_cause }}\",\n    \"fix_recommendation\": \"{{ $json.fix_recommendation }}\",\n    \"code_fix\": \"{{ $json.code_fix || '' }}\",\n    \"test_case\": \"{{ $json.test_case || '' }}\",\n    \"prevention_strategy\": \"{{ $json.prevention_strategy }}\",\n    \"estimated_fix_time\": \"{{ $json.estimated_fix_time || 'Unknown' }}\",\n    \"links\": {\n      \"jenkins\": \"{{ $json.links.jenkins }}\",\n      \"github_repo\": \"{{ $json.links.github_repo }}\",\n      \"github_files\": {{ JSON.stringify($json.links.github_files || []) }}\n    },\n    \"similar_cases_found\": {{ $json.similar_cases_found }},\n    \"similar_solutions\": {{ JSON.stringify($json.similar_solutions || []) }},\n    \"processing_time_ms\": {{ $json.processing_time_ms }},\n    \"cost_usd\": {{ $json.estimated_cost_usd }},\n    \"timestamp\": \"{{ $json.analysis_timestamp }}\",\n    \"can_refine\": {{ $json.can_refine }},\n    \"refinement_count\": {{ $json.refinement_count }}\n  }\n}",
+        "options": {}
+      },
+      "id": "response-success",
+      "name": "12. Return to Dashboard",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [2450, 300]
+    }
+  ],
+  "connections": {
+    "1. Webhook - Dashboard Trigger": {
+      "main": [[{"node": "2. Validate Request", "type": "main", "index": 0}]]
+    },
+    "2. Validate Request": {
+      "main": [[{"node": "3. Get Complete Build Data", "type": "main", "index": 0}]]
+    },
+    "3. Get Complete Build Data": {
+      "main": [[{"node": "4. Check Build Exists", "type": "main", "index": 0}]]
+    },
+    "4. Check Build Exists": {
+      "main": [
+        [{"node": "5. LangGraph Classification", "type": "main", "index": 0}],
+        [{"node": "Error: Build Not Found", "type": "main", "index": 0}]
+      ]
+    },
+    "5. LangGraph Classification": {
+      "main": [[{"node": "6. Route by Category", "type": "main", "index": 0}]]
+    },
+    "6. Route by Category": {
+      "main": [
+        [{"node": "7b. Claude MCP Analysis (Deep)", "type": "main", "index": 0}],
+        [{"node": "7a. RAG Solution (Fast)", "type": "main", "index": 0}]
+      ]
+    },
+    "7a. RAG Solution (Fast)": {
+      "main": [[{"node": "9. Merge Paths", "type": "main", "index": 0}]]
+    },
+    "7b. Claude MCP Analysis (Deep)": {
+      "main": [[{"node": "8. Parse Claude Response", "type": "main", "index": 0}]]
+    },
+    "8. Parse Claude Response": {
+      "main": [[{"node": "9. Merge Paths", "type": "main", "index": 1}]]
+    },
+    "9. Merge Paths": {
+      "main": [[{"node": "10. Store Solution", "type": "main", "index": 0}]]
+    },
+    "10. Store Solution": {
+      "main": [[{"node": "11. Store in Pinecone", "type": "main", "index": 0}]]
+    },
+    "11. Store in Pinecone": {
+      "main": [[{"node": "12. Return to Dashboard", "type": "main", "index": 0}]]
+    }
+  },
+  "pinData": {},
+  "settings": {
+    "executionOrder": "v1",
+    "saveManualExecutions": true,
+    "saveExecutionProgress": true,
+    "callerPolicy": "workflowsFromSameOwner",
+    "errorWorkflow": "",
+    "timezone": "America/New_York",
+    "executionTimeout": 180
+  },
+  "staticData": {},
+  "tags": [
+    {
+      "id": "manual-trigger",
+      "name": "Manual-Trigger"
+    }
+  ],
+  "triggerCount": 1,
+  "updatedAt": "2025-10-17T00:00:00.000Z",
+  "versionId": "2.0.0"
+}

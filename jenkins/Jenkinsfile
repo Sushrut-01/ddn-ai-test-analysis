@@ -1,0 +1,489 @@
+/**
+ * DDN Storage Test Suite - Jenkins Pipeline
+ *
+ * Automatically runs DDN storage tests and reports failures to AI analysis system
+ *
+ * Triggers:
+ * - On every commit to main/develop branches
+ * - On pull requests
+ * - Manual trigger from Jenkins UI
+ * - Scheduled nightly runs
+ */
+
+pipeline {
+    agent any
+
+    // Build parameters for manual triggers
+    parameters {
+        choice(
+            name: 'TEST_SUITE',
+            choices: ['all', 'basic', 'advanced', 'exascaler', 'multitenancy', 'security', 'performance'],
+            description: 'Which test suite to run'
+        )
+        booleanParam(
+            name: 'SKIP_INSTALL',
+            defaultValue: false,
+            description: 'Skip npm install (faster if dependencies unchanged)'
+        )
+        booleanParam(
+            name: 'SEND_NOTIFICATIONS',
+            defaultValue: true,
+            description: 'Send notifications to Teams/Slack on failure'
+        )
+    }
+
+    // Environment variables
+    environment {
+        // Node.js configuration
+        NODE_VERSION = '18'
+
+        // Test directories
+        TEST_DIR = 'tests'
+
+        // n8n webhook for AI analysis
+        N8N_WEBHOOK = "${env.N8N_WEBHOOK_URL ?: 'http://localhost:5678/webhook/ddn-test-failure'}"
+
+        // Dashboard API
+        DASHBOARD_API = "${env.DASHBOARD_API_URL ?: 'http://localhost:5005'}"
+
+        // Test results directory
+        TEST_RESULTS_DIR = 'test-results'
+
+        // Git information
+        GIT_COMMIT_SHORT = sh(returnStdout: true, script: 'git rev-parse --short HEAD').trim()
+        BUILD_TIMESTAMP = sh(returnStdout: true, script: 'date +%Y%m%d_%H%M%S').trim()
+    }
+
+    // Build options
+    options {
+        // Keep builds for 30 days
+        buildDiscarder(logRotator(daysToKeepStr: '30', numToKeepStr: '100'))
+
+        // Timeout after 30 minutes
+        timeout(time: 30, unit: 'MINUTES')
+
+        // No concurrent builds
+        disableConcurrentBuilds()
+
+        // Timestamps in console output
+        timestamps()
+
+        // ANSI color output
+        ansiColor('xterm')
+    }
+
+    // Scheduled builds (nightly at 2 AM)
+    triggers {
+        cron('0 2 * * *')  // Run at 2 AM every day
+    }
+
+    stages {
+        stage('Checkout') {
+            steps {
+                script {
+                    echo "🔄 Checking out code..."
+                    echo "Branch: ${env.GIT_BRANCH}"
+                    echo "Commit: ${env.GIT_COMMIT_SHORT}"
+                }
+
+                // Clean workspace
+                cleanWs()
+
+                // Checkout code
+                checkout scm
+
+                // Display git info
+                sh '''
+                    echo "==================================="
+                    echo "Git Information"
+                    echo "==================================="
+                    git log -1 --pretty=format:"Author: %an%nDate: %ad%nMessage: %s" || true
+                    echo ""
+                    echo "==================================="
+                '''
+            }
+        }
+
+        stage('Setup Environment') {
+            steps {
+                script {
+                    echo "⚙️ Setting up test environment..."
+                }
+
+                dir(TEST_DIR) {
+                    // Check Node.js version
+                    sh '''
+                        echo "Checking Node.js version..."
+                        node --version
+                        npm --version
+                    '''
+
+                    // Create test results directory
+                    sh "mkdir -p ${TEST_RESULTS_DIR}"
+
+                    // Check if .env file exists
+                    sh '''
+                        if [ ! -f .env ]; then
+                            echo "⚠️  Warning: .env file not found. Using .env.example as template."
+                            echo "Please configure .env file with actual credentials."
+                            cp .env.example .env || true
+                        else
+                            echo "✓ .env file found"
+                        fi
+                    '''
+                }
+            }
+        }
+
+        stage('Install Dependencies') {
+            when {
+                expression { !params.SKIP_INSTALL }
+            }
+            steps {
+                script {
+                    echo "📦 Installing npm dependencies..."
+                }
+
+                dir(TEST_DIR) {
+                    sh '''
+                        echo "Running npm ci for clean install..."
+                        npm ci --prefer-offline --no-audit
+
+                        echo "Dependencies installed successfully ✓"
+                        npm list --depth=0 || true
+                    '''
+                }
+            }
+        }
+
+        stage('Validate Configuration') {
+            steps {
+                script {
+                    echo "🔍 Validating DDN endpoints configuration..."
+                }
+
+                dir(TEST_DIR) {
+                    sh '''
+                        echo "Checking required environment variables..."
+
+                        # Check for critical environment variables
+                        if [ -f .env ]; then
+                            echo "✓ .env file exists"
+
+                            # Check for required endpoints (don't show values for security)
+                            grep -q "DDN_EXASCALER_ENDPOINT" .env && echo "✓ EXAScaler endpoint configured" || echo "⚠️  EXAScaler endpoint not configured"
+                            grep -q "DDN_API_KEY" .env && echo "✓ API key configured" || echo "⚠️  API key not configured"
+                            grep -q "N8N_WEBHOOK" .env && echo "✓ n8n webhook configured" || echo "⚠️  n8n webhook not configured"
+                        else
+                            echo "⚠️  .env file not found - tests may fail"
+                        fi
+                    '''
+                }
+            }
+        }
+
+        stage('Run Tests') {
+            steps {
+                script {
+                    def testCommand = 'npm test'
+
+                    // Select test suite based on parameter
+                    switch(params.TEST_SUITE) {
+                        case 'basic':
+                            testCommand = 'npm run test:basic'
+                            echo "🧪 Running BASIC test suite..."
+                            break
+                        case 'advanced':
+                            testCommand = 'npm run test:advanced'
+                            echo "🧪 Running ADVANCED test suite..."
+                            break
+                        case 'exascaler':
+                            testCommand = 'npm run test:exascaler'
+                            echo "🧪 Running EXASCALER test suite..."
+                            break
+                        case 'multitenancy':
+                            testCommand = 'npm run test:multitenancy'
+                            echo "🧪 Running MULTI-TENANCY test suite..."
+                            break
+                        case 'security':
+                            testCommand = 'npm run test:security'
+                            echo "🧪 Running SECURITY test suite..."
+                            break
+                        case 'performance':
+                            testCommand = 'npm run test:performance'
+                            echo "🧪 Running PERFORMANCE test suite..."
+                            break
+                        default:
+                            echo "🧪 Running ALL tests..."
+                    }
+
+                    echo "Test Suite: ${params.TEST_SUITE}"
+                    echo "Command: ${testCommand}"
+                }
+
+                dir(TEST_DIR) {
+                    // Run tests (continue even if tests fail)
+                    sh """
+                        echo "==================================="
+                        echo "Executing DDN Test Suite"
+                        echo "==================================="
+
+                        # Set build info as environment variables for tests
+                        export BUILD_ID="${env.BUILD_ID}"
+                        export BUILD_NUMBER="${env.BUILD_NUMBER}"
+                        export BUILD_URL="${env.BUILD_URL}"
+                        export JOB_NAME="${env.JOB_NAME}"
+                        export GIT_COMMIT="${env.GIT_COMMIT}"
+                        export GIT_BRANCH="${env.GIT_BRANCH}"
+
+                        # Run tests with JUnit reporter for Jenkins integration
+                        npm run test:jenkins || true
+
+                        echo "==================================="
+                        echo "Test execution completed"
+                        echo "==================================="
+                    """
+                }
+            }
+        }
+
+        stage('Analyze Results') {
+            steps {
+                script {
+                    echo "📊 Analyzing test results..."
+                }
+
+                dir(TEST_DIR) {
+                    sh '''
+                        echo "Checking test results..."
+
+                        if [ -f test-results/results.xml ]; then
+                            echo "✓ Test results file found"
+
+                            # Count test results
+                            TOTAL_TESTS=$(grep -o 'tests="[0-9]*"' test-results/results.xml | head -1 | grep -o '[0-9]*' || echo "0")
+                            FAILURES=$(grep -o 'failures="[0-9]*"' test-results/results.xml | head -1 | grep -o '[0-9]*' || echo "0")
+                            PASSED=$((TOTAL_TESTS - FAILURES))
+
+                            echo "==================================="
+                            echo "Test Results Summary"
+                            echo "==================================="
+                            echo "Total Tests: $TOTAL_TESTS"
+                            echo "Passed: $PASSED"
+                            echo "Failed: $FAILURES"
+                            echo "==================================="
+
+                            # Set build description
+                            echo "$PASSED/$TOTAL_TESTS tests passed" > build-summary.txt
+                        else
+                            echo "⚠️  Test results file not found"
+                            echo "0/0 tests (no results)" > build-summary.txt
+                        fi
+                    '''
+
+                    // Set build description
+                    def buildSummary = readFile('build-summary.txt').trim()
+                    currentBuild.description = buildSummary
+                }
+            }
+        }
+    }
+
+    post {
+        always {
+            script {
+                echo "📋 Post-build actions..."
+            }
+
+            // Publish JUnit test results
+            dir(TEST_DIR) {
+                junit(
+                    testResults: 'test-results/*.xml',
+                    allowEmptyResults: true,
+                    healthScaleFactor: 1.0
+                )
+            }
+
+            // Archive test artifacts
+            archiveArtifacts(
+                artifacts: 'tests/test-results/**/*',
+                allowEmptyArchive: true,
+                fingerprint: true
+            )
+
+            // Clean up workspace (optional)
+            // cleanWs(cleanWhenNotBuilt: false, cleanWhenFailure: false)
+        }
+
+        success {
+            script {
+                echo "✅ Build SUCCESSFUL!"
+                echo "All tests passed. Great job! 🎉"
+
+                if (params.SEND_NOTIFICATIONS) {
+                    // Send success notification (optional)
+                    sendNotification('SUCCESS', 'All DDN storage tests passed successfully')
+                }
+            }
+        }
+
+        failure {
+            script {
+                echo "❌ Build FAILED!"
+                echo "Test failures detected. AI analysis triggered."
+
+                // Send failure notification
+                if (params.SEND_NOTIFICATIONS) {
+                    sendNotification('FAILURE', 'DDN storage tests failed - AI analysis in progress')
+                }
+
+                // Trigger AI analysis via n8n webhook
+                triggerAIAnalysis()
+            }
+        }
+
+        unstable {
+            script {
+                echo "⚠️  Build UNSTABLE!"
+                echo "Some tests failed but build continued."
+
+                if (params.SEND_NOTIFICATIONS) {
+                    sendNotification('UNSTABLE', 'Some DDN storage tests failed')
+                }
+
+                // Trigger AI analysis for unstable builds too
+                triggerAIAnalysis()
+            }
+        }
+
+        aborted {
+            script {
+                echo "🛑 Build ABORTED!"
+
+                if (params.SEND_NOTIFICATIONS) {
+                    sendNotification('ABORTED', 'DDN storage test build was aborted')
+                }
+            }
+        }
+    }
+}
+
+/**
+ * Send notification to Teams/Slack
+ */
+def sendNotification(String status, String message) {
+    def color = status == 'SUCCESS' ? 'good' : (status == 'FAILURE' ? 'danger' : 'warning')
+    def emoji = status == 'SUCCESS' ? '✅' : (status == 'FAILURE' ? '❌' : '⚠️')
+
+    echo "Sending ${status} notification..."
+
+    // Microsoft Teams notification (if webhook configured)
+    if (env.TEAMS_WEBHOOK_URL) {
+        try {
+            def teamsPayload = """
+            {
+                "@type": "MessageCard",
+                "@context": "https://schema.org/extensions",
+                "summary": "DDN Test Build ${status}",
+                "themeColor": "${color == 'good' ? '00FF00' : (color == 'danger' ? 'FF0000' : 'FFA500')}",
+                "title": "${emoji} DDN Storage Tests - ${status}",
+                "sections": [{
+                    "facts": [
+                        {"name": "Build", "value": "#${env.BUILD_NUMBER}"},
+                        {"name": "Branch", "value": "${env.GIT_BRANCH}"},
+                        {"name": "Commit", "value": "${env.GIT_COMMIT_SHORT}"},
+                        {"name": "Status", "value": "${message}"}
+                    ],
+                    "markdown": true
+                }],
+                "potentialAction": [{
+                    "@type": "OpenUri",
+                    "name": "View Build",
+                    "targets": [{"os": "default", "uri": "${env.BUILD_URL}"}]
+                }]
+            }
+            """
+
+            sh """
+                curl -X POST ${env.TEAMS_WEBHOOK_URL} \
+                    -H 'Content-Type: application/json' \
+                    -d '${teamsPayload}' || true
+            """
+
+            echo "✓ Teams notification sent"
+        } catch (Exception e) {
+            echo "⚠️  Failed to send Teams notification: ${e.message}"
+        }
+    }
+
+    // Slack notification (if configured)
+    if (env.SLACK_WEBHOOK_URL) {
+        try {
+            def slackPayload = """
+            {
+                "text": "${emoji} DDN Storage Tests - ${status}",
+                "attachments": [{
+                    "color": "${color}",
+                    "fields": [
+                        {"title": "Build", "value": "#${env.BUILD_NUMBER}", "short": true},
+                        {"title": "Branch", "value": "${env.GIT_BRANCH}", "short": true},
+                        {"title": "Status", "value": "${message}", "short": false}
+                    ],
+                    "actions": [{
+                        "type": "button",
+                        "text": "View Build",
+                        "url": "${env.BUILD_URL}"
+                    }]
+                }]
+            }
+            """
+
+            sh """
+                curl -X POST ${env.SLACK_WEBHOOK_URL} \
+                    -H 'Content-Type: application/json' \
+                    -d '${slackPayload}' || true
+            """
+
+            echo "✓ Slack notification sent"
+        } catch (Exception e) {
+            echo "⚠️  Failed to send Slack notification: ${e.message}"
+        }
+    }
+}
+
+/**
+ * Trigger AI analysis via n8n webhook for failed tests
+ */
+def triggerAIAnalysis() {
+    echo "🤖 Triggering AI analysis for failed tests..."
+
+    try {
+        def webhookPayload = """
+        {
+            "build_id": "${env.BUILD_ID}",
+            "build_number": "${env.BUILD_NUMBER}",
+            "job_name": "${env.JOB_NAME}",
+            "build_url": "${env.BUILD_URL}",
+            "git_commit": "${env.GIT_COMMIT}",
+            "git_branch": "${env.GIT_BRANCH}",
+            "status": "FAILURE",
+            "timestamp": "${new Date().format('yyyy-MM-dd\'T\'HH:mm:ss\'Z\'')}",
+            "test_suite": "${params.TEST_SUITE}",
+            "trigger_source": "jenkins_pipeline"
+        }
+        """
+
+        sh """
+            curl -X POST ${N8N_WEBHOOK} \
+                -H 'Content-Type: application/json' \
+                -d '${webhookPayload}' || echo "⚠️  n8n webhook call failed"
+        """
+
+        echo "✓ AI analysis triggered via n8n webhook"
+        echo "Check dashboard for analysis results: ${DASHBOARD_API}"
+
+    } catch (Exception e) {
+        echo "⚠️  Failed to trigger AI analysis: ${e.message}"
+        echo "Failures will still be visible in test results"
+    }
+}

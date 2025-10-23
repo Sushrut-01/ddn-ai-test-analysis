@@ -1,0 +1,387 @@
+{
+  "name": "DDN AI Complete Workflow - Phase 3 Final",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "ddn-test-failure",
+        "options": {}
+      },
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [240, 300],
+      "webhookId": "ddn-test-failure"
+    },
+    {
+      "parameters": {
+        "jsCode": "const webhookData = $input.item.json;\nconst buildId = webhookData.build_id;\nconst jobName = webhookData.job_name;\nconst testSuite = webhookData.test_suite || 'unknown';\nconst buildUrl = webhookData.build_url || '';\nconst manualTrigger = webhookData.manual_trigger || false;\n\nreturn {\n  build_id: buildId,\n  job_name: jobName,\n  test_suite: testSuite,\n  build_url: buildUrl,\n  manual_trigger: manualTrigger,\n  timestamp: new Date().toISOString()\n};"
+      },
+      "name": "Extract Data",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [460, 300]
+    },
+    {
+      "parameters": {
+        "operation": "aggregate",
+        "collection": "builds",
+        "query": "[\n  {\n    \"$match\": { \"build_id\": \"={{$json.build_id}}\" }\n  },\n  {\n    \"$lookup\": {\n      \"from\": \"console_logs\",\n      \"localField\": \"build_id\",\n      \"foreignField\": \"build_id\",\n      \"as\": \"console_logs\"\n    }\n  },\n  {\n    \"$lookup\": {\n      \"from\": \"test_results\",\n      \"localField\": \"build_id\",\n      \"foreignField\": \"build_id\",\n      \"as\": \"test_results\"\n    }\n  },\n  {\n    \"$lookup\": {\n      \"from\": \"error_details\",\n      \"localField\": \"build_id\",\n      \"foreignField\": \"build_id\",\n      \"as\": \"error_details\"\n    }\n  },\n  {\n    \"$lookup\": {\n      \"from\": \"system_info\",\n      \"localField\": \"build_id\",\n      \"foreignField\": \"build_id\",\n      \"as\": \"system_info\"\n    }\n  }\n]"
+      },
+      "name": "Get Full Context",
+      "type": "n8n-nodes-base.mongoDb",
+      "typeVersion": 1,
+      "position": [680, 300],
+      "credentials": {
+        "mongoDb": {
+          "id": "1",
+          "name": "MongoDB"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT build_id, status, created_at FROM build_metadata WHERE job_name = '={{$json.job_name}}' ORDER BY created_at DESC LIMIT 10"
+      },
+      "name": "Get Build History",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2,
+      "position": [900, 300],
+      "credentials": {
+        "postgres": {
+          "id": "2",
+          "name": "PostgreSQL"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const webhookData = $('Extract Data').item.json;\nconst contextData = $('Get Full Context').item.json;\nconst historyData = $('Get Build History').all().map(i => i.json);\n\nlet consecutiveFailures = 1;\nfor (const build of historyData) {\n  if (build.status === 'FAILURE') {\n    consecutiveFailures++;\n  } else {\n    break;\n  }\n}\n\nconst shouldTriggerAI = consecutiveFailures >= 3 || webhookData.manual_trigger;\n\nconst fullContext = {\n  build_id: webhookData.build_id,\n  job_name: webhookData.job_name,\n  test_suite: webhookData.test_suite,\n  build_url: webhookData.build_url,\n  consecutive_failures: consecutiveFailures,\n  manual_trigger: webhookData.manual_trigger,\n  should_trigger_ai: shouldTriggerAI,\n  full_logs: contextData[0]?.console_logs?.[0]?.log || '',\n  test_results: JSON.stringify(contextData[0]?.test_results || []),\n  error_details: JSON.stringify(contextData[0]?.error_details || []),\n  system_info: JSON.stringify(contextData[0]?.system_info || {}),\n  timestamp: new Date().toISOString()\n};\n\nreturn fullContext;"
+      },
+      "name": "Build Context + 3-Failure Rule",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1120, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            {
+              "value1": "={{$json.should_trigger_ai}}",
+              "value2": true
+            }
+          ]
+        }
+      },
+      "name": "Check Trigger Rule",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [1340, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "return { message: 'Skipped: Less than 3 failures', build_id: $json.build_id };"
+      },
+      "name": "Skip Analysis",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1560, 200]
+    },
+    {
+      "parameters": {
+        "url": "http://localhost:5000/api/classify",
+        "method": "POST",
+        "jsonParameters": true,
+        "options": {},
+        "bodyParametersJson": "={\n  \"build_id\": \"{{$json.build_id}}\",\n  \"error_message\": \"{{$json.error_details}}\",\n  \"stack_trace\": \"{{$json.full_logs}}\",\n  \"test_results\": \"{{$json.test_results}}\"\n}"
+      },
+      "name": "LangGraph Classification",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [1560, 400]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{$json.needs_code_analysis}}",
+              "value2": "true"
+            }
+          ]
+        }
+      },
+      "name": "Route Decision",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [1780, 400]
+    },
+    {
+      "parameters": {
+        "url": "http://localhost:5003/api/search-similar",
+        "method": "POST",
+        "jsonParameters": true,
+        "options": {},
+        "bodyParametersJson": "={\n  \"error_category\": \"{{$json.error_category}}\",\n  \"error_message\": \"{{$json.error_message}}\",\n  \"top_k\": 3\n}"
+      },
+      "name": "RAG Solution Search",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [2000, 300]
+    },
+    {
+      "parameters": {
+        "url": "http://localhost:5001/api/mcp/analyze-with-claude",
+        "method": "POST",
+        "jsonParameters": true,
+        "options": {},
+        "bodyParametersJson": "={\n  \"build_id\": \"{{$json.build_id}}\",\n  \"error_category\": \"{{$json.error_category}}\",\n  \"full_context\": \"{{$json.full_logs}}\",\n  \"file_paths\": \"{{$json.file_paths}}\",\n  \"enable_mcp\": true\n}"
+      },
+      "name": "Claude MCP Deep Analysis",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [2000, 500]
+    },
+    {
+      "parameters": {
+        "jsCode": "const ragResult = $json.similar_solutions?.[0] || {};\nreturn {\n  build_id: $('Build Context + 3-Failure Rule').item.json.build_id,\n  error_category: $('LangGraph Classification').item.json.error_category,\n  root_cause: ragResult.root_cause || 'Similar solution found',\n  fix_recommendation: ragResult.fix_recommendation || 'Apply known fix',\n  confidence_score: ragResult.confidence_score || 0.85,\n  solution_source: 'RAG',\n  mcp_tools_used: []\n};"
+      },
+      "name": "Parse RAG Response",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [2220, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "return {\n  build_id: $('Build Context + 3-Failure Rule').item.json.build_id,\n  error_category: $('LangGraph Classification').item.json.error_category,\n  root_cause: $json.root_cause,\n  fix_recommendation: $json.fix_recommendation,\n  confidence_score: $json.confidence_score,\n  solution_source: 'Claude MCP',\n  mcp_tools_used: $json.mcp_tools_used || []\n};"
+      },
+      "name": "Parse Claude Response",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [2220, 500]
+    },
+    {
+      "parameters": {},
+      "name": "Merge Paths",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 2,
+      "position": [2440, 400]
+    },
+    {
+      "parameters": {
+        "operation": "insert",
+        "collection": "analysis_solutions",
+        "fields": "build_id,error_category,root_cause,fix_recommendation,confidence_score,solution_source,mcp_tools_used,created_at",
+        "options": {}
+      },
+      "name": "Store MongoDB",
+      "type": "n8n-nodes-base.mongoDb",
+      "typeVersion": 1,
+      "position": [2660, 400],
+      "credentials": {
+        "mongoDb": {
+          "id": "1",
+          "name": "MongoDB"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO failure_analysis (build_id, error_category, root_cause, fix_recommendation, confidence_score, consecutive_failures, feedback_requested, created_at) VALUES ('={{$json.build_id}}', '={{$json.error_category}}', '={{$json.root_cause}}', '={{$json.fix_recommendation}}', ={{$json.confidence_score}}, ={{$('Build Context + 3-Failure Rule').item.json.consecutive_failures}}, true, NOW()) RETURNING id"
+      },
+      "name": "Store PostgreSQL",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2,
+      "position": [2880, 400],
+      "credentials": {
+        "postgres": {
+          "id": "2",
+          "name": "PostgreSQL"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "http://localhost:5003/api/store-vector",
+        "method": "POST",
+        "jsonParameters": true,
+        "bodyParametersJson": "={\n  \"build_id\": \"{{$json.build_id}}\",\n  \"error_category\": \"{{$json.error_category}}\",\n  \"text\": \"{{$json.root_cause}} {{$json.fix_recommendation}}\",\n  \"metadata\": {\n    \"build_id\": \"{{$json.build_id}}\",\n    \"error_category\": \"{{$json.error_category}}\",\n    \"confidence_score\": {{$json.confidence_score}},\n    \"timestamp\": \"{{$now}}\"\n  }\n}"
+      },
+      "name": "Store Pinecone",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [3100, 400]
+    },
+    {
+      "parameters": {
+        "url": "http://localhost:5008/api/self-heal/analyze",
+        "method": "POST",
+        "jsonParameters": true,
+        "bodyParametersJson": "={\n  \"build_id\": \"{{$json.build_id}}\",\n  \"error_category\": \"{{$json.error_category}}\",\n  \"root_cause\": \"{{$json.root_cause}}\",\n  \"fix_recommendation\": \"{{$json.fix_recommendation}}\"\n}"
+      },
+      "name": "Self-Healing Check",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [3320, 400]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{$json.status}}",
+              "value2": "eligible"
+            }
+          ]
+        }
+      },
+      "name": "Check Self-Heal Eligible",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [3540, 400]
+    },
+    {
+      "parameters": {
+        "url": "http://localhost:5008/api/self-heal/apply",
+        "method": "POST",
+        "jsonParameters": true,
+        "bodyParametersJson": "={\n  \"build_id\": \"{{$('Merge Paths').item.json.build_id}}\",\n  \"pattern\": \"{{$json.pattern}}\",\n  \"dry_run\": false,\n  \"approved_by\": \"system\"\n}"
+      },
+      "name": "Apply Self-Healing",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [3760, 300]
+    },
+    {
+      "parameters": {
+        "url": "http://localhost:5006/api/jira/create-issue",
+        "method": "POST",
+        "jsonParameters": true,
+        "bodyParametersJson": "={\n  \"build_id\": \"{{$('Merge Paths').item.json.build_id}}\",\n  \"job_name\": \"{{$('Build Context + 3-Failure Rule').item.json.job_name}}\",\n  \"error_category\": \"{{$('Merge Paths').item.json.error_category}}\",\n  \"root_cause\": \"{{$('Merge Paths').item.json.root_cause}}\",\n  \"fix_recommendation\": \"{{$('Merge Paths').item.json.fix_recommendation}}\",\n  \"confidence_score\": {{$('Merge Paths').item.json.confidence_score}},\n  \"consecutive_failures\": {{$('Build Context + 3-Failure Rule').item.json.consecutive_failures}},\n  \"build_url\": \"{{$('Build Context + 3-Failure Rule').item.json.build_url}}\"\n}"
+      },
+      "name": "Create Jira Issue",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [3980, 400]
+    },
+    {
+      "parameters": {
+        "url": "http://localhost:5007/api/slack/send-notification",
+        "method": "POST",
+        "jsonParameters": true,
+        "bodyParametersJson": "={\n  \"build_id\": \"{{$('Merge Paths').item.json.build_id}}\",\n  \"job_name\": \"{{$('Build Context + 3-Failure Rule').item.json.job_name}}\",\n  \"error_category\": \"{{$('Merge Paths').item.json.error_category}}\",\n  \"root_cause\": \"{{$('Merge Paths').item.json.root_cause}}\",\n  \"fix_recommendation\": \"{{$('Merge Paths').item.json.fix_recommendation}}\",\n  \"confidence_score\": {{$('Merge Paths').item.json.confidence_score}},\n  \"consecutive_failures\": {{$('Build Context + 3-Failure Rule').item.json.consecutive_failures}},\n  \"build_url\": \"{{$('Build Context + 3-Failure Rule').item.json.build_url}}\"\n}"
+      },
+      "name": "Send Slack Notification",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [4200, 400]
+    },
+    {
+      "parameters": {
+        "url": "={{$('Build Context + 3-Failure Rule').item.json.teams_webhook_url}}",
+        "method": "POST",
+        "jsonParameters": true,
+        "bodyParametersJson": "={\n  \"@type\": \"MessageCard\",\n  \"@context\": \"http://schema.org/extensions\",\n  \"themeColor\": \"d63333\",\n  \"summary\": \"Test Failure: {{$('Build Context + 3-Failure Rule').item.json.job_name}}\",\n  \"sections\": [\n    {\n      \"activityTitle\": \"🚨 Test Failure Detected\",\n      \"activitySubtitle\": \"{{$('Build Context + 3-Failure Rule').item.json.job_name}}\",\n      \"facts\": [\n        {\"name\": \"Build ID\", \"value\": \"{{$('Merge Paths').item.json.build_id}}\"},\n        {\"name\": \"Category\", \"value\": \"{{$('Merge Paths').item.json.error_category}}\"},\n        {\"name\": \"Confidence\", \"value\": \"{{Math.round($('Merge Paths').item.json.confidence_score * 100)}}%\"},\n        {\"name\": \"Failures\", \"value\": \"{{$('Build Context + 3-Failure Rule').item.json.consecutive_failures}}\"}\n      ],\n      \"markdown\": true\n    },\n    {\n      \"activityTitle\": \"Root Cause\",\n      \"text\": \"{{$('Merge Paths').item.json.root_cause}}\"\n    },\n    {\n      \"activityTitle\": \"Fix Recommendation\",\n      \"text\": \"{{$('Merge Paths').item.json.fix_recommendation}}\"\n    }\n  ],\n  \"potentialAction\": [\n    {\n      \"@type\": \"OpenUri\",\n      \"name\": \"✅ Fix Worked\",\n      \"targets\": [{\"os\": \"default\", \"uri\": \"http://localhost:5004/api/feedback?build_id={{$('Merge Paths').item.json.build_id}}&feedback=success\"}]\n    },\n    {\n      \"@type\": \"OpenUri\",\n      \"name\": \"❌ Fix Failed\",\n      \"targets\": [{\"os\": \"default\", \"uri\": \"http://localhost:5004/api/feedback?build_id={{$('Merge Paths').item.json.build_id}}&feedback=failed\"}]\n    },\n    {\n      \"@type\": \"OpenUri\",\n      \"name\": \"📊 Dashboard\",\n      \"targets\": [{\"os\": \"default\", \"uri\": \"http://localhost:3000/failures/{{$('Merge Paths').item.json.build_id}}\"}]\n    },\n    {\n      \"@type\": \"OpenUri\",\n      \"name\": \"🔗 Jenkins\",\n      \"targets\": [{\"os\": \"default\", \"uri\": \"{{$('Build Context + 3-Failure Rule').item.json.build_url}}\"}]\n    }\n  ]\n}"
+      },
+      "name": "Send Teams (Optional)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [4420, 400]
+    },
+    {
+      "parameters": {
+        "jsCode": "return {\n  status: 'success',\n  build_id: $('Merge Paths').item.json.build_id,\n  message: 'Analysis complete',\n  jira_issue: $('Create Jira Issue').item.json.jira_issue_key,\n  slack_sent: $('Send Slack Notification').item.json.status === 'success',\n  self_healing_applied: $('Check Self-Heal Eligible').item.json.status === 'eligible'\n};"
+      },
+      "name": "Success Response",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [4640, 400]
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [[{"node": "Extract Data", "type": "main", "index": 0}]]
+    },
+    "Extract Data": {
+      "main": [[{"node": "Get Full Context", "type": "main", "index": 0}]]
+    },
+    "Get Full Context": {
+      "main": [[{"node": "Get Build History", "type": "main", "index": 0}]]
+    },
+    "Get Build History": {
+      "main": [[{"node": "Build Context + 3-Failure Rule", "type": "main", "index": 0}]]
+    },
+    "Build Context + 3-Failure Rule": {
+      "main": [[{"node": "Check Trigger Rule", "type": "main", "index": 0}]]
+    },
+    "Check Trigger Rule": {
+      "main": [
+        [{"node": "Skip Analysis", "type": "main", "index": 0}],
+        [{"node": "LangGraph Classification", "type": "main", "index": 0}]
+      ]
+    },
+    "LangGraph Classification": {
+      "main": [[{"node": "Route Decision", "type": "main", "index": 0}]]
+    },
+    "Route Decision": {
+      "main": [
+        [{"node": "RAG Solution Search", "type": "main", "index": 0}],
+        [{"node": "Claude MCP Deep Analysis", "type": "main", "index": 0}]
+      ]
+    },
+    "RAG Solution Search": {
+      "main": [[{"node": "Parse RAG Response", "type": "main", "index": 0}]]
+    },
+    "Claude MCP Deep Analysis": {
+      "main": [[{"node": "Parse Claude Response", "type": "main", "index": 0}]]
+    },
+    "Parse RAG Response": {
+      "main": [[{"node": "Merge Paths", "type": "main", "index": 0}]]
+    },
+    "Parse Claude Response": {
+      "main": [[{"node": "Merge Paths", "type": "main", "index": 1}]]
+    },
+    "Merge Paths": {
+      "main": [[{"node": "Store MongoDB", "type": "main", "index": 0}]]
+    },
+    "Store MongoDB": {
+      "main": [[{"node": "Store PostgreSQL", "type": "main", "index": 0}]]
+    },
+    "Store PostgreSQL": {
+      "main": [[{"node": "Store Pinecone", "type": "main", "index": 0}]]
+    },
+    "Store Pinecone": {
+      "main": [[{"node": "Self-Healing Check", "type": "main", "index": 0}]]
+    },
+    "Self-Healing Check": {
+      "main": [[{"node": "Check Self-Heal Eligible", "type": "main", "index": 0}]]
+    },
+    "Check Self-Heal Eligible": {
+      "main": [
+        [{"node": "Apply Self-Healing", "type": "main", "index": 0}],
+        [{"node": "Create Jira Issue", "type": "main", "index": 0}]
+      ]
+    },
+    "Apply Self-Healing": {
+      "main": [[{"node": "Create Jira Issue", "type": "main", "index": 0}]]
+    },
+    "Create Jira Issue": {
+      "main": [[{"node": "Send Slack Notification", "type": "main", "index": 0}]]
+    },
+    "Send Slack Notification": {
+      "main": [[{"node": "Send Teams (Optional)", "type": "main", "index": 0}]]
+    },
+    "Send Teams (Optional)": {
+      "main": [[{"node": "Success Response", "type": "main", "index": 0}]]
+    }
+  },
+  "settings": {},
+  "staticData": null,
+  "tags": [],
+  "triggerCount": 1,
+  "updatedAt": "2025-01-17T00:00:00.000Z",
+  "versionId": "3.0.0"
+}

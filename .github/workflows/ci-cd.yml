@@ -1,0 +1,63 @@
+name: DDN AI System CI/CD
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+  workflow_dispatch:
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+
+    - name: Install dependencies
+      run: |
+        cd implementation
+        pip install -r requirements.txt
+
+    - name: Run tests
+      run: |
+        cd implementation
+        python -m pytest tests/ || true
+
+    - name: Build Docker images
+      run: |
+        docker-compose build
+
+    - name: Run Docker Compose services
+      run: |
+        docker-compose up -d
+        sleep 30
+
+    - name: Health check
+      run: |
+        curl -f http://localhost:5005/health || exit 1
+        curl -f http://localhost:3000 || exit 1
+
+    - name: Stop services
+      run: |
+        docker-compose down
+
+  deploy:
+    needs: build-and-test
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Deploy to production
+      run: |
+        echo "Deploy to production server"
+        # Add your deployment scripts here

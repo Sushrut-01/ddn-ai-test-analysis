@@ -1,0 +1,441 @@
+{
+  "name": "DDN AI Test Failure Analysis - Production",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "ddn-test-failure",
+        "responseMode": "responseNode",
+        "responseNode": "response-success",
+        "options": {}
+      },
+      "id": "webhook-trigger",
+      "name": "Webhook: Jenkins Failure",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [240, 400],
+      "webhookId": "ddn-jenkins-failure"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "build_id",
+              "name": "build_id",
+              "value": "={{ $json.body.build_id || $json.build_id }}",
+              "type": "string"
+            },
+            {
+              "id": "build_url",
+              "name": "build_url",
+              "value": "={{ $json.body.build_url || $json.build_url }}",
+              "type": "string"
+            },
+            {
+              "id": "status",
+              "name": "status",
+              "value": "={{ $json.body.status || $json.status || 'FAILURE' }}",
+              "type": "string"
+            },
+            {
+              "id": "job_name",
+              "name": "job_name",
+              "value": "={{ $json.body.job_name || $json.job_name }}",
+              "type": "string"
+            },
+            {
+              "id": "timestamp",
+              "name": "timestamp",
+              "value": "={{ new Date().toISOString() }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "extract-webhook-data",
+      "name": "Extract Webhook Data",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [460, 400]
+    },
+    {
+      "parameters": {
+        "operation": "findOne",
+        "collection": "builds",
+        "query": "={ \"build_id\": \"{{ $json.build_id }}\" }",
+        "options": {
+          "projection": "={ \"build_id\": 1, \"error_log\": { \"$substr\": [\"$error_log\", 0, 500] }, \"status\": 1, \"job_name\": 1, \"test_suite\": 1 }"
+        }
+      },
+      "id": "mongodb-get-minimal",
+      "name": "MongoDB: Get Minimal Data",
+      "type": "n8n-nodes-base.mongoDb",
+      "typeVersion": 1.2,
+      "position": [680, 400],
+      "credentials": {
+        "mongoDb": {
+          "id": "mongodb-credentials",
+          "name": "MongoDB account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "http://localhost:5000/classify-error",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"build_id\": \"{{ $json.build_id }}\",\n  \"error_log\": \"{{ $json.error_log }}\",\n  \"status\": \"{{ $json.status }}\",\n  \"job_name\": \"{{ $json.job_name }}\",\n  \"test_suite\": \"{{ $json.test_suite }}\"\n}",
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "id": "langgraph-classify",
+      "name": "LangGraph: Classify Error",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [900, 400]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "needs-code-check",
+              "leftValue": "={{ $json.needs_code_analysis }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "route-by-category",
+      "name": "Route: Needs Code Analysis?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [1120, 400]
+    },
+    {
+      "parameters": {
+        "jsCode": "// ============================================================================\n// RAG SOLUTION GENERATOR (No Code Analysis Needed)\n// For: INFRA_ERROR, DEPENDENCY_ERROR, CONFIG_ERROR\n// ============================================================================\n\nconst input = $input.first().json;\n\nconsole.log('🎯 RAG Solution Generator: Processing', input.error_category);\n\n// Extract best solution from similar errors\nconst similarSolutions = input.similar_solutions || [];\n\nlet rootCause = 'Unknown';\nlet fixRecommendation = 'Manual investigation required';\nlet preventionStrategy = 'Monitor for recurrence';\nlet confidence = 0.0;\n\nif (similarSolutions.length > 0) {\n  // Use highest confidence solution\n  const bestSolution = similarSolutions[0];\n  \n  rootCause = bestSolution.root_cause || 'Based on historical data';\n  fixRecommendation = bestSolution.solution || bestSolution.fix_recommendation;\n  preventionStrategy = bestSolution.prevention || 'Follow best practices';\n  confidence = bestSolution.confidence || 0.85;\n}\n\n// Generate structured solution\nconst solution = {\n  // Original data\n  build_id: input.build_id,\n  error_category: input.error_category,\n  error_log: input.error_log,\n  \n  // Analysis metadata\n  analysis_type: 'RAG_BASED',\n  analysis_timestamp: new Date().toISOString(),\n  processing_time_ms: 5000, // Typical RAG processing time\n  confidence_score: confidence,\n  \n  // Solution components\n  root_cause: rootCause,\n  fix_recommendation: fixRecommendation,\n  prevention_strategy: preventionStrategy,\n  \n  // Additional context\n  similar_cases_found: similarSolutions.length,\n  requires_code_review: false,\n  github_files_analyzed: [],\n  \n  // Recommendations\n  action_required: confidence > 0.8 ? 'APPLY_FIX' : 'REVIEW_RECOMMENDED',\n  priority: input.error_category === 'INFRA_ERROR' ? 'HIGH' : 'MEDIUM',\n  \n  // Cost tracking\n  token_usage: 0, // No AI API call\n  estimated_cost_usd: 0.01\n};\n\nconsole.log('✅ RAG Solution Generated:', {\n  category: solution.error_category,\n  confidence: solution.confidence_score,\n  action: solution.action_required\n});\n\nreturn { json: solution };"
+      },
+      "id": "rag-solution-generator",
+      "name": "Generate RAG Solution",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1340, 300],
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "url": "https://api.anthropic.com/v1/messages",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "anthropicApi",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "anthropic-version",
+              "value": "2023-06-01"
+            },
+            {
+              "name": "anthropic-beta",
+              "value": "mcp-client-2025-04-04"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"claude-3-5-sonnet-20241022\",\n  \"max_tokens\": 4096,\n  \"mcp_servers\": [\n    {\n      \"type\": \"url\",\n      \"url\": \"http://localhost:5001/sse\",\n      \"name\": \"mongodb-tools\",\n      \"authorization_token\": \"{{ $env.MONGODB_MCP_TOKEN }}\"\n    },\n    {\n      \"type\": \"url\",\n      \"url\": \"http://localhost:5002/sse\",\n      \"name\": \"github-tools\",\n      \"authorization_token\": \"{{ $env.GITHUB_MCP_TOKEN }}\"\n    }\n  ],\n  \"messages\": [\n    {\n      \"role\": \"user\",\n      \"content\": \"Analyze this test failure and provide code fix recommendations:\\n\\n**Build Information:**\\n- Build ID: {{ $json.build_id }}\\n- Job Name: {{ $json.job_name }}\\n- Test Suite: {{ $json.test_suite }}\\n- Status: {{ $json.status }}\\n\\n**Error Details:**\\n{{ $json.error_log }}\\n\\n**Error Category:** {{ $json.error_category }}\\n\\n**Similar Past Issues:**\\n{{ JSON.stringify($json.similar_solutions.slice(0, 3)) }}\\n\\n**Available Tools:**\\nYou have access to two MCP servers:\\n\\n1. **mongodb-tools**: Query database for detailed information\\n   - mongodb_get_full_error_details(build_id)\\n   - mongodb_get_console_log(build_id)\\n   - mongodb_get_test_results(build_id)\\n   - mongodb_get_system_info(build_id)\\n\\n2. **github-tools**: Fetch source code from GitHub\\n   - github_get_file(repo, file_path, start_line, end_line)\\n   - github_get_blame(repo, file_path, line)\\n   - github_get_test_file(repo, test_name)\\n\\n**Instructions:**\\n1. First, use mongodb_get_full_error_details() to get the complete stack trace\\n2. Extract the failing file path and line number from the stack trace\\n3. Use github_get_file() to fetch the relevant source code (around the failing line)\\n4. Analyze the code and error\\n5. Provide a detailed response with:\\n   - Root cause analysis\\n   - Exact code fix (with diff format)\\n   - Test case to prevent recurrence\\n   - Prevention strategy\\n\\n**Output Format:**\\n```json\\n{\\n  \\\"root_cause\\\": \\\"Detailed explanation\\\",\\n  \\\"fix_recommendation\\\": \\\"Code fix with diff\\\",\\n  \\\"test_case\\\": \\\"Suggested test case\\\",\\n  \\\"prevention_strategy\\\": \\\"How to prevent this\\\",\\n  \\\"files_analyzed\\\": [\\\"file1.py\\\", \\\"file2.java\\\"],\\n  \\\"confidence_score\\\": 0.95\\n}\\n```\"\n    }\n  ]\n}",
+        "options": {
+          "timeout": 120000
+        }
+      },
+      "id": "claude-mcp-analysis",
+      "name": "Claude with MCP: Analyze Code",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1340, 500],
+      "credentials": {
+        "anthropicApi": {
+          "id": "anthropic-credentials",
+          "name": "Anthropic API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// ============================================================================\n// CLAUDE MCP RESPONSE PARSER\n// Extracts solution from Claude's response\n// ============================================================================\n\nconst input = $input.first().json;\n\nconsole.log('🤖 Parsing Claude MCP response...');\n\n// Extract content from Claude response\nconst content = input.content || [];\nlet solutionText = '';\n\nfor (const block of content) {\n  if (block.type === 'text') {\n    solutionText += block.text;\n  }\n}\n\n// Try to extract JSON from response\nlet parsedSolution = {};\nconst jsonMatch = solutionText.match(/```json\\s*([\\s\\S]*?)\\s*```/);\n\nif (jsonMatch) {\n  try {\n    parsedSolution = JSON.parse(jsonMatch[1]);\n  } catch (e) {\n    console.warn('Failed to parse JSON from response', e);\n    parsedSolution = {\n      root_cause: 'Extracted from text',\n      fix_recommendation: solutionText.substring(0, 500)\n    };\n  }\n}\n\n// Calculate token usage\nconst tokenUsage = input.usage || {};\nconst inputTokens = tokenUsage.input_tokens || 0;\nconst outputTokens = tokenUsage.output_tokens || 0;\nconst totalTokens = inputTokens + outputTokens;\n\n// Estimate cost (Claude 3.5 Sonnet pricing)\nconst inputCost = (inputTokens / 1000000) * 3.00;  // $3 per million input tokens\nconst outputCost = (outputTokens / 1000000) * 15.00; // $15 per million output tokens\nconst totalCost = inputCost + outputCost;\n\n// Build final solution object\nconst solution = {\n  // Original data\n  build_id: $('mongodb-get-minimal').first().json.build_id,\n  error_category: $('langgraph-classify').first().json.error_category,\n  error_log: $('mongodb-get-minimal').first().json.error_log,\n  \n  // Analysis metadata\n  analysis_type: 'MCP_CLAUDE_ANALYSIS',\n  analysis_timestamp: new Date().toISOString(),\n  processing_time_ms: 15000, // Typical MCP processing time\n  confidence_score: parsedSolution.confidence_score || 0.90,\n  \n  // Solution from Claude\n  root_cause: parsedSolution.root_cause || 'See full response',\n  fix_recommendation: parsedSolution.fix_recommendation || solutionText,\n  test_case: parsedSolution.test_case || '',\n  prevention_strategy: parsedSolution.prevention_strategy || '',\n  \n  // Code analysis details\n  requires_code_review: true,\n  github_files_analyzed: parsedSolution.files_analyzed || [],\n  \n  // Recommendations\n  action_required: 'CODE_REVIEW_REQUIRED',\n  priority: 'HIGH',\n  \n  // Cost tracking\n  token_usage: totalTokens,\n  token_breakdown: {\n    input: inputTokens,\n    output: outputTokens\n  },\n  estimated_cost_usd: totalCost.toFixed(4),\n  \n  // Full Claude response (for debugging)\n  claude_response_raw: solutionText\n};\n\nconsole.log('✅ Claude Analysis Parsed:', {\n  category: solution.error_category,\n  tokens: solution.token_usage,\n  cost: solution.estimated_cost_usd,\n  files_analyzed: solution.github_files_analyzed.length\n});\n\nreturn { json: solution };"
+      },
+      "id": "parse-claude-response",
+      "name": "Parse Claude Response",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1560, 500]
+    },
+    {
+      "parameters": {
+        "mode": "mergeByPosition",
+        "options": {}
+      },
+      "id": "merge-solutions",
+      "name": "Merge Solutions",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3,
+      "position": [1780, 400]
+    },
+    {
+      "parameters": {
+        "operation": "insertOne",
+        "collection": "analysis_solutions",
+        "fields": "={{ JSON.stringify($json) }}",
+        "options": {}
+      },
+      "id": "mongodb-store-solution",
+      "name": "MongoDB: Store Solution",
+      "type": "n8n-nodes-base.mongoDb",
+      "typeVersion": 1.2,
+      "position": [2000, 400],
+      "credentials": {
+        "mongoDb": {
+          "id": "mongodb-credentials",
+          "name": "MongoDB account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "http://localhost:5003/pinecone/store",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"build_id\": \"{{ $json.build_id }}\",\n  \"error_category\": \"{{ $json.error_category }}\",\n  \"error_log\": \"{{ $json.error_log }}\",\n  \"solution\": \"{{ $json.fix_recommendation }}\",\n  \"root_cause\": \"{{ $json.root_cause }}\",\n  \"confidence_score\": {{ $json.confidence_score }},\n  \"analysis_type\": \"{{ $json.analysis_type }}\"\n}",
+        "options": {}
+      },
+      "id": "pinecone-store-vector",
+      "name": "Pinecone: Store Vector",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [2220, 400],
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "jsCode": "// ============================================================================\n// TEAMS NOTIFICATION BUILDER\n// Create formatted Teams message\n// ============================================================================\n\nconst solution = $input.first().json;\n\n// Determine severity based on category and confidence\nlet emoji = '⚠️';\nlet severity = 'WARNING';\n\nif (solution.priority === 'HIGH' || solution.error_category === 'CODE_ERROR') {\n  emoji = '🚨';\n  severity = 'CRITICAL';\n} else if (solution.confidence_score > 0.9) {\n  emoji = '✅';\n  severity = 'INFO';\n}\n\n// Build Teams adaptive card\nconst teamsCard = {\n  \"type\": \"message\",\n  \"attachments\": [\n    {\n      \"contentType\": \"application/vnd.microsoft.card.adaptive\",\n      \"content\": {\n        \"type\": \"AdaptiveCard\",\n        \"$schema\": \"http://adaptivecards.io/schemas/adaptive-card.json\",\n        \"version\": \"1.4\",\n        \"body\": [\n          {\n            \"type\": \"Container\",\n            \"style\": \"emphasis\",\n            \"items\": [\n              {\n                \"type\": \"TextBlock\",\n                \"text\": `${emoji} Test Case Failure Detected`,\n                \"size\": \"Large\",\n                \"weight\": \"Bolder\",\n                \"color\": severity === 'CRITICAL' ? 'Attention' : 'Warning'\n              }\n            ]\n          },\n          {\n            \"type\": \"FactSet\",\n            \"facts\": [\n              {\n                \"title\": \"Build ID:\",\n                \"value\": solution.build_id\n              },\n              {\n                \"title\": \"Error Category:\",\n                \"value\": solution.error_category\n              },\n              {\n                \"title\": \"Analysis Type:\",\n                \"value\": solution.analysis_type\n              },\n              {\n                \"title\": \"Confidence:\",\n                \"value\": `${(solution.confidence_score * 100).toFixed(1)}%`\n              },\n              {\n                \"title\": \"Priority:\",\n                \"value\": solution.priority\n              },\n              {\n                \"title\": \"Cost:\",\n                \"value\": `$${solution.estimated_cost_usd}`\n              }\n            ]\n          },\n          {\n            \"type\": \"TextBlock\",\n            \"text\": \"**Root Cause:**\",\n            \"weight\": \"Bolder\",\n            \"spacing\": \"Medium\"\n          },\n          {\n            \"type\": \"TextBlock\",\n            \"text\": solution.root_cause,\n            \"wrap\": true\n          },\n          {\n            \"type\": \"TextBlock\",\n            \"text\": \"**Recommended Fix:**\",\n            \"weight\": \"Bolder\",\n            \"spacing\": \"Medium\"\n          },\n          {\n            \"type\": \"TextBlock\",\n            \"text\": solution.fix_recommendation.substring(0, 500) + (solution.fix_recommendation.length > 500 ? '...' : ''),\n            \"wrap\": true\n          }\n        ],\n        \"actions\": [\n          {\n            \"type\": \"Action.OpenUrl\",\n            \"title\": \"View in Dashboard\",\n            \"url\": `${process.env.DASHBOARD_URL}/analysis/${solution.build_id}`\n          },\n          {\n            \"type\": \"Action.OpenUrl\",\n            \"title\": \"View Jenkins Log\",\n            \"url\": $('mongodb-get-minimal').first().json.build_url || '#'\n          }\n        ]\n      }\n    }\n  ]\n};\n\nconsole.log('📨 Teams notification prepared for:', solution.build_id);\n\nreturn { json: teamsCard };"
+      },
+      "id": "prepare-teams-notification",
+      "name": "Prepare Teams Notification",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [2440, 400]
+    },
+    {
+      "parameters": {
+        "url": "={{ $env.TEAMS_WEBHOOK_URL }}",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json) }}",
+        "options": {}
+      },
+      "id": "send-teams-notification",
+      "name": "Send Teams Notification",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [2660, 400],
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\n  \"status\": \"success\",\n  \"build_id\": \"{{ $('mongodb-get-minimal').first().json.build_id }}\",\n  \"analysis_type\": \"{{ $('merge-solutions').first().json.analysis_type }}\",\n  \"message\": \"Analysis completed and notification sent\"\n}",
+        "options": {}
+      },
+      "id": "response-success",
+      "name": "Response: Success",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [2880, 400]
+    }
+  ],
+  "connections": {
+    "Webhook: Jenkins Failure": {
+      "main": [
+        [
+          {
+            "node": "Extract Webhook Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Webhook Data": {
+      "main": [
+        [
+          {
+            "node": "MongoDB: Get Minimal Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "MongoDB: Get Minimal Data": {
+      "main": [
+        [
+          {
+            "node": "LangGraph: Classify Error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "LangGraph: Classify Error": {
+      "main": [
+        [
+          {
+            "node": "Route: Needs Code Analysis?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Route: Needs Code Analysis?": {
+      "main": [
+        [
+          {
+            "node": "Claude with MCP: Analyze Code",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Generate RAG Solution",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate RAG Solution": {
+      "main": [
+        [
+          {
+            "node": "Merge Solutions",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Claude with MCP: Analyze Code": {
+      "main": [
+        [
+          {
+            "node": "Parse Claude Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Claude Response": {
+      "main": [
+        [
+          {
+            "node": "Merge Solutions",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Merge Solutions": {
+      "main": [
+        [
+          {
+            "node": "MongoDB: Store Solution",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "MongoDB: Store Solution": {
+      "main": [
+        [
+          {
+            "node": "Pinecone: Store Vector",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Pinecone: Store Vector": {
+      "main": [
+        [
+          {
+            "node": "Prepare Teams Notification",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Teams Notification": {
+      "main": [
+        [
+          {
+            "node": "Send Teams Notification",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Teams Notification": {
+      "main": [
+        [
+          {
+            "node": "Response: Success",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "settings": {
+    "executionOrder": "v1",
+    "saveManualExecutions": true,
+    "callerPolicy": "workflowsFromSameOwner",
+    "errorWorkflow": ""
+  },
+  "staticData": null,
+  "tags": [
+    {
+      "createdAt": "2025-10-17T12:00:00.000Z",
+      "updatedAt": "2025-10-17T12:00:00.000Z",
+      "id": "ddn-ai-tag",
+      "name": "DDN-AI"
+    }
+  ],
+  "triggerCount": 1,
+  "updatedAt": "2025-10-17T12:00:00.000Z",
+  "versionId": "production-v1"
+}

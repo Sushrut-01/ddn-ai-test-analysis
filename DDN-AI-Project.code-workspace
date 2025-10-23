@@ -1,0 +1,150 @@
+{
+  "folders": [
+    {
+      "name": "📁 DDN AI Project Root",
+      "path": "."
+    },
+    {
+      "name": "📖 Documentation",
+      "path": "."
+    },
+    {
+      "name": "🏗️ Architecture",
+      "path": "architecture"
+    },
+    {
+      "name": "💻 Implementation",
+      "path": "implementation"
+    },
+    {
+      "name": "🛠️ MCP Configs",
+      "path": "mcp-configs"
+    },
+    {
+      "name": "📚 Technical Guides",
+      "path": "technical-guides"
+    }
+  ],
+  "settings": {
+    "python.defaultInterpreterPath": "${workspaceFolder}/implementation/venv/bin/python",
+    "python.linting.enabled": true,
+    "python.linting.pylintEnabled": true,
+    "python.formatting.provider": "black",
+    "python.analysis.typeCheckingMode": "basic",
+    "editor.formatOnSave": true,
+    "editor.rulers": [
+      80,
+      100
+    ],
+    "files.exclude": {
+      "**/__pycache__": true,
+      "**/*.pyc": true,
+      "**/.venv": true,
+      "**/venv": true,
+      "**/.env": true
+    },
+    "files.associations": {
+      "*.json": "json",
+      "*.md": "markdown"
+    },
+    "markdown.preview.breaks": true,
+    "markdown.preview.fontSize": 14,
+    "[python]": {
+      "editor.defaultFormatter": "ms-python.black-formatter",
+      "editor.formatOnSave": true,
+      "editor.codeActionsOnSave": {
+        "source.organizeImports": "explicit"
+      }
+    },
+    "[json]": {
+      "editor.defaultFormatter": "esbenp.prettier-vscode"
+    },
+    "[markdown]": {
+      "editor.wordWrap": "on"
+    },
+    "claude-code.useTerminal": false
+  },
+  "extensions": {
+    "recommendations": [
+      "ms-python.python",
+      "ms-python.vscode-pylance",
+      "ms-python.black-formatter",
+      "ms-toolsai.jupyter",
+      "mongodb.mongodb-vscode",
+      "esbenp.prettier-vscode",
+      "yzhang.markdown-all-in-one",
+      "davidanson.vscode-markdownlint",
+      "streetsidesoftware.code-spell-checker",
+      "ms-vscode.vscode-json",
+      "redhat.vscode-yaml"
+    ]
+  },
+  "launch": {
+    "version": "0.2.0",
+    "configurations": [
+      {
+        "name": "Python: LangGraph Service",
+        "type": "python",
+        "request": "launch",
+        "program": "${workspaceFolder}/implementation/langgraph_agent.py",
+        "console": "integratedTerminal",
+        "envFile": "${workspaceFolder}/implementation/.env",
+        "cwd": "${workspaceFolder}/implementation"
+      },
+      {
+        "name": "Python: MongoDB MCP Server",
+        "type": "python",
+        "request": "launch",
+        "program": "${workspaceFolder}/mcp-configs/mongodb-mcp-server.py",
+        "console": "integratedTerminal",
+        "envFile": "${workspaceFolder}/implementation/.env",
+        "cwd": "${workspaceFolder}/mcp-configs"
+      },
+      {
+        "name": "Python: GitHub MCP Server",
+        "type": "python",
+        "request": "launch",
+        "program": "${workspaceFolder}/mcp-configs/github-mcp-server.py",
+        "console": "integratedTerminal",
+        "envFile": "${workspaceFolder}/implementation/.env",
+        "cwd": "${workspaceFolder}/mcp-configs"
+      }
+    ]
+  },
+  "tasks": {
+    "version": "2.0.0",
+    "tasks": [
+      {
+        "label": "Install Python Dependencies",
+        "type": "shell",
+        "command": "pip install -r requirements.txt",
+        "options": {
+          "cwd": "${workspaceFolder}/implementation"
+        }
+      },
+      {
+        "label": "Start LangGraph Service",
+        "type": "shell",
+        "command": "python langgraph_agent.py",
+        "options": {
+          "cwd": "${workspaceFolder}/implementation"
+        },
+        "isBackground": true
+      },
+      {
+        "label": "Start All MCP Servers",
+        "type": "shell",
+        "command": "python mongodb-mcp-server.py & python github-mcp-server.py",
+        "options": {
+          "cwd": "${workspaceFolder}/mcp-configs"
+        },
+        "isBackground": true
+      },
+      {
+        "label": "Test LangGraph Health",
+        "type": "shell",
+        "command": "curl http://localhost:5000/health"
+      }
+    ]
+  }
+}

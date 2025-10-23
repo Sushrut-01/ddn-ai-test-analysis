@@ -1,0 +1,44 @@
+// Example Jenkinsfile for test jobs that trigger the AI analysis
+pipeline {
+    agent any
+
+    stages {
+        stage('Run Tests') {
+            steps {
+                // Your test execution steps
+                sh './run-tests.sh'
+            }
+        }
+    }
+
+    post {
+        always {
+            // Collect test results
+            junit '**/test-results/*.xml'
+
+            script {
+                // Prepare webhook payload
+                def buildData = [
+                    build_id: "${env.BUILD_TAG}",
+                    job_name: "${env.JOB_NAME}",
+                    build_number: env.BUILD_NUMBER.toInteger(),
+                    status: currentBuild.result ?: 'SUCCESS',
+                    timestamp: new Date().format("yyyy-MM-dd'T'HH:mm:ss'Z'"),
+                    duration: currentBuild.duration,
+                    build_url: "${env.BUILD_URL}",
+                    console_log_url: "${env.BUILD_URL}console"
+                ]
+
+                // Send to n8n webhook if build failed
+                if (currentBuild.result == 'FAILURE') {
+                    httpRequest(
+                        url: 'http://n8n:5678/webhook/ddn-test-failure',
+                        httpMode: 'POST',
+                        contentType: 'APPLICATION_JSON',
+                        requestBody: groovy.json.JsonOutput.toJson(buildData)
+                    )
+                }
+            }
+        }
+    }
+}

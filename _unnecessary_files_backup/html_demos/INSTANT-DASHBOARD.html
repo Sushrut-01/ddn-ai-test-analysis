@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DDN AI Test Failure Analysis Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 20px;
+            box-shadow: 0 2px 20px rgba(0,0,0,0.1);
+        }
+
+        .header-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 24px;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .nav {
+            display: flex;
+            gap: 20px;
+        }
+
+        .nav-item {
+            padding: 10px 20px;
+            background: #667eea;
+            color: white;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-decoration: none;
+        }
+
+        .nav-item:hover {
+            background: #764ba2;
+            transform: translateY(-2px);
+        }
+
+        .nav-item.active {
+            background: #764ba2;
+        }
+
+        .container {
+            flex: 1;
+            max-width: 1400px;
+            margin: 30px auto;
+            padding: 0 20px;
+            width: 100%;
+        }
+
+        .page {
+            display: none;
+            animation: fadeIn 0.3s;
+        }
+
+        .page.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .card {
+            background: white;
+            border-radius: 10px;
+            padding: 30px;
+            box-shadow: 0 5px 30px rgba(0,0,0,0.2);
+            margin-bottom: 20px;
+        }
+
+        .card h2 {
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 28px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 25px;
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 48px;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+
+        .stat-label {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        .table th {
+            background: #f5f5f5;
+            padding: 15px;
+            text-align: left;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .table td {
+            padding: 15px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .table tr:hover {
+            background: #f9f9f9;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #ee0979 0%, #ff6a00 100%);
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .badge-danger {
+            background: #fee;
+            color: #d00;
+        }
+
+        .badge-success {
+            background: #efe;
+            color: #0a0;
+        }
+
+        .badge-warning {
+            background: #ffd;
+            color: #c70;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+            transition: border 0.3s;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .alert {
+            padding: 15px 20px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+
+        .alert-info {
+            background: #d1ecf1;
+            border: 1px solid #bee5eb;
+            color: #0c5460;
+        }
+
+        .alert-warning {
+            background: #fff3cd;
+            border: 1px solid #ffc107;
+            color: #856404;
+        }
+
+        .footer {
+            background: rgba(0,0,0,0.3);
+            color: white;
+            text-align: center;
+            padding: 20px;
+            margin-top: auto;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="header-content">
+            <div class="logo">🚀 DDN AI Test Analysis</div>
+            <div class="nav">
+                <a href="#" class="nav-item active" onclick="showPage('dashboard')">Dashboard</a>
+                <a href="#" class="nav-item" onclick="showPage('failures')">Failures</a>
+                <a href="#" class="nav-item" onclick="showPage('analytics')">Analytics</a>
+                <a href="#" class="nav-item" onclick="showPage('manual')">Manual Trigger</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- Dashboard Page -->
+        <div id="dashboard" class="page active">
+            <div class="alert alert-info">
+                <strong>ℹ️ Demo Mode</strong> This is a static demo dashboard. For full functionality, the backend services need to be running.
+            </div>
+
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-label">Total Failures</div>
+                    <div class="stat-number">127</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Analyzed</div>
+                    <div class="stat-number">94</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Pending</div>
+                    <div class="stat-number">33</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Success Rate</div>
+                    <div class="stat-number">87%</div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2>Recent Activity</h2>
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Build ID</th>
+                            <th>Job Name</th>
+                            <th>Status</th>
+                            <th>Aging</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>BUILD_12345</td>
+                            <td>DDN-Smoke-Test</td>
+                            <td><span class="badge badge-danger">FAILED</span></td>
+                            <td>2 days</td>
+                            <td><button class="btn btn-success">Analyze Now</button></td>
+                        </tr>
+                        <tr>
+                            <td>BUILD_12344</td>
+                            <td>DDN-Integration</td>
+                            <td><span class="badge badge-danger">FAILED</span></td>
+                            <td>5 days</td>
+                            <td><button class="btn btn-success">Analyze Now</button></td>
+                        </tr>
+                        <tr>
+                            <td>BUILD_12343</td>
+                            <td>DDN-Regression</td>
+                            <td><span class="badge badge-success">ANALYZED</span></td>
+                            <td>7 days</td>
+                            <td><button class="btn">View Results</button></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Failures Page -->
+        <div id="failures" class="page">
+            <div class="card">
+                <h2>Test Failures</h2>
+                <p>View and analyze all test failures from your Jenkins builds.</p>
+
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Build ID</th>
+                            <th>Test Name</th>
+                            <th>Error Type</th>
+                            <th>Timestamp</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>BUILD_12345</td>
+                            <td>test_storage_connection</td>
+                            <td><span class="badge badge-danger">NullPointerException</span></td>
+                            <td>2024-10-22 14:30</td>
+                            <td><button class="btn btn-success">Analyze</button></td>
+                        </tr>
+                        <tr>
+                            <td>BUILD_12344</td>
+                            <td>test_api_response</td>
+                            <td><span class="badge badge-warning">TimeoutError</span></td>
+                            <td>2024-10-22 12:15</td>
+                            <td><button class="btn btn-success">Analyze</button></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Analytics Page -->
+        <div id="analytics" class="page">
+            <div class="card">
+                <h2>Analytics & Insights</h2>
+                <p>Failure trends, patterns, and performance metrics.</p>
+
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-label">Average Resolution Time</div>
+                        <div class="stat-number">15<small>sec</small></div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">AI Accuracy</div>
+                        <div class="stat-number">92%</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Cost Savings</div>
+                        <div class="stat-number">95%</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Auto-Fixed</div>
+                        <div class="stat-number">23</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Manual Trigger Page -->
+        <div id="manual" class="page">
+            <div class="card">
+                <h2>Manual Trigger</h2>
+                <p>Manually trigger AI analysis for any test failure.</p>
+
+                <div class="alert alert-warning">
+                    <strong>⚠️ Backend Required</strong> To use this feature, ensure the backend API and n8n workflows are running.
+                </div>
+
+                <form onsubmit="triggerAnalysis(event)">
+                    <div class="form-group">
+                        <label for="buildId">Build ID</label>
+                        <input type="text" id="buildId" placeholder="e.g., BUILD_12345" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="jobName">Job Name</label>
+                        <input type="text" id="jobName" placeholder="e.g., DDN-Smoke-Test">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="userEmail">Your Email</label>
+                        <input type="email" id="userEmail" placeholder="your.email@company.com">
+                    </div>
+
+                    <button type="submit" class="btn">🚀 Trigger Analysis</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="footer">
+        <p><strong>DDN AI Test Failure Analysis System</strong></p>
+        <p>Demo Mode - For full functionality, start the backend services</p>
+        <p style="margin-top: 10px; font-size: 12px;">
+            To start full dashboard: Run WORKS-100-PERCENT.bat
+        </p>
+    </div>
+
+    <script>
+        function showPage(pageId) {
+            // Hide all pages
+            document.querySelectorAll('.page').forEach(page => {
+                page.classList.remove('active');
+            });
+
+            // Show selected page
+            document.getElementById(pageId).classList.add('active');
+
+            // Update navigation
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            event.target.classList.add('active');
+        }
+
+        function triggerAnalysis(event) {
+            event.preventDefault();
+
+            const buildId = document.getElementById('buildId').value;
+            const jobName = document.getElementById('jobName').value;
+            const userEmail = document.getElementById('userEmail').value;
+
+            alert(`Analysis Triggered!\n\nBuild ID: ${buildId}\nJob: ${jobName}\n\nNote: This is demo mode. For real analysis, the backend API must be running.\n\nTo start backend:\n1. Run: docker-compose up -d dashboard-api\n2. Or follow DEPLOYMENT-GUIDE.md`);
+        }
+
+        // Welcome message
+        console.log('%c🚀 DDN AI Dashboard - Demo Mode', 'font-size: 20px; color: #667eea; font-weight: bold;');
+        console.log('%cTo run full dashboard with backend:', 'font-size: 14px;');
+        console.log('%c  Run: WORKS-100-PERCENT.bat', 'font-size: 14px; color: #38ef7d; background: #333; padding: 5px;');
+    </script>
+</body>
+</html>
