@@ -47,32 +47,30 @@
   </triggers>
   <concurrentBuild>false</concurrentBuild>
   <builders>
-    <hudson.tasks.Shell>
-      <command>#!/bin/bash
-set -e
+    <hudson.tasks.BatchFile>
+      <command>@echo off
+echo =========================================
+echo DDN Nightly Comprehensive Tests
+echo Build: %BUILD_NUMBER%
+echo Date: %DATE% %TIME%
+echo =========================================
 
-echo "========================================="
-echo "DDN Nightly Comprehensive Tests"
-echo "Build: ${BUILD_NUMBER}"
-echo "Date: $(date)"
-echo "========================================="
-
-# Navigate to tests directory
+REM Navigate to tests directory
 cd tests
 
-# Install dependencies
-echo "Installing dependencies..."
-npm ci
+REM Install dependencies
+echo Installing dependencies...
+call npm ci
 
-# Run all tests
-echo "Running ALL DDN tests (basic + advanced + performance)..."
-npm test
+REM Run all tests
+echo Running ALL DDN tests (basic + advanced + performance)...
+call npm test
 
-echo "========================================="
-echo "Nightly test suite completed!"
-echo "========================================="
+echo =========================================
+echo Nightly test suite completed!
+echo =========================================
 </command>
-    </hudson.tasks.Shell>
+    </hudson.tasks.BatchFile>
   </builders>
   <publishers>
     <hudson.tasks.junit.JUnitResultArchiver plugin="junit@1.49">
