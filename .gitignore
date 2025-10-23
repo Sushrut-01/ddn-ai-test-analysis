@@ -5,6 +5,9 @@
 .env.*.local
 *.env
 
+# EXCEPTION: Allow tests/.env for MongoDB Atlas connection (test database only)
+!tests/.env
+
 # Python
 __pycache__/
 *.py[cod]
