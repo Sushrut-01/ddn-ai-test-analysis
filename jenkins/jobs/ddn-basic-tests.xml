@@ -43,30 +43,28 @@
   </triggers>
   <concurrentBuild>false</concurrentBuild>
   <builders>
-    <hudson.tasks.Shell>
-      <command>#!/bin/bash
-set -e
+    <hudson.tasks.BatchFile>
+      <command>@echo off
+echo =========================================
+echo DDN Basic Tests - Build %BUILD_NUMBER%
+echo =========================================
 
-echo "========================================="
-echo "DDN Basic Tests - Build ${BUILD_NUMBER}"
-echo "========================================="
-
-# Navigate to tests directory
+REM Navigate to tests directory
 cd tests
 
-# Install dependencies
-echo "Installing dependencies..."
-npm ci
+REM Install dependencies
+echo Installing dependencies...
+call npm ci
 
-# Run basic tests
-echo "Running basic DDN tests..."
-npm run test:basic
+REM Run basic tests
+echo Running basic DDN tests...
+call npm run test:basic
 
-echo "========================================="
-echo "Tests completed successfully!"
-echo "========================================="
+echo =========================================
+echo Tests completed successfully!
+echo =========================================
 </command>
-    </hudson.tasks.Shell>
+    </hudson.tasks.BatchFile>
   </builders>
   <publishers>
     <hudson.tasks.junit.JUnitResultArchiver plugin="junit@1.49">
