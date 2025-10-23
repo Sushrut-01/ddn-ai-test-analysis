@@ -16,7 +16,7 @@ echo ========================================
 echo   Prerequisites
 echo ========================================
 echo.
-echo  1. Jenkins running at http://localhost:8080
+echo  1. Jenkins running at http://localhost:8081
 echo  2. Jenkins CLI jar downloaded
 echo  3. Jenkins credentials configured
 echo.
@@ -24,7 +24,7 @@ echo.
 pause
 
 :: Configuration
-set JENKINS_URL=http://localhost:8080
+set JENKINS_URL=http://localhost:8081
 set JENKINS_USER=admin
 set /p JENKINS_TOKEN=Enter your Jenkins API Token:
 

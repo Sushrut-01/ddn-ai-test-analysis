@@ -15,6 +15,7 @@ const axios = require('axios');
 const { expect } = require('chai');
 const fs = require('fs');
 const path = require('path');
+const mongoReporter = require('./mongodb-reporter');
 
 // Load configuration
 require('dotenv').config();
@@ -33,27 +34,19 @@ const config = {
     // Test Configuration
     testTimeout: parseInt(process.env.TEST_TIMEOUT) || 30000,
 
-    // n8n Webhook for failure reporting
-    n8nWebhook: process.env.N8N_WEBHOOK || 'http://localhost:5678/webhook/ddn-test-failure',
-
     // Jenkins info
-    jenkinsUrl: process.env.JENKINS_URL || 'http://localhost:8080',
+    jenkinsUrl: process.env.JENKINS_URL || 'http://localhost:8081',
 };
 
 /**
- * Report test failure to AI analysis system via n8n webhook
+ * Report test failure directly to MongoDB database
+ * Automatically captures Jenkins environment variables
  */
 async function reportFailure(failureData) {
     try {
-        await axios.post(config.n8nWebhook, {
-            ...failureData,
-            timestamp: new Date().toISOString(),
-            environment: process.env.NODE_ENV || 'development',
-            system: 'DDN Storage Tests'
-        });
-        console.log('✓ Failure reported to AI system');
+        await mongoReporter.reportFailure(failureData);
     } catch (error) {
-        console.error('✗ Failed to report to AI system:', error.message);
+        console.error('✗ Failed to report to MongoDB:', error.message);
     }
 }
 
@@ -963,6 +956,14 @@ after(function() {
     console.log('  - Integration Tests');
     console.log('  - Performance Benchmarks');
     console.log('='.repeat(80));
-    console.log('All failures automatically reported to AI analysis system via n8n');
+    console.log('All failures automatically reported to MongoDB database');
+    console.log('='.repeat(80) + '\n');
+});
+
+// Cleanup MongoDB connection after all tests
+after(async function() {
+    console.log('\n' + '='.repeat(80));
+    console.log('Closing MongoDB connection...');
+    await mongoReporter.close();
     console.log('='.repeat(80) + '\n');
 });
