@@ -5,6 +5,9 @@
  * No Jenkins or GitHub configuration needed - works out of the box
  */
 
+// Load environment variables from .env file
+require('dotenv').config();
+
 const { MongoClient } = require('mongodb');
 
 class MongoDBReporter {
