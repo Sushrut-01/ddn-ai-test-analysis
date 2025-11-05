@@ -1,0 +1,284 @@
+{
+  "name": "DDN AI - Automated Code Fixing (Phase B)",
+  "version": "1.0.0",
+  "description": "Automatically creates GitHub PRs for high-confidence fixes. Monitors PR status, tracks success metrics, and sends notifications.",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "ddn-auto-fix-trigger",
+        "responseMode": "responseNode",
+        "options": {
+          "rawBody": false
+        }
+      },
+      "id": "webhook-auto-fix",
+      "name": "1. Webhook - AI Analysis Complete",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [250, 400],
+      "webhookId": "ddn-auto-fix-trigger",
+      "notes": "Triggered when AI analysis completes with a recommended fix"
+    },
+    {
+      "parameters": {
+        "jsCode": "// ================================================================\n// VALIDATE AUTO-FIX TRIGGER\n// Check if analysis has fix recommendation and confidence\n// ================================================================\n\nconst request = $input.first().json;\n\nconsole.log('🤖 Auto-fix trigger received:', request);\n\n// Extract payload\nconst body = request.body || request;\n\n// Required fields for auto-fix\nconst required = ['analysis_id', 'build_id'];\nconst missing = required.filter(field => !body[field]);\n\nif (missing.length > 0) {\n  throw new Error(`Missing required fields: ${missing.join(', ')}`);\n}\n\n// Extract fix data\nconst validated = {\n  analysis_id: body.analysis_id,\n  build_id: body.build_id,\n  error_category: body.error_category || 'UNKNOWN',\n  confidence_score: parseFloat(body.confidence_score || 0),\n  recommended_fix: body.recommended_fix || body.recommendation,\n  root_cause: body.root_cause,\n  file_path: body.file_path,\n  severity: body.severity || 'MEDIUM',\n  code_patch: body.code_patch,\n  before_code: body.before_code,\n  after_code: body.after_code,\n  trigger_timestamp: new Date().toISOString(),\n  auto_fix_eligible: body.confidence_score >= 0.70\n};\n\nconsole.log('✅ Auto-fix request validated:', {\n  analysis_id: validated.analysis_id,\n  confidence: validated.confidence_score,\n  eligible: validated.auto_fix_eligible\n});\n\nreturn { json: validated };"
+      },
+      "id": "validate-fix-request",
+      "name": "2. Validate Fix Request",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [450, 400],
+      "alwaysOutputData": true,
+      "notes": "Extracts and validates fix data from analysis"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false
+          },
+          "conditions": [
+            {
+              "id": "confidence-check",
+              "leftValue": "={{ $json.confidence_score }}",
+              "rightValue": 0.70,
+              "operator": {
+                "type": "number",
+                "operation": "largerEqual"
+              }
+            }
+          ]
+        }
+      },
+      "id": "check-confidence",
+      "name": "3. Check Confidence Threshold",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [650, 400],
+      "notes": "Auto-fix only if confidence >= 70%"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\n  \"status\": \"skipped\",\n  \"message\": \"Confidence too low for auto-fix\",\n  \"analysis_id\": \"{{ $('validate-fix-request').first().json.analysis_id }}\",\n  \"confidence_score\": {{ $('validate-fix-request').first().json.confidence_score }},\n  \"threshold\": 0.70,\n  \"action\": \"Manual review required\"\n}",
+        "responseCode": 200
+      },
+      "id": "skip-low-confidence",
+      "name": "Skip: Low Confidence",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [850, 500],
+      "notes": "Return early if confidence < 70%"
+    },
+    {
+      "parameters": {
+        "url": "http://localhost:5006/api/fixes/approve",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"analysis_id\": {{ $json.analysis_id }},\n  \"approved_by_name\": \"AI Auto-Fix System\",\n  \"approved_by_email\": \"autofix@system.ai\",\n  \"auto_approved\": true,\n  \"confidence_score\": {{ $json.confidence_score }}\n}",
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "id": "approve-fix",
+      "name": "4. Approve Fix & Create PR",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [850, 300],
+      "notes": "Calls code_fix_automation.py to create GitHub PR"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false
+          },
+          "conditions": [
+            {
+              "id": "pr-created",
+              "leftValue": "={{ $json.success }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "equals"
+              }
+            }
+          ]
+        }
+      },
+      "id": "check-pr-success",
+      "name": "5. Check PR Creation",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [1050, 300],
+      "notes": "Verify PR was created successfully"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\n  \"status\": \"error\",\n  \"message\": \"Failed to create PR\",\n  \"analysis_id\": \"{{ $('validate-fix-request').first().json.analysis_id }}\",\n  \"error\": \"{{ $json.error || 'Unknown error' }}\"\n}",
+        "responseCode": 500
+      },
+      "id": "error-pr-failed",
+      "name": "Error: PR Creation Failed",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [1250, 400],
+      "notes": "Return error if PR creation failed"
+    },
+    {
+      "parameters": {
+        "jsCode": "// ================================================================\n// LOG PR CREATION SUCCESS\n// Extract PR details and build notification\n// ================================================================\n\nconst prResult = $input.first().json;\nconst fixData = $('validate-fix-request').first().json;\n\nconsole.log('✅ PR Created Successfully:', {\n  pr_number: prResult.pr_number,\n  pr_url: prResult.pr_url\n});\n\n// Build success record\nconst success = {\n  analysis_id: fixData.analysis_id,\n  build_id: fixData.build_id,\n  fix_application_id: prResult.fix_application_id,\n  pr_number: prResult.pr_number,\n  pr_url: prResult.pr_url,\n  pr_created_at: new Date().toISOString(),\n  \n  // Original analysis data\n  error_category: fixData.error_category,\n  confidence_score: fixData.confidence_score,\n  file_path: fixData.file_path,\n  severity: fixData.severity,\n  \n  // Timing\n  time_to_pr_creation_ms: prResult.time_to_pr_creation_ms || 0,\n  \n  // Status\n  status: 'pr_created',\n  auto_approved: true,\n  approved_by: 'AI Auto-Fix System',\n  \n  // For notifications\n  notification_title: `🤖 Auto-Fix PR Created: #${prResult.pr_number}`,\n  notification_message: `Confidence: ${Math.round(fixData.confidence_score * 100)}%\\nCategory: ${fixData.error_category}\\nFile: ${fixData.file_path}`,\n  notification_url: prResult.pr_url\n};\n\nreturn { json: success };"
+      },
+      "id": "log-success",
+      "name": "6. Log PR Success",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1250, 200],
+      "alwaysOutputData": true,
+      "notes": "Extract PR details for notifications"
+    },
+    {
+      "parameters": {
+        "operation": "insertOne",
+        "collection": "auto_fix_history",
+        "fields": "={{ JSON.stringify($json) }}"
+      },
+      "id": "store-history",
+      "name": "7. Store Fix History",
+      "type": "n8n-nodes-base.mongoDb",
+      "typeVersion": 1.2,
+      "position": [1450, 200],
+      "credentials": {
+        "mongoDb": {
+          "id": "mongodb-prod",
+          "name": "MongoDB Production"
+        }
+      },
+      "notes": "Store in MongoDB for analytics"
+    },
+    {
+      "parameters": {
+        "url": "={{ $env.SLACK_WEBHOOK_URL }}",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"text\": \"{{ $json.notification_title }}\",\n  \"blocks\": [\n    {\n      \"type\": \"header\",\n      \"text\": {\n        \"type\": \"plain_text\",\n        \"text\": \"🤖 Automated Code Fix Applied\",\n        \"emoji\": true\n      }\n    },\n    {\n      \"type\": \"section\",\n      \"fields\": [\n        {\n          \"type\": \"mrkdwn\",\n          \"text\": \"*PR Number:*\\n<{{ $json.pr_url }}|#{{ $json.pr_number }}>\"\n        },\n        {\n          \"type\": \"mrkdwn\",\n          \"text\": \"*Confidence:*\\n{{ Math.round($json.confidence_score * 100) }}%\"\n        },\n        {\n          \"type\": \"mrkdwn\",\n          \"text\": \"*Category:*\\n{{ $json.error_category }}\"\n        },\n        {\n          \"type\": \"mrkdwn\",\n          \"text\": \"*File:*\\n{{ $json.file_path }}\"\n        }\n      ]\n    },\n    {\n      \"type\": \"actions\",\n      \"elements\": [\n        {\n          \"type\": \"button\",\n          \"text\": {\n            \"type\": \"plain_text\",\n            \"text\": \"View PR\",\n            \"emoji\": true\n          },\n          \"url\": \"{{ $json.pr_url }}\",\n          \"style\": \"primary\"\n        },\n        {\n          \"type\": \"button\",\n          \"text\": {\n            \"type\": \"plain_text\",\n            \"text\": \"View Build\",\n            \"emoji\": true\n          },\n          \"url\": \"http://localhost:5173/failures/{{ $json.build_id }}\"\n        }\n      ]\n    }\n  ]\n}",
+        "options": {
+          "timeout": 5000
+        }
+      },
+      "id": "notify-slack",
+      "name": "8. Notify Slack (Optional)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1650, 100],
+      "continueOnFail": true,
+      "notes": "Send Slack notification if webhook configured"
+    },
+    {
+      "parameters": {
+        "url": "http://localhost:5006/api/fixes/analytics",
+        "options": {
+          "timeout": 5000
+        }
+      },
+      "id": "update-analytics",
+      "name": "9. Update Analytics",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1650, 200],
+      "continueOnFail": true,
+      "notes": "Refresh analytics dashboard"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\n  \"status\": \"success\",\n  \"message\": \"Auto-fix PR created successfully\",\n  \"data\": {\n    \"analysis_id\": {{ $json.analysis_id }},\n    \"build_id\": \"{{ $json.build_id }}\",\n    \"fix_application_id\": {{ $json.fix_application_id }},\n    \"pr_number\": {{ $json.pr_number }},\n    \"pr_url\": \"{{ $json.pr_url }}\",\n    \"confidence_score\": {{ $json.confidence_score }},\n    \"error_category\": \"{{ $json.error_category }}\",\n    \"file_path\": \"{{ $json.file_path }}\",\n    \"time_to_pr_creation_ms\": {{ $json.time_to_pr_creation_ms }},\n    \"auto_approved\": true,\n    \"timestamp\": \"{{ $json.pr_created_at }}\"\n  }\n}",
+        "options": {}
+      },
+      "id": "response-success",
+      "name": "10. Return Success",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [1850, 200],
+      "notes": "Return success response to caller"
+    }
+  ],
+  "connections": {
+    "1. Webhook - AI Analysis Complete": {
+      "main": [[{"node": "2. Validate Fix Request", "type": "main", "index": 0}]]
+    },
+    "2. Validate Fix Request": {
+      "main": [[{"node": "3. Check Confidence Threshold", "type": "main", "index": 0}]]
+    },
+    "3. Check Confidence Threshold": {
+      "main": [
+        [{"node": "4. Approve Fix & Create PR", "type": "main", "index": 0}],
+        [{"node": "Skip: Low Confidence", "type": "main", "index": 0}]
+      ]
+    },
+    "4. Approve Fix & Create PR": {
+      "main": [[{"node": "5. Check PR Creation", "type": "main", "index": 0}]]
+    },
+    "5. Check PR Creation": {
+      "main": [
+        [{"node": "6. Log PR Success", "type": "main", "index": 0}],
+        [{"node": "Error: PR Creation Failed", "type": "main", "index": 0}]
+      ]
+    },
+    "6. Log PR Success": {
+      "main": [[{"node": "7. Store Fix History", "type": "main", "index": 0}]]
+    },
+    "7. Store Fix History": {
+      "main": [[{
+        "node": "8. Notify Slack (Optional)",
+        "type": "main",
+        "index": 0
+      }, {
+        "node": "9. Update Analytics",
+        "type": "main",
+        "index": 0
+      }]]
+    },
+    "8. Notify Slack (Optional)": {
+      "main": [[{"node": "10. Return Success", "type": "main", "index": 0}]]
+    },
+    "9. Update Analytics": {
+      "main": [[{"node": "10. Return Success", "type": "main", "index": 0}]]
+    }
+  },
+  "pinData": {},
+  "settings": {
+    "executionOrder": "v1",
+    "saveManualExecutions": true,
+    "saveExecutionProgress": true,
+    "callerPolicy": "workflowsFromSameOwner",
+    "errorWorkflow": "",
+    "timezone": "America/New_York",
+    "executionTimeout": 120
+  },
+  "staticData": {},
+  "tags": [
+    {
+      "id": "phase-b",
+      "name": "Phase-B-Auto-Fix"
+    },
+    {
+      "id": "automated",
+      "name": "Automated"
+    }
+  ],
+  "triggerCount": 1,
+  "updatedAt": "2025-11-03T00:00:00.000Z",
+  "versionId": "1.0.0"
+}

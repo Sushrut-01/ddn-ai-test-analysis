@@ -31,7 +31,7 @@ CORS(app)  # Enable CORS for dashboard access
 
 # Configuration
 N8N_WEBHOOK_URL = os.getenv("N8N_WEBHOOK_URL", "http://localhost:5678/webhook/ddn-test-failure")
-POSTGRES_URI = os.getenv("POSTGRES_URI", "postgresql://ddn_ai_app:password@localhost:5432/ddn_ai_analysis")
+POSTGRES_URI = os.getenv("POSTGRES_URI", "postgresql://ddn_ai_app:password@localhost:5434/ddn_ai_analysis")  # Updated to port 5434 (Docker PostgreSQL)
 PINECONE_SERVICE_URL = os.getenv("PINECONE_SERVICE_URL", "http://localhost:5003")
 
 # PostgreSQL connection
@@ -198,9 +198,9 @@ def trigger_manual_analysis():
 @app.route('/api/feedback', methods=['POST'])
 def submit_feedback():
     """
-    Submit feedback on AI recommendation
+    Submit feedback on AI recommendation (Enhanced with HITL validation tracking)
 
-    Request:
+    Request (Legacy format):
     {
         "build_id": "12345",
         "feedback_type": "success",  // success, failed, partial, incorrect_classification
@@ -210,10 +210,21 @@ def submit_feedback():
         "alternative_fix": "..."
     }
 
+    Request (New HITL format - Task 0-HITL.14):
+    {
+        "build_id": "12345",
+        "validation_status": "accepted",  // accepted, rejected, refining
+        "validator_name": "John Doe",
+        "validator_email": "john.doe@company.com",
+        "feedback_comment": "Analysis is accurate",
+        "refinement_suggestions": "..."  // for refining status
+    }
+
     Response:
     {
         "success": true,
         "feedback_id": 456,
+        "acceptance_tracking_id": 789,
         "message": "Feedback recorded successfully",
         "pinecone_updated": true
     }
@@ -222,17 +233,40 @@ def submit_feedback():
         data = request.get_json()
 
         # Validate request
-        if not data or 'build_id' not in data or 'feedback_type' not in data:
+        if not data or 'build_id' not in data:
             return jsonify({
-                "error": "Missing required fields: build_id, feedback_type"
+                "error": "Missing required field: build_id"
             }), 400
 
         build_id = data['build_id']
-        feedback_type = data['feedback_type']
-        feedback_text = data.get('feedback_text', '')
-        user_id = data.get('user_id', 'anonymous')
-        alternative_root_cause = data.get('alternative_root_cause')
-        alternative_fix = data.get('alternative_fix')
+
+        # Support both legacy and new HITL formats
+        validation_status = data.get('validation_status')
+
+        if validation_status:
+            # New HITL format (Task 0-HITL.14)
+            feedback_type = validation_status  # Map to legacy field
+            feedback_text = data.get('feedback_comment', '')
+            user_id = data.get('validator_email', 'anonymous')
+            validator_name = data.get('validator_name')
+            validator_email = data.get('validator_email')
+            refinement_suggestions = data.get('refinement_suggestions')
+            alternative_root_cause = None
+            alternative_fix = refinement_suggestions if validation_status == 'refining' else None
+        else:
+            # Legacy format
+            if 'feedback_type' not in data:
+                return jsonify({
+                    "error": "Missing required field: feedback_type or validation_status"
+                }), 400
+            feedback_type = data['feedback_type']
+            feedback_text = data.get('feedback_text', '')
+            user_id = data.get('user_id', 'anonymous')
+            validator_name = None
+            validator_email = user_id if '@' in user_id else None
+            refinement_suggestions = None
+            alternative_root_cause = data.get('alternative_root_cause')
+            alternative_fix = data.get('alternative_fix')
 
         logger.info(f"📊 Feedback received for build: {build_id} - Type: {feedback_type}")
 
@@ -259,6 +293,102 @@ def submit_feedback():
         conn.commit()
 
         logger.info(f"✅ Feedback recorded with ID: {feedback_id}")
+
+        # Task 0-HITL.14: Insert/Update acceptance_tracking table
+        acceptance_tracking_id = None
+        if validation_status:
+            try:
+                # Get analysis_id for this build
+                cursor.execute("""
+                    SELECT id
+                    FROM failure_analysis
+                    WHERE build_id = %s
+                    ORDER BY timestamp DESC
+                    LIMIT 1
+                """, (build_id,))
+
+                analysis_result = cursor.fetchone()
+                if analysis_result:
+                    analysis_id = analysis_result['id']
+
+                    # Check if acceptance_tracking record already exists
+                    cursor.execute("""
+                        SELECT id, refinement_count
+                        FROM acceptance_tracking
+                        WHERE analysis_id = %s
+                        ORDER BY created_at DESC
+                        LIMIT 1
+                    """, (analysis_id,))
+
+                    existing_tracking = cursor.fetchone()
+
+                    if existing_tracking:
+                        # Update existing record
+                        refinement_count = existing_tracking['refinement_count']
+                        if validation_status == 'refining':
+                            refinement_count += 1
+
+                        cursor.execute("""
+                            UPDATE acceptance_tracking
+                            SET
+                                validation_status = %s,
+                                refinement_count = %s,
+                                final_acceptance = %s,
+                                validator_name = %s,
+                                validator_email = %s,
+                                feedback_comment = %s,
+                                validated_at = CASE WHEN %s IN ('accepted', 'rejected') THEN NOW() ELSE validated_at END,
+                                updated_at = NOW()
+                            WHERE id = %s
+                            RETURNING id
+                        """, (
+                            validation_status,
+                            refinement_count,
+                            True if validation_status == 'accepted' else (False if validation_status == 'rejected' else None),
+                            validator_name,
+                            validator_email,
+                            feedback_text,
+                            validation_status,
+                            existing_tracking['id']
+                        ))
+
+                        acceptance_tracking_id = cursor.fetchone()['id']
+                        logger.info(f"✅ Updated acceptance_tracking ID: {acceptance_tracking_id}, refinement_count: {refinement_count}")
+                    else:
+                        # Insert new record
+                        cursor.execute("""
+                            INSERT INTO acceptance_tracking (
+                                analysis_id,
+                                build_id,
+                                validation_status,
+                                refinement_count,
+                                final_acceptance,
+                                validator_name,
+                                validator_email,
+                                feedback_comment,
+                                validated_at
+                            ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+                            RETURNING id
+                        """, (
+                            analysis_id,
+                            build_id,
+                            validation_status,
+                            1 if validation_status == 'refining' else 0,
+                            True if validation_status == 'accepted' else (False if validation_status == 'rejected' else None),
+                            validator_name,
+                            validator_email,
+                            feedback_text,
+                            datetime.now() if validation_status in ['accepted', 'rejected'] else None
+                        ))
+
+                        acceptance_tracking_id = cursor.fetchone()['id']
+                        logger.info(f"✅ Created acceptance_tracking ID: {acceptance_tracking_id}")
+
+                    conn.commit()
+
+            except Exception as e:
+                logger.error(f"❌ Acceptance tracking failed: {e}")
+                # Don't fail the entire request if acceptance tracking fails
 
         # Update Pinecone vector database with feedback
         pinecone_updated = False
@@ -297,12 +427,18 @@ def submit_feedback():
         cursor.close()
         conn.close()
 
-        return jsonify({
+        response_data = {
             "success": True,
             "feedback_id": feedback_id,
             "message": "Feedback recorded successfully",
             "pinecone_updated": pinecone_updated
-        }), 200
+        }
+
+        # Include acceptance_tracking_id in response if available (Task 0-HITL.14)
+        if acceptance_tracking_id:
+            response_data["acceptance_tracking_id"] = acceptance_tracking_id
+
+        return jsonify(response_data), 200
 
     except Exception as e:
         logger.error(f"❌ Feedback submission failed: {e}")

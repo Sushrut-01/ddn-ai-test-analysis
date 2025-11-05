@@ -4,10 +4,14 @@ import { ThemeProvider, createTheme } from '@mui/material/styles'
 import CssBaseline from '@mui/material/CssBaseline'
 import Layout from './components/Layout'
 import Dashboard from './pages/Dashboard'
+import Test from './Test'
 import Failures from './pages/Failures'
 import FailureDetails from './pages/FailureDetails'
 import Analytics from './pages/Analytics'
 import ManualTrigger from './pages/ManualTrigger'
+import KnowledgeManagement from './pages/KnowledgeManagement'
+import TriggerAnalysis from './pages/TriggerAnalysis' // Task 0F.7: Bulk analysis page
+import ErrorBoundary from './ErrorBoundary'
 
 const theme = createTheme({
   palette: {
@@ -37,13 +41,18 @@ function App() {
     <ThemeProvider theme={theme}>
       <CssBaseline />
       <Layout>
-        <Routes>
-          <Route path="/" element={<Dashboard />} />
-          <Route path="/failures" element={<Failures />} />
-          <Route path="/failures/:buildId" element={<FailureDetails />} />
-          <Route path="/analytics" element={<Analytics />} />
-          <Route path="/manual-trigger" element={<ManualTrigger />} />
-        </Routes>
+        <ErrorBoundary>
+          <Routes>
+            <Route path="/" element={<Dashboard />} />
+            <Route path="/test" element={<Test />} />
+            <Route path="/failures" element={<Failures />} />
+            <Route path="/failures/:buildId" element={<FailureDetails />} />
+            <Route path="/analytics" element={<Analytics />} />
+            <Route path="/manual-trigger" element={<ManualTrigger />} />
+            <Route path="/trigger-analysis" element={<TriggerAnalysis />} />
+            <Route path="/knowledge" element={<KnowledgeManagement />} />
+          </Routes>
+        </ErrorBoundary>
       </Layout>
     </ThemeProvider>
   )

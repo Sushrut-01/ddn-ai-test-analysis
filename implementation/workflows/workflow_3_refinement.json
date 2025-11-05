@@ -1,7 +1,7 @@
 {
-  "name": "DDN AI - Solution Refinement with User Feedback",
-  "version": "2.0.0",
-  "description": "Re-analyze test failure with user feedback and context. Always uses Claude MCP for enhanced analysis. Updates existing solution with refinement history.",
+  "name": "DDN AI - Solution Refinement with User Feedback (Dual-Index)",
+  "version": "2.1.0",
+  "description": "Re-analyze test failure with user feedback and DUAL-INDEX RAG (ddn-knowledge-docs + ddn-error-library). Always uses Claude MCP for enhanced analysis with OPTION C routing. Updates existing solution with refinement history.",
   "nodes": [
     {
       "parameters": {
@@ -136,7 +136,7 @@
         }
       },
       "id": "claude-refine",
-      "name": "7. Claude Refinement Analysis",
+      "name": "7. Claude Refinement (Dual-Index + Feedback)",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [1450, 300],
@@ -283,6 +283,6 @@
     }
   ],
   "triggerCount": 1,
-  "updatedAt": "2025-10-17T00:00:00.000Z",
-  "versionId": "2.0.0"
+  "updatedAt": "2025-11-05T00:00:00.000Z",
+  "versionId": "2.1.0-dual-index-option-c"
 }

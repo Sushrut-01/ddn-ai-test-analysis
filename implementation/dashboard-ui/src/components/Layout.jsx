@@ -20,6 +20,8 @@ import ErrorIcon from '@mui/icons-material/Error'
 import AnalyticsIcon from '@mui/icons-material/Analytics'
 import PlayArrowIcon from '@mui/icons-material/PlayArrow'
 import RefreshIcon from '@mui/icons-material/Refresh'
+import LibraryBooksIcon from '@mui/icons-material/LibraryBooks'
+import BoltIcon from '@mui/icons-material/Bolt' // Task 0F.8: Bulk trigger icon
 
 const drawerWidth = 240
 
@@ -27,7 +29,9 @@ const menuItems = [
   { text: 'Dashboard', icon: <DashboardIcon />, path: '/' },
   { text: 'Failures', icon: <ErrorIcon />, path: '/failures' },
   { text: 'Analytics', icon: <AnalyticsIcon />, path: '/analytics' },
-  { text: 'Manual Trigger', icon: <PlayArrowIcon />, path: '/manual-trigger' }
+  { text: 'Manual Trigger', icon: <PlayArrowIcon />, path: '/manual-trigger' },
+  { text: 'Trigger Analysis', icon: <BoltIcon />, path: '/trigger-analysis' }, // Task 0F.8: Bulk trigger page
+  { text: 'Knowledge Management', icon: <LibraryBooksIcon />, path: '/knowledge' }
 ]
 
 function Layout({ children }) {

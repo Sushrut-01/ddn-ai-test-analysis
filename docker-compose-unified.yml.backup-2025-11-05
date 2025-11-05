@@ -1,0 +1,454 @@
+version: '3.8'
+
+services:
+  # ============================================================================
+  # DATABASE LAYER
+  # ============================================================================
+
+  # MongoDB - Unstructured data storage
+  mongodb:
+    image: mongo:7.0
+    container_name: ddn-mongodb
+    ports:
+      - "27017:27017"
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=admin
+      - MONGO_INITDB_ROOT_PASSWORD=password
+    volumes:
+      - mongodb_data:/data/db
+    networks:
+      - ddn-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # PostgreSQL - Structured data storage (DDN AI Analysis)
+  postgres:
+    image: postgres:16
+    container_name: ddn-postgres
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=ddn_ai_analysis
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./implementation/postgresql_schema.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - ddn-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # PostgreSQL - Langfuse observability platform
+  langfuse-db:
+    image: postgres:15
+    container_name: langfuse-postgres
+    ports:
+      - "5433:5432"
+    environment:
+      - POSTGRES_USER=langfuse
+      - POSTGRES_PASSWORD=langfuse123
+      - POSTGRES_DB=langfuse
+    volumes:
+      - langfuse_db_data:/var/lib/postgresql/data
+    networks:
+      - ddn-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U langfuse"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ============================================================================
+  # CACHING & MESSAGING
+  # ============================================================================
+
+  # Redis - Cache and message broker
+  redis:
+    image: redis:latest
+    container_name: ddn-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - ddn-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  # ============================================================================
+  # MONITORING & OBSERVABILITY
+  # ============================================================================
+
+  # Langfuse - LLM observability platform
+  langfuse-server:
+    image: ghcr.io/langfuse/langfuse:2
+    container_name: langfuse-server
+    ports:
+      - "3001:3000"  # CHANGED: Avoid conflict with dashboard-ui
+    environment:
+      - DATABASE_URL=postgresql://langfuse:langfuse123@langfuse-db:5432/langfuse
+      - NEXTAUTH_URL=http://localhost:3001
+      - NEXTAUTH_SECRET=very-secret-key-change-this-in-production-12345678
+      - SALT=salt-change-this-in-production-abcdefgh
+      - TELEMETRY_ENABLED=false
+    networks:
+      - ddn-network
+    depends_on:
+      langfuse-db:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/api/public/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Flower - Celery monitoring dashboard
+  flower:
+    build:
+      context: ./implementation
+      dockerfile: Dockerfile
+    container_name: ddn-flower
+    ports:
+      - "5555:5555"
+    environment:
+      - REDIS_URL=redis://redis:6379/0
+    networks:
+      - ddn-network
+    depends_on:
+      - redis
+    restart: unless-stopped
+    command: celery -A tasks.celery_tasks flower --port=5555 --broker=redis://redis:6379/0
+
+  # ============================================================================
+  # WORKFLOW AUTOMATION
+  # ============================================================================
+
+  # n8n - Workflow automation
+  n8n:
+    image: n8nio/n8n:latest
+    container_name: ddn-n8n
+    ports:
+      - "5678:5678"
+    environment:
+      - N8N_BASIC_AUTH_ACTIVE=true
+      - N8N_BASIC_AUTH_USER=admin
+      - N8N_BASIC_AUTH_PASSWORD=password
+      - DB_TYPE=postgresdb
+      - DB_POSTGRESDB_HOST=postgres
+      - DB_POSTGRESDB_PORT=5432
+      - DB_POSTGRESDB_DATABASE=n8n
+      - DB_POSTGRESDB_USER=postgres
+      - DB_POSTGRESDB_PASSWORD=password
+      - WEBHOOK_URL=http://localhost:5678/
+    volumes:
+      - n8n_data:/home/node/.n8n
+      - ./implementation/workflows:/workflows
+    networks:
+      - ddn-network
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # ============================================================================
+  # TASK WORKERS
+  # ============================================================================
+
+  # Celery Worker - Async task processing
+  celery-worker:
+    build:
+      context: ./implementation
+      dockerfile: Dockerfile
+    container_name: ddn-celery-worker
+    environment:
+      - REDIS_URL=redis://redis:6379/0
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - MONGODB_URI=mongodb://admin:password@mongodb:27017/
+      - PINECONE_API_KEY=${PINECONE_API_KEY}
+      - LANGFUSE_ENABLED=true
+      - LANGFUSE_HOST=http://langfuse-server:3000
+      - LANGFUSE_PUBLIC_KEY=${LANGFUSE_PUBLIC_KEY}
+      - LANGFUSE_SECRET_KEY=${LANGFUSE_SECRET_KEY}
+    networks:
+      - ddn-network
+    depends_on:
+      - redis
+      - mongodb
+    restart: unless-stopped
+    command: celery -A tasks.celery_tasks worker --loglevel=info --concurrency=4 --pool=solo
+
+  # ============================================================================
+  # CORE AI SERVICES
+  # ============================================================================
+
+  # LangGraph Classification Service
+  langgraph-service:
+    build:
+      context: ./implementation
+      dockerfile: Dockerfile
+    container_name: ddn-langgraph
+    ports:
+      - "5003:5003"  # CHANGED: Was 5000, conflicts with other services
+    environment:
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - MONGODB_URI=mongodb://admin:password@mongodb:27017/
+      - MONGODB_DB=jenkins_failure_analysis
+      - PINECONE_API_KEY=${PINECONE_API_KEY}
+      - PINECONE_INDEX_NAME=test-failures
+      - REDIS_URL=redis://redis:6379/0
+      - LANGFUSE_ENABLED=true
+      - LANGFUSE_HOST=http://langfuse-server:3000
+      - LANGFUSE_PUBLIC_KEY=${LANGFUSE_PUBLIC_KEY}
+      - LANGFUSE_SECRET_KEY=${LANGFUSE_SECRET_KEY}
+    networks:
+      - ddn-network
+    depends_on:
+      mongodb:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+    command: python langgraph_agent.py
+
+  # ============================================================================
+  # MCP SERVERS (Model Context Protocol)
+  # ============================================================================
+
+  # MongoDB MCP Server
+  mcp-mongodb:
+    build:
+      context: ./mcp-configs
+      dockerfile: Dockerfile
+    container_name: ddn-mcp-mongodb
+    ports:
+      - "5001:5001"
+    environment:
+      - MONGODB_URI=mongodb://admin:password@mongodb:27017/
+      - MONGODB_DB=jenkins_failure_analysis
+    networks:
+      - ddn-network
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    restart: unless-stopped
+    command: python mcp_mongodb_server.py
+
+  # GitHub MCP Server
+  mcp-github:
+    build:
+      context: ./mcp-configs
+      dockerfile: Dockerfile
+    container_name: ddn-mcp-github
+    ports:
+      - "5002:5002"
+    environment:
+      - GITHUB_TOKEN=${GITHUB_TOKEN}
+      - GITHUB_REPO=${GITHUB_REPO}
+    networks:
+      - ddn-network
+    restart: unless-stopped
+    command: python mcp_github_server.py
+
+  # ============================================================================
+  # API SERVICES
+  # ============================================================================
+
+  # Manual Trigger API
+  manual-trigger-api:
+    build:
+      context: ./implementation
+      dockerfile: Dockerfile
+    container_name: ddn-manual-trigger
+    ports:
+      - "5004:5004"
+    environment:
+      - POSTGRES_HOST=postgres
+      - POSTGRES_PORT=5432
+      - POSTGRES_DB=ddn_ai_analysis
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=password
+      - N8N_WEBHOOK_URL=http://n8n:5678/webhook/ddn-test-failure
+    networks:
+      - ddn-network
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+    command: python manual_trigger_api.py
+
+  # Dashboard Backend API
+  dashboard-api:
+    build:
+      context: ./implementation
+      dockerfile: Dockerfile
+    container_name: ddn-dashboard-api
+    ports:
+      - "5006:5006"  # CHANGED: Was 5005
+    environment:
+      - POSTGRES_HOST=postgres
+      - POSTGRES_PORT=5432
+      - POSTGRES_DB=ddn_ai_analysis
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=password
+      - MONGODB_URI=mongodb://admin:password@mongodb:27017/
+      - MONGODB_DB=jenkins_failure_analysis
+      - MANUAL_TRIGGER_API=http://manual-trigger-api:5004
+      - GITHUB_TOKEN=${GITHUB_TOKEN}
+      - GITHUB_REPO=${GITHUB_REPO}
+    networks:
+      - ddn-network
+    depends_on:
+      postgres:
+        condition: service_healthy
+      mongodb:
+        condition: service_healthy
+    restart: unless-stopped
+    command: python dashboard_api_full.py
+
+  # ============================================================================
+  # INTEGRATION SERVICES
+  # ============================================================================
+
+  # Jira Integration Service
+  jira-service:
+    build:
+      context: ./implementation
+      dockerfile: Dockerfile
+    container_name: ddn-jira
+    ports:
+      - "5007:5007"
+    environment:
+      - POSTGRES_HOST=postgres
+      - POSTGRES_PORT=5432
+      - POSTGRES_DB=ddn_ai_analysis
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=password
+      - JIRA_URL=${JIRA_URL}
+      - JIRA_EMAIL=${JIRA_EMAIL}
+      - JIRA_API_TOKEN=${JIRA_API_TOKEN}
+      - JIRA_PROJECT_KEY=${JIRA_PROJECT_KEY}
+    networks:
+      - ddn-network
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+    command: python jira_integration_service.py
+
+  # Slack Integration Service
+  slack-service:
+    build:
+      context: ./implementation
+      dockerfile: Dockerfile
+    container_name: ddn-slack
+    ports:
+      - "5008:5008"  # CHANGED: Was 5007, conflicts with Jira
+    environment:
+      - POSTGRES_HOST=postgres
+      - POSTGRES_PORT=5432
+      - POSTGRES_DB=ddn_ai_analysis
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=password
+      - SLACK_BOT_TOKEN=${SLACK_BOT_TOKEN}
+      - SLACK_SIGNING_SECRET=${SLACK_SIGNING_SECRET}
+      - SLACK_DEFAULT_CHANNEL=${SLACK_DEFAULT_CHANNEL}
+      - DASHBOARD_URL=http://localhost:3000
+    networks:
+      - ddn-network
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+    command: python slack_integration_service.py
+
+  # Self-Healing Service
+  self-healing-service:
+    build:
+      context: ./implementation
+      dockerfile: Dockerfile
+    container_name: ddn-self-healing
+    ports:
+      - "5009:5009"  # CHANGED: Was 5008, conflicts with Slack
+    environment:
+      - POSTGRES_HOST=postgres
+      - POSTGRES_PORT=5432
+      - POSTGRES_DB=ddn_ai_analysis
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=password
+      - JENKINS_URL=${JENKINS_URL}
+      - JENKINS_USER=${JENKINS_USER}
+      - JENKINS_TOKEN=${JENKINS_TOKEN}
+      - GITHUB_TOKEN=${GITHUB_TOKEN}
+      - GITHUB_REPO=${GITHUB_REPO}
+      - SELF_HEALING_SAFE_MODE=true
+      - MIN_SUCCESS_RATE=0.8
+      - MIN_PATTERN_OCCURRENCES=3
+    networks:
+      - ddn-network
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+    command: python self_healing_service.py
+
+  # ============================================================================
+  # FRONTEND
+  # ============================================================================
+
+  # Dashboard Frontend (React)
+  dashboard-ui:
+    build:
+      context: ./implementation/dashboard-ui
+      dockerfile: Dockerfile
+    container_name: ddn-dashboard-ui
+    ports:
+      - "3000:3000"
+    environment:
+      - VITE_API_URL=http://localhost:5006  # CHANGED: Updated to new dashboard-api port
+    networks:
+      - ddn-network
+    depends_on:
+      - dashboard-api
+    restart: unless-stopped
+
+# ============================================================================
+# NETWORKS
+# ============================================================================
+networks:
+  ddn-network:
+    driver: bridge
+
+# ============================================================================
+# VOLUMES
+# ============================================================================
+volumes:
+  mongodb_data:
+    driver: local
+  postgres_data:
+    driver: local
+  langfuse_db_data:
+    driver: local
+  redis_data:
+    driver: local
+  n8n_data:
+    driver: local

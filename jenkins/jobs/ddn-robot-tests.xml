@@ -1,0 +1,122 @@
+<?xml version='1.1' encoding='UTF-8'?>
+<project>
+  <actions/>
+  <description>DDN Storage Robot Framework Tests - Automated testing with Robot Framework</description>
+  <keepDependencies>false</keepDependencies>
+  <properties>
+    <hudson.model.ParametersDefinitionProperty>
+      <parameterDefinitions>
+        <hudson.model.StringParameterDefinition>
+          <name>TEST_SUITE</name>
+          <description>Test suite to run (default: all tests)</description>
+          <defaultValue>tests</defaultValue>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.BooleanParameterDefinition>
+          <name>SEND_NOTIFICATIONS</name>
+          <description>Send notifications to Teams/Slack on failure</description>
+          <defaultValue>true</defaultValue>
+        </hudson.model.BooleanParameterDefinition>
+      </parameterDefinitions>
+    </hudson.model.ParametersDefinitionProperty>
+  </properties>
+  <scm class="hudson.plugins.git.GitSCM" plugin="git@4.11.0">
+    <configVersion>2</configVersion>
+    <userRemoteConfigs>
+      <hudson.plugins.git.UserRemoteConfig>
+        <url>https://github.com/Sushrut-01/ddn-ai-test-analysis.git</url>
+        <credentialsId>github-credentials</credentialsId>
+      </hudson.plugins.git.UserRemoteConfig>
+    </userRemoteConfigs>
+    <branches>
+      <hudson.plugins.git.BranchSpec>
+        <name>*/main</name>
+      </hudson.plugins.git.BranchSpec>
+    </branches>
+    <doGenerateSubmoduleConfigurations>false</doGenerateSubmoduleConfigurations>
+    <submoduleCfg class="list"/>
+    <extensions/>
+  </scm>
+  <canRoam>true</canRoam>
+  <disabled>false</disabled>
+  <blockBuildWhenDownstreamBuilding>false</blockBuildWhenDownstreamBuilding>
+  <blockBuildWhenUpstreamBuilding>false</blockBuildWhenUpstreamBuilding>
+  <triggers>
+    <hudson.triggers.SCMTrigger>
+      <spec>H/15 * * * *</spec>
+      <ignorePostCommitHooks>false</ignorePostCommitHooks>
+    </hudson.triggers.SCMTrigger>
+  </triggers>
+  <concurrentBuild>false</concurrentBuild>
+  <builders>
+    <hudson.tasks.BatchFile>
+      <command>@echo off
+echo =========================================
+echo DDN Robot Framework Tests - Build %BUILD_NUMBER%
+echo =========================================
+
+REM Set Python path (adjust if needed)
+set PYTHON=python
+set PIP=pip
+
+REM Install Robot Framework and dependencies
+echo Installing Robot Framework...
+%PIP% install --upgrade pip
+%PIP% install robotframework
+%PIP% install robotframework-requests
+%PIP% install robotframework-seleniumlibrary
+%PIP% install robotframework-databaselibrary
+%PIP% install pymongo
+%PIP% install python-dotenv
+
+REM Set MongoDB reporter environment
+set MONGODB_URI=mongodb+srv://sushrutnistane097_db_user:Sharu@051220@ddn-cluster.wudcfln.mongodb.net/ddn_tests?retryWrites=true^&w=majority
+set MONGODB_DB=ddn_tests
+
+REM Create output directory
+if not exist "robot-results" mkdir robot-results
+
+REM Run Robot Framework tests
+echo Running Robot Framework tests...
+%PYTHON% -m robot ^
+  --outputdir robot-results ^
+  --output output.xml ^
+  --log log.html ^
+  --report report.html ^
+  --loglevel INFO ^
+  --listener mongodb_robot_listener.py ^
+  %TEST_SUITE%
+
+echo =========================================
+echo Tests completed!
+echo =========================================
+echo Results saved to robot-results/
+</command>
+    </hudson.tasks.BatchFile>
+  </builders>
+  <publishers>
+    <hudson.plugins.robot.RobotPublisher plugin="robot@2.0.0">
+      <outputPath>robot-results</outputPath>
+      <reportFileName>report.html</reportFileName>
+      <logFileName>log.html</logFileName>
+      <outputFileName>output.xml</outputFileName>
+      <passThreshold>100.0</passThreshold>
+      <unstableThreshold>0.0</unstableThreshold>
+      <onlyCritical>false</onlyCritical>
+      <enableCache>false</enableCache>
+    </hudson.plugins.robot.RobotPublisher>
+    <hudson.tasks.ArtifactArchiver>
+      <artifacts>robot-results/**/*</artifacts>
+      <allowEmptyArchive>true</allowEmptyArchive>
+      <onlyIfSuccessful>false</onlyIfSuccessful>
+      <fingerprint>false</fingerprint>
+      <defaultExcludes>true</defaultExcludes>
+      <caseSensitive>true</caseSensitive>
+    </hudson.tasks.ArtifactArchiver>
+  </publishers>
+  <buildWrappers>
+    <hudson.plugins.timestamper.TimestamperBuildWrapper plugin="timestamper@1.13"/>
+    <hudson.plugins.ansicolor.AnsiColorBuildWrapper plugin="ansicolor@1.0.0">
+      <colorMapName>xterm</colorMapName>
+    </hudson.plugins.ansicolor.AnsiColorBuildWrapper>
+  </buildWrappers>
+</project>

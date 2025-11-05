@@ -29,7 +29,7 @@ cd implementation
 echo Installing Python packages (this may take 2-3 minutes)...
 echo.
 python -m pip install --upgrade pip
-pip install -r requirements.txt
+python -m pip install -r requirements.txt
 
 if %ERRORLEVEL% NEQ 0 (
     echo.

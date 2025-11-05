@@ -1,0 +1,97 @@
+{
+  "test_number": 9,
+  "test_name": "should verify real-time monitoring",
+  "error_type": "network_error",
+  "latency_seconds": 10.09,
+  "status": "success",
+  "response": {
+    "analysis": {
+      "ai_status": "SUCCESS",
+      "classification": "ENVIRONMENT",
+      "confidence": 1.0,
+      "rag_enabled": true,
+      "rag_match": true,
+      "root_cause": "The testing execution environment failed to resolve the Fully Qualified Domain Name (FQDN) 'exascaler.ddn.local' to an IP address. This indicates a missing or incorrect entry in the local DNS configuration or the host file of the machine running the test.",
+      "severity": "MEDIUM",
+      "similar_error_docs": [
+        {
+          "category": "ENVIRONMENT",
+          "error_id": "ERR003",
+          "error_type": "DNSResolutionException",
+          "root_cause": "DNS cannot resolve the DDN storage hostname. Either DNS server is not configured, hostname is incorrect, or /etc/hosts file is missing entry.",
+          "severity": "HIGH",
+          "similarity_score": 0.587553,
+          "tags": [
+            "dns",
+            "hostname",
+            "network",
+            "configuration"
+          ]
+        }
+      ],
+      "solution": "1. Determine the correct IP address for the DDN storage node. 2. Update the environment configuration by either adding an A record for 'exascaler.ddn.local' to the environment's DNS server, OR 3. Manually add the IP and hostname entry (e.g., '192.168.1.10 exascaler.ddn.local') to the local hosts file of the Jenkins runner machine."
+    },
+    "analysis_id": null,
+    "failure_id": "690279787237ed99adb42dc6",
+    "similar_failures": [
+      {
+        "id": "690279787237ed99adb42dc9",
+        "metadata": {
+          "classification": "ENVIRONMENT",
+          "resolved": false,
+          "test_name": "should measure Lustre parallel I/O scalability"
+        },
+        "score": 0.999223709
+      },
+      {
+        "id": "690279787237ed99adb42dc8",
+        "metadata": {
+          "classification": "ENVIRONMENT",
+          "resolved": false,
+          "test_name": "should verify 25x lower latency"
+        },
+        "score": 0.756858885
+      },
+      {
+        "id": "690279787237ed99adb42dc7",
+        "metadata": {
+          "classification": "ENVIRONMENT",
+          "resolved": false,
+          "test_name": "should achieve 4x faster data loading"
+        },
+        "score": 0.756645203
+      },
+      {
+        "id": "error_doc_ERR003",
+        "metadata": {
+          "category": "ENVIRONMENT",
+          "component": "Network Configuration",
+          "doc_type": "error_documentation",
+          "error_id": "ERR003",
+          "error_message": "java.net.UnknownHostException: exascaler.ddn.local: Name or service not known",
+          "error_type": "DNSResolutionException",
+          "file_path": "src/main/resources/application.properties",
+          "frequency": "Common in new deployments",
+          "line_range": "12-15",
+          "root_cause": "DNS cannot resolve the DDN storage hostname. Either DNS server is not configured, hostname is incorrect, or /etc/hosts file is missing entry.",
+          "severity": "HIGH",
+          "subcategory": "DNS Configuration",
+          "tags": "dns,hostname,network,configuration",
+          "test_scenarios": "All DDN connectivity tests,Initial deployment",
+          "uploaded_at": "2025-10-24T17:53:18.995693"
+        },
+        "score": 0.587478638
+      },
+      {
+        "id": "69024353ec432ae99b656cf4",
+        "metadata": {
+          "classification": "CONFIGURATION",
+          "resolved": false,
+          "test_name": "should prevent cross-tenant S3 access"
+        },
+        "score": 0.259635955
+      }
+    ],
+    "status": "success"
+  }
+}

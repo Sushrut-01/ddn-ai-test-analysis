@@ -1,0 +1,224 @@
+{
+  "test_scenarios": [
+    {
+      "id": "PERF-001",
+      "name": "Simple Authentication Error",
+      "category": "CODE_ERROR",
+      "expected_complexity": "simple",
+      "expected_latency": "< 10s",
+      "error_message": "AssertionError: Expected status code 200, got 401",
+      "error_log": "test_user_authentication.py::test_valid_login FAILED\n\ndef test_valid_login():\n    response = client.post('/api/auth/login', json={'username': 'testuser', 'password': 'testpass123'})\n>   assert response.status_code == 200\nE   AssertionError: Expected status code 200, got 401\n\ntest_user_authentication.py:45: AssertionError",
+      "stack_trace": "File \"test_user_authentication.py\", line 45, in test_valid_login\n    assert response.status_code == 200\nAssertionError: Expected status code 200, got 401",
+      "test_name": "test_valid_login"
+    },
+    {
+      "id": "PERF-002",
+      "name": "Database Connection Timeout",
+      "category": "INFRA_ERROR",
+      "expected_complexity": "simple",
+      "expected_latency": "< 10s",
+      "error_message": "OperationalError: could not connect to server: Connection timed out",
+      "error_log": "psycopg2.OperationalError: could not connect to server: Connection timed out\n\tIs the server running on host \"localhost\" (127.0.0.1) and accepting\n\tTCP/IP connections on port 5432?",
+      "stack_trace": "File \"database.py\", line 23, in connect\n    conn = psycopg2.connect(**config)\nOperationalError: Connection timed out",
+      "test_name": "test_database_connection"
+    },
+    {
+      "id": "PERF-003",
+      "name": "Missing Environment Variable",
+      "category": "CONFIG_ERROR",
+      "expected_complexity": "simple",
+      "expected_latency": "< 10s",
+      "error_message": "KeyError: 'DATABASE_URL'",
+      "error_log": "KeyError: 'DATABASE_URL'\n\nTraceback (most recent call last):\n  File \"config.py\", line 12, in load_config\n    database_url = os.environ['DATABASE_URL']\nKeyError: 'DATABASE_URL'",
+      "stack_trace": "File \"config.py\", line 12, in load_config\n    database_url = os.environ['DATABASE_URL']\nKeyError: 'DATABASE_URL'",
+      "test_name": "test_config_loading"
+    },
+    {
+      "id": "PERF-004",
+      "name": "Missing Python Package",
+      "category": "DEPENDENCY_ERROR",
+      "expected_complexity": "simple",
+      "expected_latency": "< 10s",
+      "error_message": "ModuleNotFoundError: No module named 'requests'",
+      "error_log": "ModuleNotFoundError: No module named 'requests'\n\nTraceback (most recent call last):\n  File \"api_client.py\", line 1, in <module>\n    import requests\nModuleNotFoundError: No module named 'requests'",
+      "stack_trace": "File \"api_client.py\", line 1, in <module>\n    import requests\nModuleNotFoundError: No module named 'requests'",
+      "test_name": "test_api_client_import"
+    },
+    {
+      "id": "PERF-005",
+      "name": "Complex Code Error - Low Confidence",
+      "category": "CODE_ERROR",
+      "expected_complexity": "complex",
+      "expected_latency": "< 30s",
+      "error_message": "TypeError: unsupported operand type(s) for +: 'NoneType' and 'int'",
+      "error_log": "TypeError: unsupported operand type(s) for +: 'NoneType' and 'int'\n\nThis error occurs when trying to add None to an integer. The function calculate_total() is receiving None from get_price() which should return a numeric value.\n\nTraceback (most recent call last):\n  File \"payment_processor.py\", line 67, in process_payment\n    total = calculate_total(items)\n  File \"utils.py\", line 45, in calculate_total\n    sum = sum + item.price\nTypeError: unsupported operand type(s) for +: 'NoneType' and 'int'",
+      "stack_trace": "File \"payment_processor.py\", line 67, in process_payment\n    total = calculate_total(items)\nFile \"utils.py\", line 45, in calculate_total\n    sum = sum + item.price\nTypeError: unsupported operand type(s) for +: 'NoneType' and 'int'",
+      "test_name": "test_payment_processing"
+    },
+    {
+      "id": "PERF-006",
+      "name": "Multi-File Python Error",
+      "category": "CODE_ERROR",
+      "expected_complexity": "complex",
+      "expected_latency": "< 30s",
+      "error_message": "AttributeError: 'dict' object has no attribute 'validate'",
+      "error_log": "AttributeError: 'dict' object has no attribute 'validate'\n\nTraceback (most recent call last):\n  File \"src/payment/processor.py\", line 45, in process_transaction\n    gateway.send_payment(data)\n  File \"src/payment/gateway.py\", line 23, in send_payment\n    validated_data = validator.validate(data)\n  File \"src/utils/validation.py\", line 67, in validate\n    return data.validate()\nAttributeError: 'dict' object has no attribute 'validate'",
+      "stack_trace": "File \"src/payment/processor.py\", line 45, in process_transaction\n    gateway.send_payment(data)\nFile \"src/payment/gateway.py\", line 23, in send_payment\n    validated_data = validator.validate(data)\nFile \"src/utils/validation.py\", line 67, in validate\n    return data.validate()\nAttributeError: 'dict' object has no attribute 'validate'",
+      "test_name": "test_multi_file_payment_error"
+    },
+    {
+      "id": "PERF-007",
+      "name": "Multi-File Java Error",
+      "category": "CODE_ERROR",
+      "expected_complexity": "complex",
+      "expected_latency": "< 30s",
+      "error_message": "NullPointerException at com.example.service.UserService.getUser",
+      "error_log": "java.lang.NullPointerException: Cannot invoke \"com.example.model.User.getId()\" because \"user\" is null\n\tat com.example.service.UserService.getUser(UserService.java:45)\n\tat com.example.controller.UserController.handleRequest(UserController.java:23)\n\tat com.example.api.Router.route(Router.java:67)",
+      "stack_trace": "at com.example.service.UserService.getUser(UserService.java:45)\nat com.example.controller.UserController.handleRequest(UserController.java:23)\nat com.example.api.Router.route(Router.java:67)",
+      "test_name": "test_java_multi_file_error"
+    },
+    {
+      "id": "PERF-008",
+      "name": "API Timeout with Retry",
+      "category": "CODE_ERROR",
+      "expected_complexity": "simple",
+      "expected_latency": "< 10s",
+      "error_message": "requests.exceptions.Timeout: HTTPConnectionPool timeout",
+      "error_log": "requests.exceptions.Timeout: HTTPConnectionPool(host='api.example.com', port=80): Read timed out. (read timeout=5)\n\nThe API request to https://api.example.com/users timed out after 5 seconds.",
+      "stack_trace": "File \"api_client.py\", line 34, in fetch_users\n    response = requests.get(url, timeout=5)\nTimeout: Read timed out",
+      "test_name": "test_api_timeout"
+    },
+    {
+      "id": "PERF-009",
+      "name": "Permission Denied Error",
+      "category": "INFRA_ERROR",
+      "expected_complexity": "simple",
+      "expected_latency": "< 10s",
+      "error_message": "PermissionError: [Errno 13] Permission denied: '/var/log/app.log'",
+      "error_log": "PermissionError: [Errno 13] Permission denied: '/var/log/app.log'\n\nAttempted to write to log file but user does not have write permissions.",
+      "stack_trace": "File \"logger.py\", line 23, in write_log\n    f = open('/var/log/app.log', 'a')\nPermissionError: [Errno 13] Permission denied",
+      "test_name": "test_file_permissions"
+    },
+    {
+      "id": "PERF-010",
+      "name": "Missing Test Fixture",
+      "category": "TEST_ERROR",
+      "expected_complexity": "simple",
+      "expected_latency": "< 10s",
+      "error_message": "fixture 'database' not found",
+      "error_log": "ERROR at setup of test_user_creation\nfixture 'database' not found\n\n>       available fixtures: cache, capfd, capsys, doctest_namespace, monkeypatch, pytestconfig, record_property, record_xml_attribute, tmpdir\n\nPlease check if the fixture is defined in conftest.py",
+      "stack_trace": "",
+      "test_name": "test_missing_fixture"
+    },
+    {
+      "id": "PERF-011",
+      "name": "JSON Decode Error",
+      "category": "CODE_ERROR",
+      "expected_complexity": "simple",
+      "expected_latency": "< 10s",
+      "error_message": "json.JSONDecodeError: Expecting value: line 1 column 1 (char 0)",
+      "error_log": "json.decoder.JSONDecodeError: Expecting value: line 1 column 1 (char 0)\n\nAttempted to parse invalid JSON response from API.",
+      "stack_trace": "File \"parser.py\", line 12, in parse_response\n    data = json.loads(response.text)\nJSONDecodeError: Expecting value",
+      "test_name": "test_json_parsing"
+    },
+    {
+      "id": "PERF-012",
+      "name": "Redis Connection Error",
+      "category": "INFRA_ERROR",
+      "expected_complexity": "simple",
+      "expected_latency": "< 10s",
+      "error_message": "redis.exceptions.ConnectionError: Error connecting to Redis",
+      "error_log": "redis.exceptions.ConnectionError: Error 111 connecting to localhost:6379. Connection refused.\n\nRedis server is not running or not accessible on port 6379.",
+      "stack_trace": "File \"cache.py\", line 18, in connect\n    redis_client = redis.Redis(host='localhost', port=6379)\nConnectionError: Connection refused",
+      "test_name": "test_redis_connection"
+    },
+    {
+      "id": "PERF-013",
+      "name": "SSL Certificate Error",
+      "category": "CONFIG_ERROR",
+      "expected_complexity": "simple",
+      "expected_latency": "< 10s",
+      "error_message": "SSLError: [SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed",
+      "error_log": "requests.exceptions.SSLError: HTTPSConnectionPool(host='api.example.com', port=443): Max retries exceeded with url: /api/v1/users (Caused by SSLError(SSLError(1, '[SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed (_ssl.c:852)')))",
+      "stack_trace": "File \"api_client.py\", line 29, in fetch_data\n    response = requests.get(url, verify=True)\nSSLError: certificate verify failed",
+      "test_name": "test_ssl_verification"
+    },
+    {
+      "id": "PERF-014",
+      "name": "Import Circular Dependency",
+      "category": "CODE_ERROR",
+      "expected_complexity": "simple",
+      "expected_latency": "< 10s",
+      "error_message": "ImportError: cannot import name 'User' from partially initialized module 'models'",
+      "error_log": "ImportError: cannot import name 'User' from partially initialized module 'models' (most likely due to a circular import)\n\nCircular import detected between models.py and services.py",
+      "stack_trace": "File \"services.py\", line 3, in <module>\n    from models import User\nImportError: cannot import name 'User' from partially initialized module",
+      "test_name": "test_circular_import"
+    },
+    {
+      "id": "PERF-015",
+      "name": "Memory Allocation Error",
+      "category": "INFRA_ERROR",
+      "expected_complexity": "simple",
+      "expected_latency": "< 10s",
+      "error_message": "MemoryError: Unable to allocate array",
+      "error_log": "MemoryError: Unable to allocate 8.00 GiB for an array with shape (1000000, 1000) and data type float64\n\nSystem ran out of memory while processing large dataset.",
+      "stack_trace": "File \"data_processor.py\", line 56, in process_large_dataset\n    result = np.zeros((1000000, 1000))\nMemoryError: Unable to allocate array",
+      "test_name": "test_memory_allocation"
+    },
+    {
+      "id": "PERF-016",
+      "name": "Docker Container Not Running",
+      "category": "INFRA_ERROR",
+      "expected_complexity": "simple",
+      "expected_latency": "< 10s",
+      "error_message": "docker.errors.NotFound: 404 Client Error: Not Found",
+      "error_log": "docker.errors.NotFound: 404 Client Error: Not Found (\"No such container: postgres-db\")\n\nDocker container 'postgres-db' is not running or does not exist.",
+      "stack_trace": "File \"docker_utils.py\", line 34, in get_container\n    container = client.containers.get('postgres-db')\nNotFound: No such container",
+      "test_name": "test_docker_container"
+    },
+    {
+      "id": "PERF-017",
+      "name": "Invalid Configuration Format",
+      "category": "CONFIG_ERROR",
+      "expected_complexity": "simple",
+      "expected_latency": "< 10s",
+      "error_message": "yaml.scanner.ScannerError: while scanning a simple key",
+      "error_log": "yaml.scanner.ScannerError: while scanning a simple key\n  in \"config.yaml\", line 23, column 1\ncould not find expected ':'\n  in \"config.yaml\", line 24, column 1\n\nYAML configuration file has invalid syntax.",
+      "stack_trace": "File \"config_loader.py\", line 18, in load_yaml\n    config = yaml.safe_load(f)\nScannerError: could not find expected ':'",
+      "test_name": "test_yaml_parsing"
+    },
+    {
+      "id": "PERF-018",
+      "name": "AWS Credentials Error",
+      "category": "CONFIG_ERROR",
+      "expected_complexity": "simple",
+      "expected_latency": "< 10s",
+      "error_message": "botocore.exceptions.NoCredentialsError: Unable to locate credentials",
+      "error_log": "botocore.exceptions.NoCredentialsError: Unable to locate credentials\n\nAWS credentials not found. Please configure AWS CLI or set environment variables.",
+      "stack_trace": "File \"s3_client.py\", line 23, in upload_file\n    s3.upload_file(filename, bucket, key)\nNoCredentialsError: Unable to locate credentials",
+      "test_name": "test_aws_upload"
+    },
+    {
+      "id": "PERF-019",
+      "name": "Rate Limit Exceeded",
+      "category": "CODE_ERROR",
+      "expected_complexity": "complex",
+      "expected_latency": "< 30s",
+      "error_message": "requests.exceptions.HTTPError: 429 Client Error: Too Many Requests",
+      "error_log": "requests.exceptions.HTTPError: 429 Client Error: Too Many Requests for url: https://api.example.com/users\n\nAPI rate limit exceeded. Headers: X-RateLimit-Limit: 1000, X-RateLimit-Remaining: 0, X-RateLimit-Reset: 1640000000",
+      "stack_trace": "File \"api_client.py\", line 42, in make_request\n    response.raise_for_status()\nHTTPError: 429 Client Error",
+      "test_name": "test_rate_limiting"
+    },
+    {
+      "id": "PERF-020",
+      "name": "Unknown Edge Case Error",
+      "category": "UNKNOWN",
+      "expected_complexity": "complex",
+      "expected_latency": "< 30s",
+      "error_message": "RuntimeError: Unexpected error in production",
+      "error_log": "RuntimeError: Unexpected error in production\n\nThis is a rare edge case that occurred in production. The error message is vague and doesn't match any known patterns.\n\nStack trace shows execution path through multiple modules but root cause is unclear.",
+      "stack_trace": "File \"main.py\", line 123, in run\n    result = process_data(input)\nFile \"processor.py\", line 67, in process_data\n    raise RuntimeError('Unexpected error in production')\nRuntimeError: Unexpected error in production",
+      "test_name": "test_unknown_error"
+    }
+  ]
+}

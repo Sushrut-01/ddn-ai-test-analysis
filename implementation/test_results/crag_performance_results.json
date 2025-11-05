@@ -1,0 +1,1454 @@
+{
+  "test_info": {
+    "test_suite": "CRAG Performance Test",
+    "task_id": "0-ARCH.22",
+    "date": "2025-11-03T12:35:36.771636",
+    "total_tests": 50
+  },
+  "test_results": [
+    {
+      "test_id": "HIGH_1",
+      "scenario": "CODE_ERROR: Authentication failure case 1",
+      "status": "HITL",
+      "confidence": 0.806,
+      "confidence_level": "MEDIUM",
+      "latency_ms": 0.0,
+      "components": {
+        "relevance": 0.92,
+        "consistency": 1.0,
+        "grounding": 0.333,
+        "completeness": 1.0,
+        "classification": 0.95
+      },
+      "ground_truth": {
+        "is_correct": true,
+        "quality": "high",
+        "expected_confidence_min": 0.85,
+        "expected_routing": "PASS"
+      },
+      "routing_correct": false,
+      "confidence_calibrated": false,
+      "false_positive": false,
+      "false_negative": true,
+      "expected_routing": "PASS",
+      "success": true
+    },
+    {
+      "test_id": "HIGH_2",
+      "scenario": "CODE_ERROR: Authentication failure case 2",
+      "status": "HITL",
+      "confidence": 0.806,
+      "confidence_level": "MEDIUM",
+      "latency_ms": 1.0,
+      "components": {
+        "relevance": 0.92,
+        "consistency": 1.0,
+        "grounding": 0.333,
+        "completeness": 1.0,
+        "classification": 0.95
+      },
+      "ground_truth": {
+        "is_correct": true,
+        "quality": "high",
+        "expected_confidence_min": 0.85,
+        "expected_routing": "PASS"
+      },
+      "routing_correct": false,
+      "confidence_calibrated": false,
+      "false_positive": false,
+      "false_negative": true,
+      "expected_routing": "PASS",
+      "success": true
+    },
+    {
+      "test_id": "HIGH_3",
+      "scenario": "CODE_ERROR: Authentication failure case 3",
+      "status": "HITL",
+      "confidence": 0.806,
+      "confidence_level": "MEDIUM",
+      "latency_ms": 0.0,
+      "components": {
+        "relevance": 0.92,
+        "consistency": 1.0,
+        "grounding": 0.333,
+        "completeness": 1.0,
+        "classification": 0.95
+      },
+      "ground_truth": {
+        "is_correct": true,
+        "quality": "high",
+        "expected_confidence_min": 0.85,
+        "expected_routing": "PASS"
+      },
+      "routing_correct": false,
+      "confidence_calibrated": false,
+      "false_positive": false,
+      "false_negative": true,
+      "expected_routing": "PASS",
+      "success": true
+    },
+    {
+      "test_id": "HIGH_4",
+      "scenario": "CODE_ERROR: Authentication failure case 4",
+      "status": "HITL",
+      "confidence": 0.806,
+      "confidence_level": "MEDIUM",
+      "latency_ms": 0.51,
+      "components": {
+        "relevance": 0.92,
+        "consistency": 1.0,
+        "grounding": 0.333,
+        "completeness": 1.0,
+        "classification": 0.95
+      },
+      "ground_truth": {
+        "is_correct": true,
+        "quality": "high",
+        "expected_confidence_min": 0.85,
+        "expected_routing": "PASS"
+      },
+      "routing_correct": false,
+      "confidence_calibrated": false,
+      "false_positive": false,
+      "false_negative": true,
+      "expected_routing": "PASS",
+      "success": true
+    },
+    {
+      "test_id": "HIGH_5",
+      "scenario": "CODE_ERROR: Authentication failure case 5",
+      "status": "HITL",
+      "confidence": 0.806,
+      "confidence_level": "MEDIUM",
+      "latency_ms": 0.0,
+      "components": {
+        "relevance": 0.92,
+        "consistency": 1.0,
+        "grounding": 0.333,
+        "completeness": 1.0,
+        "classification": 0.95
+      },
+      "ground_truth": {
+        "is_correct": true,
+        "quality": "high",
+        "expected_confidence_min": 0.85,
+        "expected_routing": "PASS"
+      },
+      "routing_correct": false,
+      "confidence_calibrated": false,
+      "false_positive": false,
+      "false_negative": true,
+      "expected_routing": "PASS",
+      "success": true
+    },
+    {
+      "test_id": "HIGH_6",
+      "scenario": "INFRA_ERROR: Database connection case 6",
+      "status": "HITL",
+      "confidence": 0.787,
+      "confidence_level": "MEDIUM",
+      "latency_ms": 0.0,
+      "components": {
+        "relevance": 0.89,
+        "consistency": 1.0,
+        "grounding": 0.3,
+        "completeness": 1.0,
+        "classification": 0.93
+      },
+      "ground_truth": {
+        "is_correct": true,
+        "quality": "high",
+        "expected_confidence_min": 0.85,
+        "expected_routing": "PASS"
+      },
+      "routing_correct": false,
+      "confidence_calibrated": false,
+      "false_positive": false,
+      "false_negative": true,
+      "expected_routing": "PASS",
+      "success": true
+    },
+    {
+      "test_id": "HIGH_7",
+      "scenario": "INFRA_ERROR: Database connection case 7",
+      "status": "HITL",
+      "confidence": 0.787,
+      "confidence_level": "MEDIUM",
+      "latency_ms": 0.0,
+      "components": {
+        "relevance": 0.89,
+        "consistency": 1.0,
+        "grounding": 0.3,
+        "completeness": 1.0,
+        "classification": 0.93
+      },
+      "ground_truth": {
+        "is_correct": true,
+        "quality": "high",
+        "expected_confidence_min": 0.85,
+        "expected_routing": "PASS"
+      },
+      "routing_correct": false,
+      "confidence_calibrated": false,
+      "false_positive": false,
+      "false_negative": true,
+      "expected_routing": "PASS",
+      "success": true
+    },
+    {
+      "test_id": "HIGH_8",
+      "scenario": "INFRA_ERROR: Database connection case 8",
+      "status": "HITL",
+      "confidence": 0.787,
+      "confidence_level": "MEDIUM",
+      "latency_ms": 0.0,
+      "components": {
+        "relevance": 0.89,
+        "consistency": 1.0,
+        "grounding": 0.3,
+        "completeness": 1.0,
+        "classification": 0.93
+      },
+      "ground_truth": {
+        "is_correct": true,
+        "quality": "high",
+        "expected_confidence_min": 0.85,
+        "expected_routing": "PASS"
+      },
+      "routing_correct": false,
+      "confidence_calibrated": false,
+      "false_positive": false,
+      "false_negative": true,
+      "expected_routing": "PASS",
+      "success": true
+    },
+    {
+      "test_id": "HIGH_9",
+      "scenario": "INFRA_ERROR: Database connection case 9",
+      "status": "HITL",
+      "confidence": 0.787,
+      "confidence_level": "MEDIUM",
+      "latency_ms": 1.08,
+      "components": {
+        "relevance": 0.89,
+        "consistency": 1.0,
+        "grounding": 0.3,
+        "completeness": 1.0,
+        "classification": 0.93
+      },
+      "ground_truth": {
+        "is_correct": true,
+        "quality": "high",
+        "expected_confidence_min": 0.85,
+        "expected_routing": "PASS"
+      },
+      "routing_correct": false,
+      "confidence_calibrated": false,
+      "false_positive": false,
+      "false_negative": true,
+      "expected_routing": "PASS",
+      "success": true
+    },
+    {
+      "test_id": "HIGH_10",
+      "scenario": "INFRA_ERROR: Database connection case 10",
+      "status": "HITL",
+      "confidence": 0.787,
+      "confidence_level": "MEDIUM",
+      "latency_ms": 0.0,
+      "components": {
+        "relevance": 0.89,
+        "consistency": 1.0,
+        "grounding": 0.3,
+        "completeness": 1.0,
+        "classification": 0.93
+      },
+      "ground_truth": {
+        "is_correct": true,
+        "quality": "high",
+        "expected_confidence_min": 0.85,
+        "expected_routing": "PASS"
+      },
+      "routing_correct": false,
+      "confidence_calibrated": false,
+      "false_positive": false,
+      "false_negative": true,
+      "expected_routing": "PASS",
+      "success": true
+    },
+    {
+      "test_id": "HIGH_11",
+      "scenario": "CONFIG_ERROR: Environment configuration case 11",
+      "status": "HITL",
+      "confidence": 0.807,
+      "confidence_level": "MEDIUM",
+      "latency_ms": 0.0,
+      "components": {
+        "relevance": 0.93,
+        "consistency": 1.0,
+        "grounding": 0.333,
+        "completeness": 1.0,
+        "classification": 0.94
+      },
+      "ground_truth": {
+        "is_correct": true,
+        "quality": "high",
+        "expected_confidence_min": 0.85,
+        "expected_routing": "PASS"
+      },
+      "routing_correct": false,
+      "confidence_calibrated": false,
+      "false_positive": false,
+      "false_negative": true,
+      "expected_routing": "PASS",
+      "success": true
+    },
+    {
+      "test_id": "HIGH_12",
+      "scenario": "CONFIG_ERROR: Environment configuration case 12",
+      "status": "HITL",
+      "confidence": 0.807,
+      "confidence_level": "MEDIUM",
+      "latency_ms": 0.0,
+      "components": {
+        "relevance": 0.93,
+        "consistency": 1.0,
+        "grounding": 0.333,
+        "completeness": 1.0,
+        "classification": 0.94
+      },
+      "ground_truth": {
+        "is_correct": true,
+        "quality": "high",
+        "expected_confidence_min": 0.85,
+        "expected_routing": "PASS"
+      },
+      "routing_correct": false,
+      "confidence_calibrated": false,
+      "false_positive": false,
+      "false_negative": true,
+      "expected_routing": "PASS",
+      "success": true
+    },
+    {
+      "test_id": "HIGH_13",
+      "scenario": "CONFIG_ERROR: Environment configuration case 13",
+      "status": "HITL",
+      "confidence": 0.807,
+      "confidence_level": "MEDIUM",
+      "latency_ms": 0.0,
+      "components": {
+        "relevance": 0.93,
+        "consistency": 1.0,
+        "grounding": 0.333,
+        "completeness": 1.0,
+        "classification": 0.94
+      },
+      "ground_truth": {
+        "is_correct": true,
+        "quality": "high",
+        "expected_confidence_min": 0.85,
+        "expected_routing": "PASS"
+      },
+      "routing_correct": false,
+      "confidence_calibrated": false,
+      "false_positive": false,
+      "false_negative": true,
+      "expected_routing": "PASS",
+      "success": true
+    },
+    {
+      "test_id": "HIGH_14",
+      "scenario": "CONFIG_ERROR: Environment configuration case 14",
+      "status": "HITL",
+      "confidence": 0.807,
+      "confidence_level": "MEDIUM",
+      "latency_ms": 1.0,
+      "components": {
+        "relevance": 0.93,
+        "consistency": 1.0,
+        "grounding": 0.333,
+        "completeness": 1.0,
+        "classification": 0.94
+      },
+      "ground_truth": {
+        "is_correct": true,
+        "quality": "high",
+        "expected_confidence_min": 0.85,
+        "expected_routing": "PASS"
+      },
+      "routing_correct": false,
+      "confidence_calibrated": false,
+      "false_positive": false,
+      "false_negative": true,
+      "expected_routing": "PASS",
+      "success": true
+    },
+    {
+      "test_id": "HIGH_15",
+      "scenario": "CONFIG_ERROR: Environment configuration case 15",
+      "status": "HITL",
+      "confidence": 0.807,
+      "confidence_level": "MEDIUM",
+      "latency_ms": 0.0,
+      "components": {
+        "relevance": 0.93,
+        "consistency": 1.0,
+        "grounding": 0.333,
+        "completeness": 1.0,
+        "classification": 0.94
+      },
+      "ground_truth": {
+        "is_correct": true,
+        "quality": "high",
+        "expected_confidence_min": 0.85,
+        "expected_routing": "PASS"
+      },
+      "routing_correct": false,
+      "confidence_calibrated": false,
+      "false_positive": false,
+      "false_negative": true,
+      "expected_routing": "PASS",
+      "success": true
+    },
+    {
+      "test_id": "HIGH_16",
+      "scenario": "TEST_ERROR: Flaky test case 16",
+      "status": "HITL",
+      "confidence": 0.776,
+      "confidence_level": "MEDIUM",
+      "latency_ms": 0.0,
+      "components": {
+        "relevance": 0.9,
+        "consistency": 1.0,
+        "grounding": 0.25,
+        "completeness": 1.0,
+        "classification": 0.92
+      },
+      "ground_truth": {
+        "is_correct": true,
+        "quality": "high",
+        "expected_confidence_min": 0.85,
+        "expected_routing": "PASS"
+      },
+      "routing_correct": false,
+      "confidence_calibrated": false,
+      "false_positive": false,
+      "false_negative": true,
+      "expected_routing": "PASS",
+      "success": true
+    },
+    {
+      "test_id": "HIGH_17",
+      "scenario": "TEST_ERROR: Flaky test case 17",
+      "status": "HITL",
+      "confidence": 0.776,
+      "confidence_level": "MEDIUM",
+      "latency_ms": 0.0,
+      "components": {
+        "relevance": 0.9,
+        "consistency": 1.0,
+        "grounding": 0.25,
+        "completeness": 1.0,
+        "classification": 0.92
+      },
+      "ground_truth": {
+        "is_correct": true,
+        "quality": "high",
+        "expected_confidence_min": 0.85,
+        "expected_routing": "PASS"
+      },
+      "routing_correct": false,
+      "confidence_calibrated": false,
+      "false_positive": false,
+      "false_negative": true,
+      "expected_routing": "PASS",
+      "success": true
+    },
+    {
+      "test_id": "HIGH_18",
+      "scenario": "TEST_ERROR: Flaky test case 18",
+      "status": "HITL",
+      "confidence": 0.776,
+      "confidence_level": "MEDIUM",
+      "latency_ms": 0.0,
+      "components": {
+        "relevance": 0.9,
+        "consistency": 1.0,
+        "grounding": 0.25,
+        "completeness": 1.0,
+        "classification": 0.92
+      },
+      "ground_truth": {
+        "is_correct": true,
+        "quality": "high",
+        "expected_confidence_min": 0.85,
+        "expected_routing": "PASS"
+      },
+      "routing_correct": false,
+      "confidence_calibrated": false,
+      "false_positive": false,
+      "false_negative": true,
+      "expected_routing": "PASS",
+      "success": true
+    },
+    {
+      "test_id": "HIGH_19",
+      "scenario": "TEST_ERROR: Flaky test case 19",
+      "status": "HITL",
+      "confidence": 0.776,
+      "confidence_level": "MEDIUM",
+      "latency_ms": 0.0,
+      "components": {
+        "relevance": 0.9,
+        "consistency": 1.0,
+        "grounding": 0.25,
+        "completeness": 1.0,
+        "classification": 0.92
+      },
+      "ground_truth": {
+        "is_correct": true,
+        "quality": "high",
+        "expected_confidence_min": 0.85,
+        "expected_routing": "PASS"
+      },
+      "routing_correct": false,
+      "confidence_calibrated": false,
+      "false_positive": false,
+      "false_negative": true,
+      "expected_routing": "PASS",
+      "success": true
+    },
+    {
+      "test_id": "HIGH_20",
+      "scenario": "TEST_ERROR: Flaky test case 20",
+      "status": "HITL",
+      "confidence": 0.776,
+      "confidence_level": "MEDIUM",
+      "latency_ms": 0.0,
+      "components": {
+        "relevance": 0.9,
+        "consistency": 1.0,
+        "grounding": 0.25,
+        "completeness": 1.0,
+        "classification": 0.92
+      },
+      "ground_truth": {
+        "is_correct": true,
+        "quality": "high",
+        "expected_confidence_min": 0.85,
+        "expected_routing": "PASS"
+      },
+      "routing_correct": false,
+      "confidence_calibrated": false,
+      "false_positive": false,
+      "false_negative": true,
+      "expected_routing": "PASS",
+      "success": true
+    },
+    {
+      "test_id": "MEDIUM_21",
+      "scenario": "CODE_ERROR: Incomplete analysis case 21",
+      "status": "HITL",
+      "confidence": 0.734,
+      "confidence_level": "MEDIUM",
+      "latency_ms": 0.0,
+      "components": {
+        "relevance": 0.72,
+        "consistency": 1.0,
+        "grounding": 0.667,
+        "completeness": 0.5,
+        "classification": 0.75
+      },
+      "ground_truth": {
+        "is_correct": true,
+        "quality": "medium",
+        "expected_confidence_min": 0.65,
+        "expected_confidence_max": 0.85,
+        "expected_routing": "HITL"
+      },
+      "routing_correct": true,
+      "confidence_calibrated": true,
+      "false_positive": false,
+      "false_negative": true,
+      "expected_routing": "HITL",
+      "success": true
+    },
+    {
+      "test_id": "MEDIUM_22",
+      "scenario": "CODE_ERROR: Incomplete analysis case 22",
+      "status": "HITL",
+      "confidence": 0.734,
+      "confidence_level": "MEDIUM",
+      "latency_ms": 0.0,
+      "components": {
+        "relevance": 0.72,
+        "consistency": 1.0,
+        "grounding": 0.667,
+        "completeness": 0.5,
+        "classification": 0.75
+      },
+      "ground_truth": {
+        "is_correct": true,
+        "quality": "medium",
+        "expected_confidence_min": 0.65,
+        "expected_confidence_max": 0.85,
+        "expected_routing": "HITL"
+      },
+      "routing_correct": true,
+      "confidence_calibrated": true,
+      "false_positive": false,
+      "false_negative": true,
+      "expected_routing": "HITL",
+      "success": true
+    },
+    {
+      "test_id": "MEDIUM_23",
+      "scenario": "CODE_ERROR: Incomplete analysis case 23",
+      "status": "HITL",
+      "confidence": 0.734,
+      "confidence_level": "MEDIUM",
+      "latency_ms": 0.0,
+      "components": {
+        "relevance": 0.72,
+        "consistency": 1.0,
+        "grounding": 0.667,
+        "completeness": 0.5,
+        "classification": 0.75
+      },
+      "ground_truth": {
+        "is_correct": true,
+        "quality": "medium",
+        "expected_confidence_min": 0.65,
+        "expected_confidence_max": 0.85,
+        "expected_routing": "HITL"
+      },
+      "routing_correct": true,
+      "confidence_calibrated": true,
+      "false_positive": false,
+      "false_negative": true,
+      "expected_routing": "HITL",
+      "success": true
+    },
+    {
+      "test_id": "MEDIUM_24",
+      "scenario": "CODE_ERROR: Incomplete analysis case 24",
+      "status": "HITL",
+      "confidence": 0.734,
+      "confidence_level": "MEDIUM",
+      "latency_ms": 0.0,
+      "components": {
+        "relevance": 0.72,
+        "consistency": 1.0,
+        "grounding": 0.667,
+        "completeness": 0.5,
+        "classification": 0.75
+      },
+      "ground_truth": {
+        "is_correct": true,
+        "quality": "medium",
+        "expected_confidence_min": 0.65,
+        "expected_confidence_max": 0.85,
+        "expected_routing": "HITL"
+      },
+      "routing_correct": true,
+      "confidence_calibrated": true,
+      "false_positive": false,
+      "false_negative": true,
+      "expected_routing": "HITL",
+      "success": true
+    },
+    {
+      "test_id": "MEDIUM_25",
+      "scenario": "CODE_ERROR: Incomplete analysis case 25",
+      "status": "HITL",
+      "confidence": 0.734,
+      "confidence_level": "MEDIUM",
+      "latency_ms": 0.0,
+      "components": {
+        "relevance": 0.72,
+        "consistency": 1.0,
+        "grounding": 0.667,
+        "completeness": 0.5,
+        "classification": 0.75
+      },
+      "ground_truth": {
+        "is_correct": true,
+        "quality": "medium",
+        "expected_confidence_min": 0.65,
+        "expected_confidence_max": 0.85,
+        "expected_routing": "HITL"
+      },
+      "routing_correct": true,
+      "confidence_calibrated": true,
+      "false_positive": false,
+      "false_negative": true,
+      "expected_routing": "HITL",
+      "success": true
+    },
+    {
+      "test_id": "MEDIUM_26",
+      "scenario": "CODE_ERROR: Incomplete analysis case 26",
+      "status": "HITL",
+      "confidence": 0.734,
+      "confidence_level": "MEDIUM",
+      "latency_ms": 0.0,
+      "components": {
+        "relevance": 0.72,
+        "consistency": 1.0,
+        "grounding": 0.667,
+        "completeness": 0.5,
+        "classification": 0.75
+      },
+      "ground_truth": {
+        "is_correct": true,
+        "quality": "medium",
+        "expected_confidence_min": 0.65,
+        "expected_confidence_max": 0.85,
+        "expected_routing": "HITL"
+      },
+      "routing_correct": true,
+      "confidence_calibrated": true,
+      "false_positive": false,
+      "false_negative": true,
+      "expected_routing": "HITL",
+      "success": true
+    },
+    {
+      "test_id": "MEDIUM_27",
+      "scenario": "CODE_ERROR: Incomplete analysis case 27",
+      "status": "HITL",
+      "confidence": 0.734,
+      "confidence_level": "MEDIUM",
+      "latency_ms": 0.0,
+      "components": {
+        "relevance": 0.72,
+        "consistency": 1.0,
+        "grounding": 0.667,
+        "completeness": 0.5,
+        "classification": 0.75
+      },
+      "ground_truth": {
+        "is_correct": true,
+        "quality": "medium",
+        "expected_confidence_min": 0.65,
+        "expected_confidence_max": 0.85,
+        "expected_routing": "HITL"
+      },
+      "routing_correct": true,
+      "confidence_calibrated": true,
+      "false_positive": false,
+      "false_negative": true,
+      "expected_routing": "HITL",
+      "success": true
+    },
+    {
+      "test_id": "MEDIUM_28",
+      "scenario": "INFRA_ERROR: Ambiguous infrastructure case 28",
+      "status": "HITL",
+      "confidence": 0.615,
+      "confidence_level": "MEDIUM",
+      "latency_ms": 13292.15,
+      "components": {
+        "relevance": 0.65,
+        "consistency": 1.0,
+        "grounding": 0.0,
+        "completeness": 1.0,
+        "classification": 0.68
+      },
+      "ground_truth": {
+        "is_correct": false,
+        "quality": "medium",
+        "expected_confidence_min": 0.65,
+        "expected_confidence_max": 0.85,
+        "expected_routing": "HITL"
+      },
+      "routing_correct": true,
+      "confidence_calibrated": false,
+      "false_positive": false,
+      "false_negative": false,
+      "expected_routing": "HITL",
+      "success": true
+    },
+    {
+      "test_id": "MEDIUM_29",
+      "scenario": "INFRA_ERROR: Ambiguous infrastructure case 29",
+      "status": "HITL",
+      "confidence": 0.615,
+      "confidence_level": "MEDIUM",
+      "latency_ms": 9253.81,
+      "components": {
+        "relevance": 0.65,
+        "consistency": 1.0,
+        "grounding": 0.0,
+        "completeness": 1.0,
+        "classification": 0.68
+      },
+      "ground_truth": {
+        "is_correct": false,
+        "quality": "medium",
+        "expected_confidence_min": 0.65,
+        "expected_confidence_max": 0.85,
+        "expected_routing": "HITL"
+      },
+      "routing_correct": true,
+      "confidence_calibrated": false,
+      "false_positive": false,
+      "false_negative": false,
+      "expected_routing": "HITL",
+      "success": true
+    },
+    {
+      "test_id": "MEDIUM_30",
+      "scenario": "INFRA_ERROR: Ambiguous infrastructure case 30",
+      "status": "HITL",
+      "confidence": 0.615,
+      "confidence_level": "MEDIUM",
+      "latency_ms": 10056.84,
+      "components": {
+        "relevance": 0.65,
+        "consistency": 1.0,
+        "grounding": 0.0,
+        "completeness": 1.0,
+        "classification": 0.68
+      },
+      "ground_truth": {
+        "is_correct": false,
+        "quality": "medium",
+        "expected_confidence_min": 0.65,
+        "expected_confidence_max": 0.85,
+        "expected_routing": "HITL"
+      },
+      "routing_correct": true,
+      "confidence_calibrated": false,
+      "false_positive": false,
+      "false_negative": false,
+      "expected_routing": "HITL",
+      "success": true
+    },
+    {
+      "test_id": "MEDIUM_31",
+      "scenario": "INFRA_ERROR: Ambiguous infrastructure case 31",
+      "status": "HITL",
+      "confidence": 0.615,
+      "confidence_level": "MEDIUM",
+      "latency_ms": 10840.64,
+      "components": {
+        "relevance": 0.65,
+        "consistency": 1.0,
+        "grounding": 0.0,
+        "completeness": 1.0,
+        "classification": 0.68
+      },
+      "ground_truth": {
+        "is_correct": false,
+        "quality": "medium",
+        "expected_confidence_min": 0.65,
+        "expected_confidence_max": 0.85,
+        "expected_routing": "HITL"
+      },
+      "routing_correct": true,
+      "confidence_calibrated": false,
+      "false_positive": false,
+      "false_negative": false,
+      "expected_routing": "HITL",
+      "success": true
+    },
+    {
+      "test_id": "MEDIUM_32",
+      "scenario": "INFRA_ERROR: Ambiguous infrastructure case 32",
+      "status": "HITL",
+      "confidence": 0.615,
+      "confidence_level": "MEDIUM",
+      "latency_ms": 9172.66,
+      "components": {
+        "relevance": 0.65,
+        "consistency": 1.0,
+        "grounding": 0.0,
+        "completeness": 1.0,
+        "classification": 0.68
+      },
+      "ground_truth": {
+        "is_correct": false,
+        "quality": "medium",
+        "expected_confidence_min": 0.65,
+        "expected_confidence_max": 0.85,
+        "expected_routing": "HITL"
+      },
+      "routing_correct": true,
+      "confidence_calibrated": false,
+      "false_positive": false,
+      "false_negative": false,
+      "expected_routing": "HITL",
+      "success": true
+    },
+    {
+      "test_id": "MEDIUM_33",
+      "scenario": "INFRA_ERROR: Ambiguous infrastructure case 33",
+      "status": "HITL",
+      "confidence": 0.615,
+      "confidence_level": "MEDIUM",
+      "latency_ms": 9117.59,
+      "components": {
+        "relevance": 0.65,
+        "consistency": 1.0,
+        "grounding": 0.0,
+        "completeness": 1.0,
+        "classification": 0.68
+      },
+      "ground_truth": {
+        "is_correct": false,
+        "quality": "medium",
+        "expected_confidence_min": 0.65,
+        "expected_confidence_max": 0.85,
+        "expected_routing": "HITL"
+      },
+      "routing_correct": true,
+      "confidence_calibrated": false,
+      "false_positive": false,
+      "false_negative": false,
+      "expected_routing": "HITL",
+      "success": true
+    },
+    {
+      "test_id": "MEDIUM_34",
+      "scenario": "INFRA_ERROR: Ambiguous infrastructure case 34",
+      "status": "HITL",
+      "confidence": 0.615,
+      "confidence_level": "MEDIUM",
+      "latency_ms": 9527.2,
+      "components": {
+        "relevance": 0.65,
+        "consistency": 1.0,
+        "grounding": 0.0,
+        "completeness": 1.0,
+        "classification": 0.68
+      },
+      "ground_truth": {
+        "is_correct": false,
+        "quality": "medium",
+        "expected_confidence_min": 0.65,
+        "expected_confidence_max": 0.85,
+        "expected_routing": "HITL"
+      },
+      "routing_correct": true,
+      "confidence_calibrated": false,
+      "false_positive": false,
+      "false_negative": false,
+      "expected_routing": "HITL",
+      "success": true
+    },
+    {
+      "test_id": "MEDIUM_35",
+      "scenario": "INFRA_ERROR: Ambiguous infrastructure case 35",
+      "status": "HITL",
+      "confidence": 0.615,
+      "confidence_level": "MEDIUM",
+      "latency_ms": 9364.75,
+      "components": {
+        "relevance": 0.65,
+        "consistency": 1.0,
+        "grounding": 0.0,
+        "completeness": 1.0,
+        "classification": 0.68
+      },
+      "ground_truth": {
+        "is_correct": false,
+        "quality": "medium",
+        "expected_confidence_min": 0.65,
+        "expected_confidence_max": 0.85,
+        "expected_routing": "HITL"
+      },
+      "routing_correct": true,
+      "confidence_calibrated": false,
+      "false_positive": false,
+      "false_negative": false,
+      "expected_routing": "HITL",
+      "success": true
+    },
+    {
+      "test_id": "LOW_36",
+      "scenario": "CODE_ERROR: Poor quality analysis case 36",
+      "status": "HITL",
+      "confidence": 0.532,
+      "confidence_level": "MEDIUM",
+      "latency_ms": 9185.71,
+      "components": {
+        "relevance": 0.5,
+        "consistency": 1.0,
+        "grounding": 0.5,
+        "completeness": 0.0,
+        "classification": 0.55
+      },
+      "ground_truth": {
+        "is_correct": false,
+        "quality": "low",
+        "expected_confidence_min": 0.4,
+        "expected_confidence_max": 0.65,
+        "expected_routing": "CORRECTED"
+      },
+      "routing_correct": true,
+      "confidence_calibrated": true,
+      "false_positive": false,
+      "false_negative": false,
+      "expected_routing": "CORRECTED",
+      "success": true
+    },
+    {
+      "test_id": "LOW_37",
+      "scenario": "CODE_ERROR: Poor quality analysis case 37",
+      "status": "HITL",
+      "confidence": 0.532,
+      "confidence_level": "MEDIUM",
+      "latency_ms": 9645.91,
+      "components": {
+        "relevance": 0.5,
+        "consistency": 1.0,
+        "grounding": 0.5,
+        "completeness": 0.0,
+        "classification": 0.55
+      },
+      "ground_truth": {
+        "is_correct": false,
+        "quality": "low",
+        "expected_confidence_min": 0.4,
+        "expected_confidence_max": 0.65,
+        "expected_routing": "CORRECTED"
+      },
+      "routing_correct": true,
+      "confidence_calibrated": true,
+      "false_positive": false,
+      "false_negative": false,
+      "expected_routing": "CORRECTED",
+      "success": true
+    },
+    {
+      "test_id": "LOW_38",
+      "scenario": "CODE_ERROR: Poor quality analysis case 38",
+      "status": "HITL",
+      "confidence": 0.532,
+      "confidence_level": "MEDIUM",
+      "latency_ms": 11411.78,
+      "components": {
+        "relevance": 0.5,
+        "consistency": 1.0,
+        "grounding": 0.5,
+        "completeness": 0.0,
+        "classification": 0.55
+      },
+      "ground_truth": {
+        "is_correct": false,
+        "quality": "low",
+        "expected_confidence_min": 0.4,
+        "expected_confidence_max": 0.65,
+        "expected_routing": "CORRECTED"
+      },
+      "routing_correct": true,
+      "confidence_calibrated": true,
+      "false_positive": false,
+      "false_negative": false,
+      "expected_routing": "CORRECTED",
+      "success": true
+    },
+    {
+      "test_id": "LOW_39",
+      "scenario": "CODE_ERROR: Poor quality analysis case 39",
+      "status": "HITL",
+      "confidence": 0.532,
+      "confidence_level": "MEDIUM",
+      "latency_ms": 11862.36,
+      "components": {
+        "relevance": 0.5,
+        "consistency": 1.0,
+        "grounding": 0.5,
+        "completeness": 0.0,
+        "classification": 0.55
+      },
+      "ground_truth": {
+        "is_correct": false,
+        "quality": "low",
+        "expected_confidence_min": 0.4,
+        "expected_confidence_max": 0.65,
+        "expected_routing": "CORRECTED"
+      },
+      "routing_correct": true,
+      "confidence_calibrated": true,
+      "false_positive": false,
+      "false_negative": false,
+      "expected_routing": "CORRECTED",
+      "success": true
+    },
+    {
+      "test_id": "LOW_40",
+      "scenario": "CODE_ERROR: Poor quality analysis case 40",
+      "status": "HITL",
+      "confidence": 0.532,
+      "confidence_level": "MEDIUM",
+      "latency_ms": 10229.86,
+      "components": {
+        "relevance": 0.5,
+        "consistency": 1.0,
+        "grounding": 0.5,
+        "completeness": 0.0,
+        "classification": 0.55
+      },
+      "ground_truth": {
+        "is_correct": false,
+        "quality": "low",
+        "expected_confidence_min": 0.4,
+        "expected_confidence_max": 0.65,
+        "expected_routing": "CORRECTED"
+      },
+      "routing_correct": true,
+      "confidence_calibrated": true,
+      "false_positive": false,
+      "false_negative": false,
+      "expected_routing": "CORRECTED",
+      "success": true
+    },
+    {
+      "test_id": "LOW_41",
+      "scenario": "CODE_ERROR: Poor quality analysis case 41",
+      "status": "HITL",
+      "confidence": 0.532,
+      "confidence_level": "MEDIUM",
+      "latency_ms": 9744.54,
+      "components": {
+        "relevance": 0.5,
+        "consistency": 1.0,
+        "grounding": 0.5,
+        "completeness": 0.0,
+        "classification": 0.55
+      },
+      "ground_truth": {
+        "is_correct": false,
+        "quality": "low",
+        "expected_confidence_min": 0.4,
+        "expected_confidence_max": 0.65,
+        "expected_routing": "CORRECTED"
+      },
+      "routing_correct": true,
+      "confidence_calibrated": true,
+      "false_positive": false,
+      "false_negative": false,
+      "expected_routing": "CORRECTED",
+      "success": true
+    },
+    {
+      "test_id": "LOW_42",
+      "scenario": "CODE_ERROR: Poor quality analysis case 42",
+      "status": "HITL",
+      "confidence": 0.532,
+      "confidence_level": "MEDIUM",
+      "latency_ms": 11879.12,
+      "components": {
+        "relevance": 0.5,
+        "consistency": 1.0,
+        "grounding": 0.5,
+        "completeness": 0.0,
+        "classification": 0.55
+      },
+      "ground_truth": {
+        "is_correct": false,
+        "quality": "low",
+        "expected_confidence_min": 0.4,
+        "expected_confidence_max": 0.65,
+        "expected_routing": "CORRECTED"
+      },
+      "routing_correct": true,
+      "confidence_calibrated": true,
+      "false_positive": false,
+      "false_negative": false,
+      "expected_routing": "CORRECTED",
+      "success": true
+    },
+    {
+      "test_id": "LOW_43",
+      "scenario": "CODE_ERROR: Poor quality analysis case 43",
+      "status": "HITL",
+      "confidence": 0.532,
+      "confidence_level": "MEDIUM",
+      "latency_ms": 9729.18,
+      "components": {
+        "relevance": 0.5,
+        "consistency": 1.0,
+        "grounding": 0.5,
+        "completeness": 0.0,
+        "classification": 0.55
+      },
+      "ground_truth": {
+        "is_correct": false,
+        "quality": "low",
+        "expected_confidence_min": 0.4,
+        "expected_confidence_max": 0.65,
+        "expected_routing": "CORRECTED"
+      },
+      "routing_correct": true,
+      "confidence_calibrated": true,
+      "false_positive": false,
+      "false_negative": false,
+      "expected_routing": "CORRECTED",
+      "success": true
+    },
+    {
+      "test_id": "LOW_44",
+      "scenario": "CODE_ERROR: Poor quality analysis case 44",
+      "status": "HITL",
+      "confidence": 0.532,
+      "confidence_level": "MEDIUM",
+      "latency_ms": 11081.08,
+      "components": {
+        "relevance": 0.5,
+        "consistency": 1.0,
+        "grounding": 0.5,
+        "completeness": 0.0,
+        "classification": 0.55
+      },
+      "ground_truth": {
+        "is_correct": false,
+        "quality": "low",
+        "expected_confidence_min": 0.4,
+        "expected_confidence_max": 0.65,
+        "expected_routing": "CORRECTED"
+      },
+      "routing_correct": true,
+      "confidence_calibrated": true,
+      "false_positive": false,
+      "false_negative": false,
+      "expected_routing": "CORRECTED",
+      "success": true
+    },
+    {
+      "test_id": "LOW_45",
+      "scenario": "CODE_ERROR: Poor quality analysis case 45",
+      "status": "HITL",
+      "confidence": 0.532,
+      "confidence_level": "MEDIUM",
+      "latency_ms": 10080.45,
+      "components": {
+        "relevance": 0.5,
+        "consistency": 1.0,
+        "grounding": 0.5,
+        "completeness": 0.0,
+        "classification": 0.55
+      },
+      "ground_truth": {
+        "is_correct": false,
+        "quality": "low",
+        "expected_confidence_min": 0.4,
+        "expected_confidence_max": 0.65,
+        "expected_routing": "CORRECTED"
+      },
+      "routing_correct": true,
+      "confidence_calibrated": true,
+      "false_positive": false,
+      "false_negative": false,
+      "expected_routing": "CORRECTED",
+      "success": true
+    },
+    {
+      "test_id": "VERY_LOW_46",
+      "scenario": "UNKNOWN: Completely unhelpful case 46",
+      "status": "WEB_SEARCH",
+      "confidence": 0.575,
+      "confidence_level": "WEB_ENHANCED",
+      "latency_ms": 2830.18,
+      "components": {
+        "relevance": 0.0,
+        "consistency": 1.0,
+        "grounding": 0.0,
+        "completeness": 0.0,
+        "classification": 0.3
+      },
+      "ground_truth": {
+        "is_correct": false,
+        "quality": "very_low",
+        "expected_confidence_max": 0.4,
+        "expected_routing": "WEB_SEARCH"
+      },
+      "routing_correct": true,
+      "confidence_calibrated": false,
+      "false_positive": false,
+      "false_negative": false,
+      "expected_routing": "WEB_SEARCH",
+      "success": true
+    },
+    {
+      "test_id": "VERY_LOW_47",
+      "scenario": "UNKNOWN: Completely unhelpful case 47",
+      "status": "WEB_SEARCH",
+      "confidence": 0.575,
+      "confidence_level": "WEB_ENHANCED",
+      "latency_ms": 2394.62,
+      "components": {
+        "relevance": 0.0,
+        "consistency": 1.0,
+        "grounding": 0.0,
+        "completeness": 0.0,
+        "classification": 0.3
+      },
+      "ground_truth": {
+        "is_correct": false,
+        "quality": "very_low",
+        "expected_confidence_max": 0.4,
+        "expected_routing": "WEB_SEARCH"
+      },
+      "routing_correct": true,
+      "confidence_calibrated": false,
+      "false_positive": false,
+      "false_negative": false,
+      "expected_routing": "WEB_SEARCH",
+      "success": true
+    },
+    {
+      "test_id": "VERY_LOW_48",
+      "scenario": "UNKNOWN: Completely unhelpful case 48",
+      "status": "WEB_SEARCH",
+      "confidence": 0.575,
+      "confidence_level": "WEB_ENHANCED",
+      "latency_ms": 1956.94,
+      "components": {
+        "relevance": 0.0,
+        "consistency": 1.0,
+        "grounding": 0.0,
+        "completeness": 0.0,
+        "classification": 0.3
+      },
+      "ground_truth": {
+        "is_correct": false,
+        "quality": "very_low",
+        "expected_confidence_max": 0.4,
+        "expected_routing": "WEB_SEARCH"
+      },
+      "routing_correct": true,
+      "confidence_calibrated": false,
+      "false_positive": false,
+      "false_negative": false,
+      "expected_routing": "WEB_SEARCH",
+      "success": true
+    },
+    {
+      "test_id": "VERY_LOW_49",
+      "scenario": "UNKNOWN: Completely unhelpful case 49",
+      "status": "WEB_SEARCH",
+      "confidence": 0.575,
+      "confidence_level": "WEB_ENHANCED",
+      "latency_ms": 2241.58,
+      "components": {
+        "relevance": 0.0,
+        "consistency": 1.0,
+        "grounding": 0.0,
+        "completeness": 0.0,
+        "classification": 0.3
+      },
+      "ground_truth": {
+        "is_correct": false,
+        "quality": "very_low",
+        "expected_confidence_max": 0.4,
+        "expected_routing": "WEB_SEARCH"
+      },
+      "routing_correct": true,
+      "confidence_calibrated": false,
+      "false_positive": false,
+      "false_negative": false,
+      "expected_routing": "WEB_SEARCH",
+      "success": true
+    },
+    {
+      "test_id": "VERY_LOW_50",
+      "scenario": "UNKNOWN: Completely unhelpful case 50",
+      "status": "WEB_SEARCH",
+      "confidence": 0.575,
+      "confidence_level": "WEB_ENHANCED",
+      "latency_ms": 1893.68,
+      "components": {
+        "relevance": 0.0,
+        "consistency": 1.0,
+        "grounding": 0.0,
+        "completeness": 0.0,
+        "classification": 0.3
+      },
+      "ground_truth": {
+        "is_correct": false,
+        "quality": "very_low",
+        "expected_confidence_max": 0.4,
+        "expected_routing": "WEB_SEARCH"
+      },
+      "routing_correct": true,
+      "confidence_calibrated": false,
+      "false_positive": false,
+      "false_negative": false,
+      "expected_routing": "WEB_SEARCH",
+      "success": true
+    }
+  ],
+  "metrics": {
+    "summary": {
+      "total_tests": 50,
+      "successful_tests": 50,
+      "failed_tests": 0
+    },
+    "accuracy": {
+      "routing_accuracy": 60.0,
+      "target": 95.0,
+      "pass": false
+    },
+    "false_rates": {
+      "false_positive_rate": 0.0,
+      "false_positive_count": 0,
+      "false_negative_rate": 54.0,
+      "false_negative_count": 27,
+      "target_fp_rate": 5.0,
+      "target_fn_rate": 5.0
+    },
+    "confidence_calibration": {
+      "calibration_accuracy": 34.0,
+      "calibrated_count": 17,
+      "total_count": 50
+    },
+    "routing_distribution": {
+      "HITL": {
+        "count": 45,
+        "avg_confidence": 0.695
+      },
+      "WEB_SEARCH": {
+        "count": 5,
+        "avg_confidence": 0.575
+      }
+    },
+    "component_scores": {
+      "relevance": 0.669,
+      "consistency": 1.0,
+      "grounding": 0.315,
+      "completeness": 0.63,
+      "classification": 0.728
+    },
+    "performance": {
+      "avg_latency_ms": 3935.92,
+      "target_latency_ms": 1000,
+      "latency_acceptable": false
+    },
+    "quality_breakdown": {
+      "high": {
+        "total": 20,
+        "correct_routing": 0,
+        "accuracy": 0.0
+      },
+      "medium": {
+        "total": 15,
+        "correct_routing": 15,
+        "accuracy": 100.0
+      },
+      "low": {
+        "total": 10,
+        "correct_routing": 10,
+        "accuracy": 100.0
+      },
+      "very_low": {
+        "total": 5,
+        "correct_routing": 5,
+        "accuracy": 100.0
+      }
+    }
+  }
+}

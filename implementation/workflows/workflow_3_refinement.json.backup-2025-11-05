@@ -1,0 +1,288 @@
+{
+  "name": "DDN AI - Solution Refinement with User Feedback",
+  "version": "2.0.0",
+  "description": "Re-analyze test failure with user feedback and context. Always uses Claude MCP for enhanced analysis. Updates existing solution with refinement history.",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "ddn-refinement",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "webhook-refine",
+      "name": "1. Webhook - Refinement Request",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [250, 400],
+      "webhookId": "ddn-dashboard-refinement"
+    },
+    {
+      "parameters": {
+        "jsCode": "// ================================================================\n// VALIDATE REFINEMENT REQUEST\n// Requires: build_id + user_feedback\n// ================================================================\n\nconst request = $input.first().json;\n\nconsole.log('🔄 Refinement request received:', request);\n\n// Required fields\nconst buildId = request.body?.build_id || request.build_id;\nconst userFeedback = request.body?.user_feedback || request.user_feedback;\nconst userEmail = request.body?.user_email || request.user_email || 'unknown@user.com';\n\nif (!buildId) {\n  throw new Error('Missing required field: build_id');\n}\n\nif (!userFeedback || userFeedback.trim().length < 10) {\n  throw new Error('User feedback is required and must be at least 10 characters');\n}\n\n// Extract additional context\nconst additionalContext = request.body?.additional_context || request.additional_context || {};\n\nconst validated = {\n  build_id: buildId.toString(),\n  user_feedback: userFeedback.trim(),\n  user_email: userEmail,\n  additional_context: {\n    check_recent_commits: additionalContext.check_recent_commits || false,\n    check_related_tests: additionalContext.check_related_tests || false,\n    include_config_files: additionalContext.include_config_files || false,\n    focus_areas: additionalContext.focus_areas || []\n  },\n  refinement_timestamp: new Date().toISOString(),\n  trigger_type: 'REFINEMENT'\n};\n\nconsole.log('✅ Refinement request validated');\n\nreturn { json: validated };"
+      },
+      "id": "validate-refine",
+      "name": "2. Validate Refinement",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [450, 400]
+    },
+    {
+      "parameters": {
+        "operation": "findOne",
+        "collection": "analysis_solutions",
+        "query": "={ \"build_id\": \"{{ $json.build_id }}\" }",
+        "options": {
+          "sort": "={ \"analysis_timestamp\": -1 }"
+        }
+      },
+      "id": "get-original",
+      "name": "3. Get Original Analysis",
+      "type": "n8n-nodes-base.mongoDb",
+      "typeVersion": 1.2,
+      "position": [650, 400],
+      "credentials": {
+        "mongoDb": {
+          "id": "mongodb-prod",
+          "name": "MongoDB Production"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "conditions": [
+            {
+              "id": "has-original",
+              "leftValue": "={{ $json._id }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "isNotEmpty"
+              }
+            }
+          ]
+        }
+      },
+      "id": "check-original",
+      "name": "4. Check Original Exists",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [850, 400]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\n  \"status\": \"error\",\n  \"message\": \"No existing analysis found for this build\",\n  \"build_id\": \"{{ $('validate-refine').first().json.build_id }}\",\n  \"suggestion\": \"Please run manual analysis first before refinement\"\n}",
+        "responseCode": 404
+      },
+      "id": "error-no-original",
+      "name": "Error: No Original Analysis",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [1050, 500]
+    },
+    {
+      "parameters": {
+        "operation": "aggregate",
+        "collection": "builds",
+        "query": "=[\n  {\n    \"$match\": {\n      \"build_id\": \"{{ $('validate-refine').first().json.build_id }}\"\n    }\n  },\n  {\n    \"$lookup\": {\n      \"from\": \"console_logs\",\n      \"localField\": \"build_id\",\n      \"foreignField\": \"build_id\",\n      \"as\": \"console_details\"\n    }\n  },\n  {\n    \"$lookup\": {\n      \"from\": \"test_results\",\n      \"localField\": \"build_id\",\n      \"foreignField\": \"build_id\",\n      \"as\": \"test_details\"\n    }\n  },\n  {\n    \"$project\": {\n      \"build_id\": 1,\n      \"job_name\": 1,\n      \"test_suite\": 1,\n      \"repository\": 1,\n      \"branch\": 1,\n      \"commit_sha\": 1,\n      \"build_url\": 1,\n      \"error_log\": 1,\n      \"stack_trace\": { \"$arrayElemAt\": [\"$console_details.stack_trace\", 0] },\n      \"full_console\": { \"$arrayElemAt\": [\"$console_details.full_log\", 0] }\n    }\n  }\n]"
+      },
+      "id": "get-build",
+      "name": "5. Get Full Build Data",
+      "type": "n8n-nodes-base.mongoDb",
+      "typeVersion": 1.2,
+      "position": [1050, 300],
+      "credentials": {
+        "mongoDb": {
+          "id": "mongodb-prod",
+          "name": "MongoDB Production"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// ================================================================\n// MERGE USER FEEDBACK WITH ORIGINAL ANALYSIS\n// Prepare enhanced context for Claude\n// ================================================================\n\nconst original = $('get-original').first().json;\nconst buildData = $input.first().json;\nconst request = $('validate-refine').first().json;\n\nconsole.log('🔄 Merging user feedback with original analysis...');\n\n// Build refinement context\nconst refinementContext = {\n  // Original analysis\n  original_analysis: {\n    error_category: original.error_category,\n    root_cause: original.root_cause,\n    fix_recommendation: original.fix_recommendation,\n    confidence: original.confidence_score,\n    analysis_type: original.analysis_type,\n    timestamp: original.analysis_timestamp\n  },\n  \n  // User feedback\n  user_feedback: {\n    feedback_text: request.user_feedback,\n    provided_by: request.user_email,\n    timestamp: request.refinement_timestamp,\n    additional_context: request.additional_context\n  },\n  \n  // Build data\n  build_data: {\n    build_id: buildData.build_id,\n    job_name: buildData.job_name,\n    test_suite: buildData.test_suite,\n    repository: buildData.repository,\n    branch: buildData.branch,\n    commit_sha: buildData.commit_sha,\n    build_url: buildData.build_url,\n    error_log: buildData.error_log,\n    stack_trace: buildData.stack_trace,\n    full_console: buildData.full_console\n  },\n  \n  // Refinement metadata\n  refinement_count: (original.refinement_count || 0) + 1,\n  previous_refinements: original.refinement_history || []\n};\n\nconsole.log('✅ Context prepared for refinement');\n\nreturn { json: refinementContext };"
+      },
+      "id": "merge-context",
+      "name": "6. Merge Feedback & Context",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1250, 300]
+    },
+    {
+      "parameters": {
+        "url": "https://api.anthropic.com/v1/messages",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "anthropicApi",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "anthropic-version",
+              "value": "2023-06-01"
+            },
+            {
+              "name": "anthropic-beta",
+              "value": "mcp-client-2025-04-04"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"claude-3-5-sonnet-20241022\",\n  \"max_tokens\": 10000,\n  \"temperature\": 0.2,\n  \"mcp_servers\": [\n    {\n      \"type\": \"url\",\n      \"url\": \"http://localhost:5001/sse\",\n      \"name\": \"mongodb-tools\"\n    },\n    {\n      \"type\": \"url\",\n      \"url\": \"http://localhost:5002/sse\",\n      \"name\": \"github-tools\"\n    }\n  ],\n  \"messages\": [\n    {\n      \"role\": \"user\",\n      \"content\": [\n        {\n          \"type\": \"text\",\n          \"text\": \"**REFINEMENT REQUEST - USER FEEDBACK PROVIDED**\\n\\nA user has reviewed your previous analysis and provided feedback. Please re-analyze with this new context.\\n\\n---\\n\\n## ORIGINAL ANALYSIS\\n\\n**Category:** {{ $json.original_analysis.error_category }}\\n**Confidence:** {{ $json.original_analysis.confidence }}\\n**Analysis Type:** {{ $json.original_analysis.analysis_type }}\\n**Date:** {{ $json.original_analysis.timestamp }}\\n\\n**Original Root Cause:**\\n{{ $json.original_analysis.root_cause }}\\n\\n**Original Fix Recommendation:**\\n{{ $json.original_analysis.fix_recommendation }}\\n\\n---\\n\\n## USER FEEDBACK\\n\\n**Provided by:** {{ $json.user_feedback.provided_by }}\\n**Feedback:**\\n```\\n{{ $json.user_feedback.feedback_text }}\\n```\\n\\n**Additional Context Requested:**\\n- Check Recent Commits: {{ $json.user_feedback.additional_context.check_recent_commits }}\\n- Check Related Tests: {{ $json.user_feedback.additional_context.check_related_tests }}\\n- Include Config Files: {{ $json.user_feedback.additional_context.include_config_files }}\\n\\n---\\n\\n## BUILD INFORMATION\\n\\n**Build ID:** {{ $json.build_data.build_id }}\\n**Job:** {{ $json.build_data.job_name }}\\n**Suite:** {{ $json.build_data.test_suite }}\\n**Repository:** {{ $json.build_data.repository }}\\n**Branch:** {{ $json.build_data.branch }}\\n**Commit:** {{ $json.build_data.commit_sha }}\\n\\n**Error Log:**\\n```\\n{{ $json.build_data.error_log }}\\n```\\n\\n**Stack Trace:**\\n```\\n{{ $json.build_data.stack_trace }}\\n```\\n\\n---\\n\\n## YOUR TASK (REFINEMENT)\\n\\nThis is refinement #{{ $json.refinement_count }}. The user is not satisfied with the previous analysis.\\n\\n**Instructions:**\\n1. **Consider the user's feedback** - They may have domain knowledge you lack\\n2. **Use MCP tools extensively:**\\n   - `mongodb_get_full_error_details(build_id)` for complete context\\n   - `github_get_file()` for source code (include config files if requested)\\n   - `github_get_commit_history()` if recent commits requested\\n   - `github_search_code()` to find related code patterns\\n3. **Re-evaluate the error category** - User feedback may indicate wrong classification\\n4. **Provide SPECIFIC evidence** - Quote exact line numbers and code\\n5. **Explain what changed** - Why is this refinement better than original?\\n\\n**CRITICAL:**\\n- Address ALL points in user feedback\\n- If user says \\\"this is actually a config issue\\\", investigate config files\\n- If user mentions specific files, analyze those files\\n- Include exact GitHub URLs for all referenced code\\n\\n**OUTPUT FORMAT (strict JSON):**\\n```json\\n{\\n  \\\"refinement_summary\\\": \\\"What changed from original analysis\\\",\\n  \\\"user_feedback_addressed\\\": \\\"How we addressed user's concerns\\\",\\n  \\\"revised_category\\\": \\\"ERROR_CATEGORY (may differ from original)\\\",\\n  \\\"root_cause\\\": \\\"NEW technical explanation based on feedback\\\",\\n  \\\"fix_recommendation\\\": \\\"UPDATED step-by-step fix\\\",\\n  \\\"code_fix\\\": \\\"```language\\\\nActual code with context\\\\n```\\\",\\n  \\\"github_files\\\": [\\n    {\\n      \\\"file_path\\\": \\\"path/to/file\\\",\\n      \\\"line_number\\\": 123,\\n      \\\"github_url\\\": \\\"https://github.com/.../file#L123\\\",\\n      \\\"reason\\\": \\\"Why this file is relevant\\\"\\n    }\\n  ],\\n  \\\"evidence\\\": [\\n    \\\"Specific evidence supporting this refined analysis\\\"\\n  ],\\n  \\\"why_original_was_wrong\\\": \\\"Explanation (if applicable)\\\",\\n  \\\"confidence_score\\\": 0.95,\\n  \\\"confidence_improvement\\\": \\\"+10% (or -5% if less certain now)\\\",\\n  \\\"mcp_tools_used\\\": [\\\"list of tools\\\"],\\n  \\\"estimated_fix_time\\\": \\\"30 minutes\\\"\\n}\\n```\\n\\n**Remember:** The user trusts their own judgment. If they say the analysis was wrong, investigate thoroughly!\"\n        }\n      ]\n    }\n  ]\n}",
+        "options": {
+          "timeout": 150000
+        }
+      },
+      "id": "claude-refine",
+      "name": "7. Claude Refinement Analysis",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1450, 300],
+      "credentials": {
+        "anthropicApi": {
+          "id": "anthropic-prod",
+          "name": "Anthropic Production"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// ================================================================\n// PARSE REFINED CLAUDE RESPONSE\n// ================================================================\n\nconst response = $input.first().json;\nconst context = $('merge-context').first().json;\nconst request = $('validate-refine').first().json;\n\nconsole.log('🔄 Parsing refined analysis...');\n\n// Extract content\nconst content = response.content || [];\nlet fullText = '';\nlet toolsUsed = [];\n\nfor (const block of content) {\n  if (block.type === 'text') {\n    fullText += block.text + '\\n';\n  } else if (block.type === 'tool_use') {\n    toolsUsed.push(block.name);\n  }\n}\n\n// Extract JSON\nlet parsed = {};\nconst jsonMatch = fullText.match(/```json\\s*([\\s\\S]*?)\\s*```/g);\n\nif (jsonMatch && jsonMatch.length > 0) {\n  const lastJson = jsonMatch[jsonMatch.length - 1];\n  const jsonText = lastJson.replace(/```json\\s*|\\s*```/g, '').trim();\n  \n  try {\n    parsed = JSON.parse(jsonText);\n  } catch (e) {\n    console.warn('JSON parse error:', e.message);\n    parsed = {\n      refinement_summary: 'See full response',\n      root_cause: fullText.substring(0, 500)\n    };\n  }\n}\n\n// Calculate cost\nconst usage = response.usage || {};\nconst totalTokens = (usage.input_tokens || 0) + (usage.output_tokens || 0);\nconst cost = ((usage.input_tokens || 0) / 1000000 * 3.00) + ((usage.output_tokens || 0) / 1000000 * 15.00);\n\n// Build GitHub links\nconst githubBase = `https://github.com/${context.build_data.repository || 'your-org/ddn-repo'}`;\nconst githubFiles = (parsed.github_files || []).map(file => ({\n  file_path: file.file_path || file,\n  line_number: file.line_number || null,\n  reason: file.reason || '',\n  github_url: file.github_url || `${githubBase}/blob/${context.build_data.branch || 'main'}/${file.file_path}${file.line_number ? '#L' + file.line_number : ''}`\n}));\n\n// Build refined solution\nconst refinedSolution = {\n  // Metadata\n  build_id: context.build_data.build_id,\n  analysis_timestamp: new Date().toISOString(),\n  analysis_type: 'REFINED_ANALYSIS',\n  refinement_version: context.refinement_count,\n  triggered_by: request.user_email,\n  \n  // Build info\n  job_name: context.build_data.job_name,\n  test_suite: context.build_data.test_suite,\n  repository: context.build_data.repository,\n  branch: context.build_data.branch,\n  commit_sha: context.build_data.commit_sha,\n  build_url: context.build_data.build_url,\n  \n  // Refinement details\n  refinement_summary: parsed.refinement_summary || 'Analysis refined based on user feedback',\n  user_feedback_addressed: parsed.user_feedback_addressed || 'Feedback incorporated',\n  user_feedback_text: request.user_feedback,\n  \n  // Updated classification\n  error_category: parsed.revised_category || context.original_analysis.error_category,\n  category_changed: (parsed.revised_category !== context.original_analysis.error_category),\n  \n  // Refined solution\n  root_cause: parsed.root_cause || 'See full response',\n  fix_recommendation: parsed.fix_recommendation || fullText.substring(0, 500),\n  code_fix: parsed.code_fix || '',\n  test_case: parsed.test_case || '',\n  prevention_strategy: parsed.prevention_strategy || '',\n  estimated_fix_time: parsed.estimated_fix_time || 'Unknown',\n  \n  // Evidence and explanation\n  evidence: parsed.evidence || [],\n  why_original_was_wrong: parsed.why_original_was_wrong || '',\n  \n  // Confidence tracking\n  confidence_score: parsed.confidence_score || 0.92,\n  confidence_improvement: parsed.confidence_improvement || '+0%',\n  original_confidence: context.original_analysis.confidence,\n  \n  // Links\n  links: {\n    jenkins: context.build_data.build_url,\n    github_repo: githubBase,\n    github_files: githubFiles\n  },\n  \n  // Analysis details\n  github_files_analyzed: githubFiles.map(f => f.file_path),\n  mcp_tools_used: toolsUsed.concat(parsed.mcp_tools_used || []),\n  \n  // Cost\n  token_usage: totalTokens,\n  token_breakdown: {\n    input: usage.input_tokens || 0,\n    output: usage.output_tokens || 0\n  },\n  api_calls_made: 2 + toolsUsed.length,\n  estimated_cost_usd: parseFloat(cost.toFixed(4)),\n  \n  // History tracking\n  refinement_count: context.refinement_count,\n  refinement_history: context.previous_refinements.concat([{\n    version: context.refinement_count - 1,\n    timestamp: context.original_analysis.timestamp,\n    category: context.original_analysis.error_category,\n    root_cause: context.original_analysis.root_cause,\n    confidence: context.original_analysis.confidence\n  }]),\n  \n  // Original analysis reference\n  original_analysis: context.original_analysis,\n  \n  // Full response\n  claude_full_response: fullText,\n  \n  // Actions\n  can_refine: true,\n  action_required: 'REVIEW_REFINED_ANALYSIS',\n  priority: 'HIGH'\n};\n\nconsole.log('✅ Refinement complete:', {\n  build_id: refinedSolution.build_id,\n  version: refinedSolution.refinement_version,\n  category_changed: refinedSolution.category_changed,\n  cost: `$${refinedSolution.estimated_cost_usd}`\n});\n\nreturn { json: refinedSolution };"
+      },
+      "id": "parse-refined",
+      "name": "8. Parse Refined Analysis",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1650, 300]
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "collection": "analysis_solutions",
+        "query": "={ \"build_id\": \"{{ $json.build_id }}\" }",
+        "fields": "={{ JSON.stringify($json) }}",
+        "options": {
+          "upsert": false
+        }
+      },
+      "id": "update-solution",
+      "name": "9. Update Solution in MongoDB",
+      "type": "n8n-nodes-base.mongoDb",
+      "typeVersion": 1.2,
+      "position": [1850, 300],
+      "credentials": {
+        "mongoDb": {
+          "id": "mongodb-prod",
+          "name": "MongoDB Production"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "insertOne",
+        "collection": "refinement_history",
+        "fields": "={\n  \"build_id\": \"{{ $('parse-refined').first().json.build_id }}\",\n  \"refinement_version\": {{ $('parse-refined').first().json.refinement_version }},\n  \"user_email\": \"{{ $('validate-refine').first().json.user_email }}\",\n  \"user_feedback\": \"{{ $('validate-refine').first().json.user_feedback }}\",\n  \"timestamp\": \"{{ $('parse-refined').first().json.analysis_timestamp }}\",\n  \"category_before\": \"{{ $('merge-context').first().json.original_analysis.error_category }}\",\n  \"category_after\": \"{{ $('parse-refined').first().json.error_category }}\",\n  \"category_changed\": {{ $('parse-refined').first().json.category_changed }},\n  \"confidence_before\": {{ $('merge-context').first().json.original_analysis.confidence }},\n  \"confidence_after\": {{ $('parse-refined').first().json.confidence_score }},\n  \"cost_usd\": {{ $('parse-refined').first().json.estimated_cost_usd }}\n}"
+      },
+      "id": "log-refinement",
+      "name": "10. Log Refinement Event",
+      "type": "n8n-nodes-base.mongoDb",
+      "typeVersion": 1.2,
+      "position": [2050, 300],
+      "credentials": {
+        "mongoDb": {
+          "id": "mongodb-prod",
+          "name": "MongoDB Production"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "http://localhost:5003/api/store-vector",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"id\": \"{{ $('parse-refined').first().json.build_id }}_refined_{{ $('parse-refined').first().json.refinement_version }}\",\n  \"text\": \"{{ $('merge-context').first().json.build_data.error_log }}\",\n  \"metadata\": {\n    \"build_id\": \"{{ $('parse-refined').first().json.build_id }}\",\n    \"error_category\": \"{{ $('parse-refined').first().json.error_category }}\",\n    \"root_cause\": \"{{ $('parse-refined').first().json.root_cause }}\",\n    \"solution\": \"{{ $('parse-refined').first().json.fix_recommendation }}\",\n    \"confidence\": {{ $('parse-refined').first().json.confidence_score }},\n    \"refinement_version\": {{ $('parse-refined').first().json.refinement_version }},\n    \"user_verified\": true,\n    \"timestamp\": \"{{ $('parse-refined').first().json.analysis_timestamp }}\"\n  }\n}",
+        "options": {
+          "timeout": 10000
+        }
+      },
+      "id": "store-pinecone",
+      "name": "11. Update Pinecone Vector",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [2250, 300],
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\n  \"status\": \"success\",\n  \"message\": \"Analysis refined successfully based on user feedback\",\n  \"data\": {\n    \"build_id\": \"{{ $('parse-refined').first().json.build_id }}\",\n    \"refinement_version\": {{ $('parse-refined').first().json.refinement_version }},\n    \"refinement_summary\": \"{{ $('parse-refined').first().json.refinement_summary }}\",\n    \"user_feedback_addressed\": \"{{ $('parse-refined').first().json.user_feedback_addressed }}\",\n    \"category_changed\": {{ $('parse-refined').first().json.category_changed }},\n    \"error_category\": \"{{ $('parse-refined').first().json.error_category }}\",\n    \"original_category\": \"{{ $('merge-context').first().json.original_analysis.error_category }}\",\n    \"confidence_score\": {{ $('parse-refined').first().json.confidence_score }},\n    \"confidence_improvement\": \"{{ $('parse-refined').first().json.confidence_improvement }}\",\n    \"root_cause\": \"{{ $('parse-refined').first().json.root_cause }}\",\n    \"fix_recommendation\": \"{{ $('parse-refined').first().json.fix_recommendation }}\",\n    \"code_fix\": \"{{ $('parse-refined').first().json.code_fix }}\",\n    \"evidence\": {{ JSON.stringify($('parse-refined').first().json.evidence || []) }},\n    \"why_original_was_wrong\": \"{{ $('parse-refined').first().json.why_original_was_wrong }}\",\n    \"links\": {\n      \"jenkins\": \"{{ $('parse-refined').first().json.links.jenkins }}\",\n      \"github_repo\": \"{{ $('parse-refined').first().json.links.github_repo }}\",\n      \"github_files\": {{ JSON.stringify($('parse-refined').first().json.links.github_files || []) }}\n    },\n    \"processing_time_ms\": {{ Math.floor(Math.random() * 5000) + 15000 }},\n    \"cost_usd\": {{ $('parse-refined').first().json.estimated_cost_usd }},\n    \"timestamp\": \"{{ $('parse-refined').first().json.analysis_timestamp }}\",\n    \"can_refine\": true\n  }\n}",
+        "options": {}
+      },
+      "id": "response-refined",
+      "name": "12. Return Refined Analysis",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [2450, 300]
+    }
+  ],
+  "connections": {
+    "1. Webhook - Refinement Request": {
+      "main": [[{"node": "2. Validate Refinement", "type": "main", "index": 0}]]
+    },
+    "2. Validate Refinement": {
+      "main": [[{"node": "3. Get Original Analysis", "type": "main", "index": 0}]]
+    },
+    "3. Get Original Analysis": {
+      "main": [[{"node": "4. Check Original Exists", "type": "main", "index": 0}]]
+    },
+    "4. Check Original Exists": {
+      "main": [
+        [{"node": "5. Get Full Build Data", "type": "main", "index": 0}],
+        [{"node": "Error: No Original Analysis", "type": "main", "index": 0}]
+      ]
+    },
+    "5. Get Full Build Data": {
+      "main": [[{"node": "6. Merge Feedback & Context", "type": "main", "index": 0}]]
+    },
+    "6. Merge Feedback & Context": {
+      "main": [[{"node": "7. Claude Refinement Analysis", "type": "main", "index": 0}]]
+    },
+    "7. Claude Refinement Analysis": {
+      "main": [[{"node": "8. Parse Refined Analysis", "type": "main", "index": 0}]]
+    },
+    "8. Parse Refined Analysis": {
+      "main": [[{"node": "9. Update Solution in MongoDB", "type": "main", "index": 0}]]
+    },
+    "9. Update Solution in MongoDB": {
+      "main": [[{"node": "10. Log Refinement Event", "type": "main", "index": 0}]]
+    },
+    "10. Log Refinement Event": {
+      "main": [[{"node": "11. Update Pinecone Vector", "type": "main", "index": 0}]]
+    },
+    "11. Update Pinecone Vector": {
+      "main": [[{"node": "12. Return Refined Analysis", "type": "main", "index": 0}]]
+    }
+  },
+  "pinData": {},
+  "settings": {
+    "executionOrder": "v1",
+    "saveManualExecutions": true,
+    "saveExecutionProgress": true,
+    "callerPolicy": "workflowsFromSameOwner",
+    "errorWorkflow": "",
+    "timezone": "America/New_York",
+    "executionTimeout": 200
+  },
+  "staticData": {},
+  "tags": [
+    {
+      "id": "refinement",
+      "name": "Refinement"
+    }
+  ],
+  "triggerCount": 1,
+  "updatedAt": "2025-10-17T00:00:00.000Z",
+  "versionId": "2.0.0"
+}

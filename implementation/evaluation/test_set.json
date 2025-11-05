@@ -1,0 +1,1749 @@
+{
+  "test_cases": [
+    {
+      "id": "TEST_001",
+      "category": "CODE_ERROR",
+      "query": "AttributeError: 'NoneType' object has no attribute 'get' in user_service.py line 45",
+      "error_message": "AttributeError: 'NoneType' object has no attribute 'get'\nFile: user_service.py, line 45\n    user_data = response.get('user')",
+      "stack_trace": "Traceback (most recent call last):\n  File \"user_service.py\", line 45, in get_user_data\n    user_data = response.get('user')\nAttributeError: 'NoneType' object has no attribute 'get'",
+      "ground_truth": {
+        "root_cause": "Null pointer exception - response object is None before calling .get()",
+        "recommendation": "Add null check: if response is not None before accessing attributes",
+        "severity": "HIGH",
+        "confidence": 0.95,
+        "category": "CODE_ERROR",
+        "file_path": "user_service.py",
+        "line_number": 45
+      },
+      "verified_by": "human_expert",
+      "verification_date": "2025-11-03"
+    },
+    {
+      "id": "TEST_002",
+      "category": "INFRA_ERROR",
+      "query": "ConnectionRefusedError: [Errno 111] Connection refused when connecting to Redis on localhost:6379",
+      "error_message": "ConnectionRefusedError: [Errno 111] Connection refused",
+      "stack_trace": "redis.exceptions.ConnectionError: Error 111 connecting to localhost:6379. Connection refused.",
+      "ground_truth": {
+        "root_cause": "Redis server is not running or not accessible on localhost:6379",
+        "recommendation": "Start Redis server: redis-server or docker run -d -p 6379:6379 redis",
+        "severity": "CRITICAL",
+        "confidence": 0.98,
+        "category": "INFRA_ERROR",
+        "service": "redis"
+      },
+      "verified_by": "human_expert",
+      "verification_date": "2025-11-03"
+    },
+    {
+      "id": "TEST_003",
+      "category": "CONFIG_ERROR",
+      "query": "KeyError: 'DATABASE_URL' not found in environment variables",
+      "error_message": "KeyError: 'DATABASE_URL'",
+      "stack_trace": "File \"config.py\", line 12, in load_config\n    db_url = os.environ['DATABASE_URL']\nKeyError: 'DATABASE_URL'",
+      "ground_truth": {
+        "root_cause": "Missing DATABASE_URL environment variable in .env file",
+        "recommendation": "Add DATABASE_URL=postgresql://user:pass@localhost:5432/dbname to .env file",
+        "severity": "CRITICAL",
+        "confidence": 0.99,
+        "category": "CONFIG_ERROR",
+        "config_key": "DATABASE_URL"
+      },
+      "verified_by": "human_expert",
+      "verification_date": "2025-11-03"
+    },
+    {
+      "id": "TEST_004",
+      "category": "DEPENDENCY_ERROR",
+      "query": "ModuleNotFoundError: No module named 'pinecone'",
+      "error_message": "ModuleNotFoundError: No module named 'pinecone'",
+      "stack_trace": "File \"rag_service.py\", line 3, in <module>\n    from pinecone import Pinecone\nModuleNotFoundError: No module named 'pinecone'",
+      "ground_truth": {
+        "root_cause": "Pinecone package not installed in Python environment",
+        "recommendation": "Install pinecone: pip install pinecone-client",
+        "severity": "CRITICAL",
+        "confidence": 0.99,
+        "category": "DEPENDENCY_ERROR",
+        "package": "pinecone-client"
+      },
+      "verified_by": "human_expert",
+      "verification_date": "2025-11-03"
+    },
+    {
+      "id": "TEST_005",
+      "category": "TEST_ERROR",
+      "query": "AssertionError: Expected 200 but got 404 in test_api_endpoint",
+      "error_message": "AssertionError: Expected status code 200 but got 404",
+      "stack_trace": "File \"test_api.py\", line 67, in test_api_endpoint\n    assert response.status_code == 200\nAssertionError",
+      "ground_truth": {
+        "root_cause": "API endpoint returns 404 instead of expected 200 status code",
+        "recommendation": "Check if API route is correctly defined and endpoint URL is correct",
+        "severity": "MEDIUM",
+        "confidence": 0.90,
+        "category": "TEST_ERROR",
+        "test_name": "test_api_endpoint"
+      },
+      "verified_by": "human_expert",
+      "verification_date": "2025-11-03"
+    },
+    {
+      "id": "TEST_006",
+      "category": "CODE_ERROR",
+      "query": "IndexError: list index out of range in data_processor.py line 123",
+      "error_message": "IndexError: list index out of range",
+      "stack_trace": "File \"data_processor.py\", line 123, in process_items\n    first_item = items[0]\nIndexError: list index out of range",
+      "ground_truth": {
+        "root_cause": "Attempting to access index 0 of empty list",
+        "recommendation": "Add length check: if items before accessing items[0]",
+        "severity": "HIGH",
+        "confidence": 0.95,
+        "category": "CODE_ERROR",
+        "file_path": "data_processor.py",
+        "line_number": 123
+      },
+      "verified_by": "human_expert",
+      "verification_date": "2025-11-03"
+    },
+    {
+      "id": "TEST_007",
+      "category": "INFRA_ERROR",
+      "query": "TimeoutError: MongoDB connection timeout after 30 seconds",
+      "error_message": "pymongo.errors.ServerSelectionTimeoutError: localhost:27017: [Errno 111] Connection refused, Timeout: 30s",
+      "stack_trace": "pymongo.errors.ServerSelectionTimeoutError: localhost:27017: [Errno 111] Connection refused",
+      "ground_truth": {
+        "root_cause": "MongoDB server not running or network connectivity issue",
+        "recommendation": "Start MongoDB: mongod --dbpath /data/db or check MongoDB service status",
+        "severity": "CRITICAL",
+        "confidence": 0.97,
+        "category": "INFRA_ERROR",
+        "service": "mongodb"
+      },
+      "verified_by": "human_expert",
+      "verification_date": "2025-11-03"
+    },
+    {
+      "id": "TEST_008",
+      "category": "CODE_ERROR",
+      "query": "ValueError: invalid literal for int() with base 10: 'abc'",
+      "error_message": "ValueError: invalid literal for int() with base 10: 'abc'",
+      "stack_trace": "File \"parser.py\", line 89, in parse_number\n    result = int(value)\nValueError: invalid literal for int() with base 10: 'abc'",
+      "ground_truth": {
+        "root_cause": "Attempting to convert non-numeric string 'abc' to integer",
+        "recommendation": "Add input validation: try/except block or check if value.isdigit() before conversion",
+        "severity": "MEDIUM",
+        "confidence": 0.96,
+        "category": "CODE_ERROR",
+        "file_path": "parser.py",
+        "line_number": 89
+      },
+      "verified_by": "human_expert",
+      "verification_date": "2025-11-03"
+    },
+    {
+      "id": "TEST_009",
+      "category": "CONFIG_ERROR",
+      "query": "Invalid API key format in OPENAI_API_KEY environment variable",
+      "error_message": "openai.error.AuthenticationError: Incorrect API key provided",
+      "stack_trace": "openai.error.AuthenticationError: Incorrect API key provided: sk-invalid",
+      "ground_truth": {
+        "root_cause": "OpenAI API key is invalid or incorrectly formatted",
+        "recommendation": "Verify OPENAI_API_KEY in .env file has valid API key from OpenAI dashboard",
+        "severity": "CRITICAL",
+        "confidence": 0.98,
+        "category": "CONFIG_ERROR",
+        "config_key": "OPENAI_API_KEY"
+      },
+      "verified_by": "human_expert",
+      "verification_date": "2025-11-03"
+    },
+    {
+      "id": "TEST_010",
+      "category": "DEPENDENCY_ERROR",
+      "query": "ImportError: cannot import name 'create_react_agent' from 'agents'",
+      "error_message": "ImportError: cannot import name 'create_react_agent' from 'agents'",
+      "stack_trace": "File \"main.py\", line 5, in <module>\n    from agents import create_react_agent\nImportError: cannot import name 'create_react_agent'",
+      "ground_truth": {
+        "root_cause": "Function create_react_agent does not exist in agents module or module structure changed",
+        "recommendation": "Check agents/__init__.py exports or verify function name in react_agent_service.py",
+        "severity": "HIGH",
+        "confidence": 0.92,
+        "category": "DEPENDENCY_ERROR",
+        "module": "agents"
+      },
+      "verified_by": "human_expert",
+      "verification_date": "2025-11-03"
+    },
+    {
+      "id": "TEST_011",
+      "category": "CODE_ERROR",
+      "query": "KeyError: 'user_id' when accessing request data in Flask endpoint",
+      "error_message": "KeyError: 'user_id'",
+      "stack_trace": "File \"api.py\", line 234, in create_user\n    user_id = request.json['user_id']\nKeyError: 'user_id'",
+      "ground_truth": {
+        "root_cause": "Missing 'user_id' field in JSON request body",
+        "recommendation": "Use request.json.get('user_id') or add validation to check required fields",
+        "severity": "MEDIUM",
+        "confidence": 0.94,
+        "category": "CODE_ERROR",
+        "file_path": "api.py",
+        "line_number": 234
+      },
+      "verified_by": "human_expert",
+      "verification_date": "2025-11-03"
+    },
+    {
+      "id": "TEST_012",
+      "category": "INFRA_ERROR",
+      "query": "PostgreSQL connection failed: FATAL: password authentication failed for user 'postgres'",
+      "error_message": "psycopg2.OperationalError: FATAL: password authentication failed for user \"postgres\"",
+      "stack_trace": "psycopg2.OperationalError: connection to server at \"localhost\" (127.0.0.1), port 5432 failed: FATAL: password authentication failed for user \"postgres\"",
+      "ground_truth": {
+        "root_cause": "Incorrect PostgreSQL password or user does not have access",
+        "recommendation": "Verify POSTGRES_PASSWORD in .env matches PostgreSQL user password",
+        "severity": "CRITICAL",
+        "confidence": 0.99,
+        "category": "INFRA_ERROR",
+        "service": "postgresql"
+      },
+      "verified_by": "human_expert",
+      "verification_date": "2025-11-03"
+    },
+    {
+      "id": "TEST_013",
+      "category": "TEST_ERROR",
+      "query": "Timeout in test_data_processing: test exceeded 30 seconds",
+      "error_message": "pytest.Timeout: test exceeded 30.0 seconds",
+      "stack_trace": "File \"test_processing.py\", line 45, in test_data_processing\n    result = process_large_dataset(data)\npytest.Timeout: test exceeded 30.0 seconds",
+      "ground_truth": {
+        "root_cause": "Test execution time exceeds configured timeout limit",
+        "recommendation": "Optimize process_large_dataset() or increase timeout with @pytest.mark.timeout(60)",
+        "severity": "MEDIUM",
+        "confidence": 0.91,
+        "category": "TEST_ERROR",
+        "test_name": "test_data_processing"
+      },
+      "verified_by": "human_expert",
+      "verification_date": "2025-11-03"
+    },
+    {
+      "id": "TEST_014",
+      "category": "CODE_ERROR",
+      "query": "TypeError: unsupported operand type(s) for +: 'int' and 'str'",
+      "error_message": "TypeError: unsupported operand type(s) for +: 'int' and 'str'",
+      "stack_trace": "File \"calculator.py\", line 56, in add_values\n    result = num1 + num2\nTypeError: unsupported operand type(s) for +: 'int' and 'str'",
+      "ground_truth": {
+        "root_cause": "Attempting to add integer and string without type conversion",
+        "recommendation": "Convert to same type: result = int(num1) + int(num2) or str(num1) + str(num2)",
+        "severity": "HIGH",
+        "confidence": 0.97,
+        "category": "CODE_ERROR",
+        "file_path": "calculator.py",
+        "line_number": 56
+      },
+      "verified_by": "human_expert",
+      "verification_date": "2025-11-03"
+    },
+    {
+      "id": "TEST_015",
+      "category": "CONFIG_ERROR",
+      "query": "Invalid Pinecone environment: 'us-east-1-aws' not found",
+      "error_message": "pinecone.exceptions.PineconeException: Invalid environment 'us-east-1-aws'",
+      "stack_trace": "pinecone.exceptions.PineconeException: Environment 'us-east-1-aws' not found",
+      "ground_truth": {
+        "root_cause": "PINECONE_ENVIRONMENT value in .env does not match actual Pinecone environment",
+        "recommendation": "Check Pinecone dashboard for correct environment name (e.g., 'us-east-1' or 'gcp-starter')",
+        "severity": "HIGH",
+        "confidence": 0.96,
+        "category": "CONFIG_ERROR",
+        "config_key": "PINECONE_ENVIRONMENT"
+      },
+      "verified_by": "human_expert",
+      "verification_date": "2025-11-03"
+    },
+    {
+      "id": "TEST_016",
+      "category": "INFRA_ERROR",
+      "query": "Celery worker connection failed: [Errno 61] Connection refused (broker: redis://localhost:6379/0)",
+      "error_message": "celery.exceptions.OperationalError: [Errno 61] Connection refused",
+      "stack_trace": "kombu.exceptions.OperationalError: [Errno 61] Connection refused while connecting to Redis broker",
+      "ground_truth": {
+        "root_cause": "Redis broker not running for Celery task queue",
+        "recommendation": "Start Redis server for Celery: redis-server or check CELERY_BROKER_URL in .env",
+        "severity": "CRITICAL",
+        "confidence": 0.98,
+        "category": "INFRA_ERROR",
+        "service": "redis"
+      },
+      "verified_by": "human_expert",
+      "verification_date": "2025-11-03"
+    },
+    {
+      "id": "TEST_017",
+      "category": "CODE_ERROR",
+      "query": "RecursionError: maximum recursion depth exceeded",
+      "error_message": "RecursionError: maximum recursion depth exceeded in comparison",
+      "stack_trace": "File \"tree_parser.py\", line 89, in parse_node\n    result = parse_node(child)\nRecursionError: maximum recursion depth exceeded",
+      "ground_truth": {
+        "root_cause": "Infinite recursion due to circular reference or missing base case",
+        "recommendation": "Add recursion depth limit check and proper base case to terminate recursion",
+        "severity": "HIGH",
+        "confidence": 0.93,
+        "category": "CODE_ERROR",
+        "file_path": "tree_parser.py",
+        "line_number": 89
+      },
+      "verified_by": "human_expert",
+      "verification_date": "2025-11-03"
+    },
+    {
+      "id": "TEST_018",
+      "category": "DEPENDENCY_ERROR",
+      "query": "Version conflict: requires numpy>=2.0.0 but installed version is 1.24.4",
+      "error_message": "ImportError: numpy version 1.24.4 does not meet requirement >=2.0.0",
+      "stack_trace": "ImportError: This package requires numpy>=2.0.0, but you have 1.24.4 installed",
+      "ground_truth": {
+        "root_cause": "Numpy version mismatch - package requires 2.x but 1.24.4 is installed",
+        "recommendation": "Upgrade numpy: pip install 'numpy>=2.0.0' or check dependency conflicts",
+        "severity": "HIGH",
+        "confidence": 0.99,
+        "category": "DEPENDENCY_ERROR",
+        "package": "numpy"
+      },
+      "verified_by": "human_expert",
+      "verification_date": "2025-11-03"
+    },
+    {
+      "id": "TEST_019",
+      "category": "TEST_ERROR",
+      "query": "Fixture 'database_session' not found in pytest",
+      "error_message": "pytest.fixtures.FixtureLookupError: fixture 'database_session' not found",
+      "stack_trace": "File \"test_database.py\", line 23, in test_user_creation\n    def test_user_creation(database_session):\nFixtureLookupError: fixture 'database_session' not found",
+      "ground_truth": {
+        "root_cause": "Pytest fixture 'database_session' is not defined in conftest.py",
+        "recommendation": "Define fixture in conftest.py with @pytest.fixture decorator",
+        "severity": "MEDIUM",
+        "confidence": 0.95,
+        "category": "TEST_ERROR",
+        "test_name": "test_user_creation"
+      },
+      "verified_by": "human_expert",
+      "verification_date": "2025-11-03"
+    },
+    {
+      "id": "TEST_020",
+      "category": "CONFIG_ERROR",
+      "query": "JWT_SECRET_KEY not set in environment, using insecure default",
+      "error_message": "Warning: JWT_SECRET_KEY not configured, authentication may be insecure",
+      "stack_trace": "SecurityWarning: JWT_SECRET_KEY not set in environment variables",
+      "ground_truth": {
+        "root_cause": "Missing JWT_SECRET_KEY environment variable for token encryption",
+        "recommendation": "Add JWT_SECRET_KEY=<random_secret> to .env file for secure authentication",
+        "severity": "CRITICAL",
+        "confidence": 0.99,
+        "category": "CONFIG_ERROR",
+        "config_key": "JWT_SECRET_KEY"
+      },
+      "verified_by": "human_expert",
+      "verification_date": "2025-11-03"
+    },
+    {
+      "id": "TEST_021",
+      "category": "CODE_ERROR",
+      "query": "FileNotFoundError: [Errno 2] No such file or directory: 'config.yaml'",
+      "error_message": "FileNotFoundError: [Errno 2] No such file or directory: 'config.yaml'",
+      "stack_trace": "File \"app.py\", line 12, in load_config\n    with open('config.yaml', 'r') as f:\nFileNotFoundError: [Errno 2] No such file or directory: 'config.yaml'",
+      "ground_truth": {
+        "root_cause": "config.yaml file does not exist in expected location",
+        "recommendation": "Create config.yaml file or use absolute path: os.path.join(BASE_DIR, 'config.yaml')",
+        "severity": "HIGH",
+        "confidence": 0.97,
+        "category": "CODE_ERROR",
+        "file_path": "app.py",
+        "line_number": 12
+      },
+      "verified_by": "human_expert",
+      "verification_date": "2025-11-03"
+    },
+    {
+      "id": "TEST_022",
+      "category": "INFRA_ERROR",
+      "query": "Docker container exited with code 137 (out of memory)",
+      "error_message": "Container 'app-service' exited with code 137",
+      "stack_trace": "OOM Killer: Container exceeded memory limit and was terminated",
+      "ground_truth": {
+        "root_cause": "Docker container exceeded memory limit and was killed by OOM killer",
+        "recommendation": "Increase Docker memory limit: docker run -m 4g or optimize application memory usage",
+        "severity": "CRITICAL",
+        "confidence": 0.98,
+        "category": "INFRA_ERROR",
+        "service": "docker"
+      },
+      "verified_by": "human_expert",
+      "verification_date": "2025-11-03"
+    },
+    {
+      "id": "TEST_023",
+      "category": "CODE_ERROR",
+      "query": "ZeroDivisionError: division by zero in calculation",
+      "error_message": "ZeroDivisionError: division by zero",
+      "stack_trace": "File \"metrics.py\", line 145, in calculate_average\n    avg = total / count\nZeroDivisionError: division by zero",
+      "ground_truth": {
+        "root_cause": "Division by zero when count variable is 0",
+        "recommendation": "Add check: if count > 0 before division or use count or 1 as denominator",
+        "severity": "MEDIUM",
+        "confidence": 0.98,
+        "category": "CODE_ERROR",
+        "file_path": "metrics.py",
+        "line_number": 145
+      },
+      "verified_by": "human_expert",
+      "verification_date": "2025-11-03"
+    },
+    {
+      "id": "TEST_024",
+      "category": "DEPENDENCY_ERROR",
+      "query": "SSL certificate verification failed when installing packages",
+      "error_message": "SSLError: [SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed",
+      "stack_trace": "urllib.error.URLError: <urlopen error [SSL: CERTIFICATE_VERIFY_FAILED]>",
+      "ground_truth": {
+        "root_cause": "SSL certificate verification fails when downloading packages from PyPI",
+        "recommendation": "Update certificates: pip install --upgrade certifi or use trusted-host option",
+        "severity": "MEDIUM",
+        "confidence": 0.90,
+        "category": "DEPENDENCY_ERROR",
+        "package": "certifi"
+      },
+      "verified_by": "human_expert",
+      "verification_date": "2025-11-03"
+    },
+    {
+      "id": "TEST_025",
+      "category": "TEST_ERROR",
+      "query": "Mock object has no attribute 'return_value' in unit test",
+      "error_message": "AttributeError: 'Mock' object has no attribute 'return_value'",
+      "stack_trace": "File \"test_service.py\", line 78, in test_api_call\n    mock_api.return_value = expected_result\nAttributeError",
+      "ground_truth": {
+        "root_cause": "Incorrectly accessing return_value on Mock object",
+        "recommendation": "Use mock_api.return_value = ... or patch with return_value in decorator",
+        "severity": "LOW",
+        "confidence": 0.88,
+        "category": "TEST_ERROR",
+        "test_name": "test_api_call"
+      },
+      "verified_by": "human_expert",
+      "verification_date": "2025-11-03"
+    },
+    {
+      "id": "TEST_026",
+      "category": "CONFIG_ERROR",
+      "query": "CORS policy blocked request from origin 'http://localhost:3000'",
+      "error_message": "Access to XMLHttpRequest blocked by CORS policy",
+      "stack_trace": "CORS error: Origin 'http://localhost:3000' has been blocked by CORS policy",
+      "ground_truth": {
+        "root_cause": "Flask app not configured to allow requests from localhost:3000 origin",
+        "recommendation": "Configure CORS: CORS(app, origins=['http://localhost:3000']) in Flask app",
+        "severity": "MEDIUM",
+        "confidence": 0.96,
+        "category": "CONFIG_ERROR",
+        "config_key": "CORS_ORIGINS"
+      },
+      "verified_by": "human_expert",
+      "verification_date": "2025-11-03"
+    },
+    {
+      "id": "TEST_027",
+      "category": "CODE_ERROR",
+      "query": "JSONDecodeError: Expecting value: line 1 column 1 (char 0)",
+      "error_message": "json.decoder.JSONDecodeError: Expecting value: line 1 column 1 (char 0)",
+      "stack_trace": "File \"parser.py\", line 67, in parse_response\n    data = json.loads(response.text)\nJSONDecodeError: Expecting value",
+      "ground_truth": {
+        "root_cause": "Response body is empty or not valid JSON format",
+        "recommendation": "Check response.text before parsing: if response.text and verify API returns JSON",
+        "severity": "MEDIUM",
+        "confidence": 0.94,
+        "category": "CODE_ERROR",
+        "file_path": "parser.py",
+        "line_number": 67
+      },
+      "verified_by": "human_expert",
+      "verification_date": "2025-11-03"
+    },
+    {
+      "id": "TEST_028",
+      "category": "INFRA_ERROR",
+      "query": "Port 5000 already in use by another process",
+      "error_message": "OSError: [Errno 48] Address already in use",
+      "stack_trace": "OSError: [Errno 48] Address already in use: ('0.0.0.0', 5000)",
+      "ground_truth": {
+        "root_cause": "Port 5000 is already occupied by another process",
+        "recommendation": "Kill process using port: lsof -ti:5000 | xargs kill or use different port",
+        "severity": "MEDIUM",
+        "confidence": 0.99,
+        "category": "INFRA_ERROR",
+        "service": "flask"
+      },
+      "verified_by": "human_expert",
+      "verification_date": "2025-11-03"
+    },
+    {
+      "id": "TEST_029",
+      "category": "DEPENDENCY_ERROR",
+      "query": "Cannot find module 'typescript' when running npm build",
+      "error_message": "Error: Cannot find module 'typescript'",
+      "stack_trace": "Error: Cannot find module 'typescript'\n  at Function.Module._resolveFilename",
+      "ground_truth": {
+        "root_cause": "TypeScript package not installed in node_modules",
+        "recommendation": "Install TypeScript: npm install typescript --save-dev",
+        "severity": "HIGH",
+        "confidence": 0.98,
+        "category": "DEPENDENCY_ERROR",
+        "package": "typescript"
+      },
+      "verified_by": "human_expert",
+      "verification_date": "2025-11-03"
+    },
+    {
+      "id": "TEST_030",
+      "category": "CODE_ERROR",
+      "query": "UnboundLocalError: local variable 'result' referenced before assignment",
+      "error_message": "UnboundLocalError: local variable 'result' referenced before assignment",
+      "stack_trace": "File \"processor.py\", line 234, in calculate\n    return result\nUnboundLocalError: local variable 'result' referenced before assignment",
+      "ground_truth": {
+        "root_cause": "Variable 'result' used before being assigned in some code paths",
+        "recommendation": "Initialize result = None at function start or ensure all paths assign result",
+        "severity": "HIGH",
+        "confidence": 0.95,
+        "category": "CODE_ERROR",
+        "file_path": "processor.py",
+        "line_number": 234
+      },
+      "verified_by": "human_expert",
+      "verification_date": "2025-11-03"
+    },
+    {
+      "id": "TEST_031",
+      "category": "TEST_ERROR",
+      "query": "No tests collected by pytest in tests/ directory",
+      "error_message": "collected 0 items",
+      "stack_trace": "pytest: no tests ran in 0.01s",
+      "ground_truth": {
+        "root_cause": "Test files not following pytest naming convention (test_*.py or *_test.py)",
+        "recommendation": "Rename test files to start with 'test_' or configure pytest collection in pytest.ini",
+        "severity": "MEDIUM",
+        "confidence": 0.92,
+        "category": "TEST_ERROR",
+        "test_name": "pytest_collection"
+      },
+      "verified_by": "human_expert",
+      "verification_date": "2025-11-03"
+    },
+    {
+      "id": "TEST_032",
+      "category": "CONFIG_ERROR",
+      "query": "Environment variable MAX_WORKERS must be an integer, got 'auto'",
+      "error_message": "ValueError: invalid literal for int() with base 10: 'auto'",
+      "stack_trace": "File \"config.py\", line 45, in load_settings\n    workers = int(os.getenv('MAX_WORKERS'))\nValueError",
+      "ground_truth": {
+        "root_cause": "MAX_WORKERS environment variable contains 'auto' instead of numeric value",
+        "recommendation": "Set MAX_WORKERS to integer value in .env: MAX_WORKERS=4",
+        "severity": "MEDIUM",
+        "confidence": 0.97,
+        "category": "CONFIG_ERROR",
+        "config_key": "MAX_WORKERS"
+      },
+      "verified_by": "human_expert",
+      "verification_date": "2025-11-03"
+    },
+    {
+      "id": "TEST_033",
+      "category": "INFRA_ERROR",
+      "query": "Elasticsearch cluster health status: RED",
+      "error_message": "ClusterHealthStatusError: Cluster health status is RED",
+      "stack_trace": "elasticsearch.exceptions.ClusterHealthError: Health status: RED - Some primary shards are unassigned",
+      "ground_truth": {
+        "root_cause": "Elasticsearch cluster has unassigned primary shards causing RED status",
+        "recommendation": "Check Elasticsearch logs, verify disk space, and reassign shards: POST /_cluster/reroute",
+        "severity": "CRITICAL",
+        "confidence": 0.93,
+        "category": "INFRA_ERROR",
+        "service": "elasticsearch"
+      },
+      "verified_by": "human_expert",
+      "verification_date": "2025-11-03"
+    },
+    {
+      "id": "TEST_034",
+      "category": "CODE_ERROR",
+      "query": "StopIteration exception in generator function",
+      "error_message": "StopIteration",
+      "stack_trace": "File \"data_stream.py\", line 156, in process_stream\n    value = next(iterator)\nStopIteration",
+      "ground_truth": {
+        "root_cause": "Generator exhausted without handling StopIteration exception",
+        "recommendation": "Use for loop instead of next() or wrap in try/except StopIteration",
+        "severity": "MEDIUM",
+        "confidence": 0.91,
+        "category": "CODE_ERROR",
+        "file_path": "data_stream.py",
+        "line_number": 156
+      },
+      "verified_by": "human_expert",
+      "verification_date": "2025-11-03"
+    },
+    {
+      "id": "TEST_035",
+      "category": "DEPENDENCY_ERROR",
+      "query": "pkg_resources.DistributionNotFound: The 'requests>=2.28.0' distribution was not found",
+      "error_message": "pkg_resources.DistributionNotFound: The 'requests>=2.28.0' distribution was not found",
+      "stack_trace": "pkg_resources.DistributionNotFound: The 'requests>=2.28.0' distribution was not found",
+      "ground_truth": {
+        "root_cause": "requests package version <2.28.0 or not installed",
+        "recommendation": "Install/upgrade requests: pip install 'requests>=2.28.0'",
+        "severity": "HIGH",
+        "confidence": 0.98,
+        "category": "DEPENDENCY_ERROR",
+        "package": "requests"
+      },
+      "verified_by": "human_expert",
+      "verification_date": "2025-11-03"
+    },
+    {
+      "id": "TEST_036",
+      "category": "CONFIG_ERROR",
+      "query": "Invalid log level 'TRACE' in configuration",
+      "error_message": "ValueError: Unknown level: 'TRACE'",
+      "stack_trace": "File \"logger.py\", line 23, in configure_logging\n    logging.basicConfig(level=log_level)\nValueError: Unknown level: 'TRACE'",
+      "ground_truth": {
+        "root_cause": "LOG_LEVEL environment variable set to 'TRACE' which is not valid Python logging level",
+        "recommendation": "Use valid log level: DEBUG, INFO, WARNING, ERROR, or CRITICAL",
+        "severity": "LOW",
+        "confidence": 0.99,
+        "category": "CONFIG_ERROR",
+        "config_key": "LOG_LEVEL"
+      },
+      "verified_by": "human_expert",
+      "verification_date": "2025-11-03"
+    },
+    {
+      "id": "TEST_037",
+      "category": "TEST_ERROR",
+      "query": "Selenium WebDriverException: Chrome binary not found",
+      "error_message": "selenium.common.exceptions.WebDriverException: Message: 'chromedriver' executable needs to be in PATH",
+      "stack_trace": "WebDriverException: Message: 'chromedriver' executable needs to be in PATH",
+      "ground_truth": {
+        "root_cause": "ChromeDriver not installed or not in system PATH",
+        "recommendation": "Install ChromeDriver: npm install chromedriver or add to PATH",
+        "severity": "MEDIUM",
+        "confidence": 0.96,
+        "category": "TEST_ERROR",
+        "test_name": "selenium_test"
+      },
+      "verified_by": "human_expert",
+      "verification_date": "2025-11-03"
+    },
+    {
+      "id": "TEST_038",
+      "category": "CODE_ERROR",
+      "query": "MemoryError: unable to allocate array with shape and data type",
+      "error_message": "MemoryError: Unable to allocate 8.00 GiB for an array with shape (1000000000,) and data type float64",
+      "stack_trace": "MemoryError: Unable to allocate array",
+      "ground_truth": {
+        "root_cause": "Insufficient RAM to allocate large numpy array (8GB required)",
+        "recommendation": "Reduce array size, use memory-mapped arrays, or increase system RAM",
+        "severity": "HIGH",
+        "confidence": 0.94,
+        "category": "CODE_ERROR",
+        "file_path": "data_processor.py",
+        "line_number": 0
+      },
+      "verified_by": "human_expert",
+      "verification_date": "2025-11-03"
+    },
+    {
+      "id": "TEST_039",
+      "category": "INFRA_ERROR",
+      "query": "Kubernetes pod CrashLoopBackOff",
+      "error_message": "Pod 'api-deployment-abc123' in CrashLoopBackOff state",
+      "stack_trace": "Container exited with code 1, waiting 40s before restarting",
+      "ground_truth": {
+        "root_cause": "Kubernetes pod continuously crashing due to application error or misconfiguration",
+        "recommendation": "Check pod logs: kubectl logs pod-name and describe pod: kubectl describe pod pod-name",
+        "severity": "CRITICAL",
+        "confidence": 0.90,
+        "category": "INFRA_ERROR",
+        "service": "kubernetes"
+      },
+      "verified_by": "human_expert",
+      "verification_date": "2025-11-03"
+    },
+    {
+      "id": "TEST_040",
+      "category": "DEPENDENCY_ERROR",
+      "query": "Python version 3.8 required but 3.7 detected",
+      "error_message": "RuntimeError: Python 3.8+ required, but 3.7.9 detected",
+      "stack_trace": "RuntimeError: This application requires Python 3.8 or higher",
+      "ground_truth": {
+        "root_cause": "Python version mismatch - application requires 3.8+ but 3.7 is installed",
+        "recommendation": "Upgrade Python: pyenv install 3.8 && pyenv global 3.8 or use virtual environment with Python 3.8+",
+        "severity": "CRITICAL",
+        "confidence": 0.99,
+        "category": "DEPENDENCY_ERROR",
+        "package": "python"
+      },
+      "verified_by": "human_expert",
+      "verification_date": "2025-11-03"
+    },
+    {
+      "id": "TEST_041",
+      "category": "CODE_ERROR",
+      "query": "UnicodeDecodeError: 'utf-8' codec can't decode byte 0xff",
+      "error_message": "UnicodeDecodeError: 'utf-8' codec can't decode byte 0xff in position 0: invalid start byte",
+      "stack_trace": "File \"reader.py\", line 89, in read_file\n    content = file.read()\nUnicodeDecodeError",
+      "ground_truth": {
+        "root_cause": "File contains non-UTF-8 encoded data (possibly binary or different encoding)",
+        "recommendation": "Open file with correct encoding: open(file, 'rb') or encoding='latin-1' or errors='ignore'",
+        "severity": "MEDIUM",
+        "confidence": 0.93,
+        "category": "CODE_ERROR",
+        "file_path": "reader.py",
+        "line_number": 89
+      },
+      "verified_by": "human_expert",
+      "verification_date": "2025-11-03"
+    },
+    {
+      "id": "TEST_042",
+      "category": "CONFIG_ERROR",
+      "query": "AWS S3 bucket not found: 'my-test-bucket' does not exist",
+      "error_message": "botocore.exceptions.NoSuchBucket: The specified bucket does not exist",
+      "stack_trace": "botocore.exceptions.NoSuchBucket: An error occurred (NoSuchBucket) when calling the ListObjects operation",
+      "ground_truth": {
+        "root_cause": "S3 bucket name in AWS_S3_BUCKET config does not exist or wrong AWS region",
+        "recommendation": "Create S3 bucket or update AWS_S3_BUCKET in .env with existing bucket name",
+        "severity": "HIGH",
+        "confidence": 0.97,
+        "category": "CONFIG_ERROR",
+        "config_key": "AWS_S3_BUCKET"
+      },
+      "verified_by": "human_expert",
+      "verification_date": "2025-11-03"
+    },
+    {
+      "id": "TEST_043",
+      "category": "TEST_ERROR",
+      "query": "Coverage report shows 45% coverage, below 80% threshold",
+      "error_message": "ERROR: Coverage 45.23% is below minimum threshold 80%",
+      "stack_trace": "Coverage check failed: 45.23% < 80.0%",
+      "ground_truth": {
+        "root_cause": "Unit test coverage below minimum required threshold",
+        "recommendation": "Add more unit tests to increase coverage or adjust threshold in pytest.ini",
+        "severity": "LOW",
+        "confidence": 0.95,
+        "category": "TEST_ERROR",
+        "test_name": "coverage_check"
+      },
+      "verified_by": "human_expert",
+      "verification_date": "2025-11-03"
+    },
+    {
+      "id": "TEST_044",
+      "category": "INFRA_ERROR",
+      "query": "Nginx 502 Bad Gateway when accessing application",
+      "error_message": "502 Bad Gateway",
+      "stack_trace": "nginx: connect() failed (111: Connection refused) while connecting to upstream",
+      "ground_truth": {
+        "root_cause": "Nginx cannot connect to upstream application server (Flask/Gunicorn not running)",
+        "recommendation": "Start application server or check upstream configuration in nginx.conf",
+        "severity": "CRITICAL",
+        "confidence": 0.96,
+        "category": "INFRA_ERROR",
+        "service": "nginx"
+      },
+      "verified_by": "human_expert",
+      "verification_date": "2025-11-03"
+    },
+    {
+      "id": "TEST_045",
+      "category": "CODE_ERROR",
+      "query": "Circular import detected between modules user.py and auth.py",
+      "error_message": "ImportError: cannot import name 'User' from partially initialized module 'user'",
+      "stack_trace": "ImportError: cannot import name 'User' from 'user' (most likely due to a circular import)",
+      "ground_truth": {
+        "root_cause": "Circular import: user.py imports auth.py and auth.py imports user.py",
+        "recommendation": "Refactor to remove circular dependency: move shared code to separate module or use late imports",
+        "severity": "HIGH",
+        "confidence": 0.94,
+        "category": "CODE_ERROR",
+        "file_path": "user.py",
+        "line_number": 0
+      },
+      "verified_by": "human_expert",
+      "verification_date": "2025-11-03"
+    },
+    {
+      "id": "TEST_046",
+      "category": "DEPENDENCY_ERROR",
+      "query": "Flask-CORS version conflict with Flask 3.0",
+      "error_message": "ImportError: cannot import name 'safe_str_cmp' from 'werkzeug.security'",
+      "stack_trace": "ImportError: cannot import name 'safe_str_cmp' from 'werkzeug.security'",
+      "ground_truth": {
+        "root_cause": "Flask-CORS incompatible with Flask 3.0 (removed werkzeug.security.safe_str_cmp)",
+        "recommendation": "Upgrade Flask-CORS: pip install 'Flask-CORS>=4.0.0' compatible with Flask 3.x",
+        "severity": "HIGH",
+        "confidence": 0.96,
+        "category": "DEPENDENCY_ERROR",
+        "package": "Flask-CORS"
+      },
+      "verified_by": "human_expert",
+      "verification_date": "2025-11-03"
+    },
+    {
+      "id": "TEST_047",
+      "category": "CONFIG_ERROR",
+      "query": "Invalid JSON in configuration file config.json",
+      "error_message": "json.decoder.JSONDecodeError: Expecting ',' delimiter: line 15 column 5 (char 234)",
+      "stack_trace": "JSONDecodeError: Expecting ',' delimiter: line 15 column 5",
+      "ground_truth": {
+        "root_cause": "Syntax error in config.json file - missing comma delimiter",
+        "recommendation": "Fix JSON syntax in config.json at line 15, column 5 - add missing comma",
+        "severity": "MEDIUM",
+        "confidence": 0.98,
+        "category": "CONFIG_ERROR",
+        "config_key": "config.json"
+      },
+      "verified_by": "human_expert",
+      "verification_date": "2025-11-03"
+    },
+    {
+      "id": "TEST_048",
+      "category": "TEST_ERROR",
+      "query": "Robot Framework test failed: Element not found after 30 seconds",
+      "error_message": "TimeoutException: Element with selector '#submit-button' not found",
+      "stack_trace": "TimeoutException: Timed out after 30 seconds waiting for element #submit-button",
+      "ground_truth": {
+        "root_cause": "UI element '#submit-button' not found within timeout period",
+        "recommendation": "Increase timeout, check element selector, or verify page loads correctly",
+        "severity": "MEDIUM",
+        "confidence": 0.89,
+        "category": "TEST_ERROR",
+        "test_name": "robot_framework_test"
+      },
+      "verified_by": "human_expert",
+      "verification_date": "2025-11-03"
+    },
+    {
+      "id": "TEST_049",
+      "category": "CODE_ERROR",
+      "query": "AssertionError: Lists have different lengths (expected 10, got 8)",
+      "error_message": "AssertionError: assert 8 == 10",
+      "stack_trace": "File \"test_data.py\", line 123, in test_list_length\n    assert len(result) == 10\nAssertionError: assert 8 == 10",
+      "ground_truth": {
+        "root_cause": "Function returns list with 8 items instead of expected 10",
+        "recommendation": "Debug function to identify why 2 items are missing from result list",
+        "severity": "MEDIUM",
+        "confidence": 0.92,
+        "category": "CODE_ERROR",
+        "file_path": "test_data.py",
+        "line_number": 123
+      },
+      "verified_by": "human_expert",
+      "verification_date": "2025-11-03"
+    },
+    {
+      "id": "TEST_050",
+      "category": "INFRA_ERROR",
+      "query": "Load balancer health check failing for service",
+      "error_message": "HealthCheckFailed: Target group reports unhealthy",
+      "stack_trace": "AWS ELB: All targets failing health check on /health endpoint",
+      "ground_truth": {
+        "root_cause": "Application /health endpoint not responding or returning non-200 status",
+        "recommendation": "Check application logs and verify /health endpoint returns 200 OK",
+        "severity": "CRITICAL",
+        "confidence": 0.94,
+        "category": "INFRA_ERROR",
+        "service": "load_balancer"
+      },
+      "verified_by": "human_expert",
+      "verification_date": "2025-11-03"
+    },
+    {
+      "id": "TEST_051",
+      "category": "CODE_ERROR",
+      "query": "NameError: name 'pd' is not defined in data_analysis.py",
+      "error_message": "NameError: name 'pd' is not defined",
+      "stack_trace": "File \"data_analysis.py\", line 34, in load_data\n    df = pd.read_csv(filename)\nNameError: name 'pd' is not defined",
+      "ground_truth": {
+        "root_cause": "pandas not imported with 'pd' alias before use",
+        "recommendation": "Add import at top of file: import pandas as pd",
+        "severity": "HIGH",
+        "confidence": 0.99,
+        "category": "CODE_ERROR",
+        "file_path": "data_analysis.py",
+        "line_number": 34
+      },
+      "verified_by": "human_expert",
+      "verification_date": "2025-11-03"
+    },
+    {
+      "id": "TEST_052",
+      "category": "DEPENDENCY_ERROR",
+      "query": "Node.js version 18 required but version 16 detected",
+      "error_message": "Error: Node.js version 18.x or higher is required",
+      "stack_trace": "The current Node.js version v16.14.2 does not satisfy required version >=18.0.0",
+      "ground_truth": {
+        "root_cause": "Node.js version mismatch - application requires v18+ but v16 installed",
+        "recommendation": "Upgrade Node.js: nvm install 18 && nvm use 18 or download from nodejs.org",
+        "severity": "CRITICAL",
+        "confidence": 0.99,
+        "category": "DEPENDENCY_ERROR",
+        "package": "nodejs"
+      },
+      "verified_by": "human_expert",
+      "verification_date": "2025-11-03"
+    },
+    {
+      "id": "TEST_053",
+      "category": "CONFIG_ERROR",
+      "query": "Redis URL malformed: missing port number",
+      "error_message": "ValueError: Invalid Redis URL format",
+      "stack_trace": "ValueError: Redis URL must include port: redis://localhost:6379",
+      "ground_truth": {
+        "root_cause": "REDIS_URL environment variable missing port number in connection string",
+        "recommendation": "Fix REDIS_URL format: redis://localhost:6379/0 in .env file",
+        "severity": "HIGH",
+        "confidence": 0.97,
+        "category": "CONFIG_ERROR",
+        "config_key": "REDIS_URL"
+      },
+      "verified_by": "human_expert",
+      "verification_date": "2025-11-03"
+    },
+    {
+      "id": "TEST_054",
+      "category": "TEST_ERROR",
+      "query": "Database rollback failed in test teardown",
+      "error_message": "IntegrityError: duplicate key value violates unique constraint",
+      "stack_trace": "IntegrityError: duplicate key value violates unique constraint \"users_email_key\"",
+      "ground_truth": {
+        "root_cause": "Test database not properly rolled back between tests, leaving duplicate data",
+        "recommendation": "Add proper teardown: db.session.rollback() in test fixture or use transactional fixtures",
+        "severity": "MEDIUM",
+        "confidence": 0.90,
+        "category": "TEST_ERROR",
+        "test_name": "database_test"
+      },
+      "verified_by": "human_expert",
+      "verification_date": "2025-11-03"
+    },
+    {
+      "id": "TEST_055",
+      "category": "CODE_ERROR",
+      "query": "datetime.strptime() ValueError: time data '2025-13-01' does not match format '%Y-%m-%d'",
+      "error_message": "ValueError: time data '2025-13-01' does not match format '%Y-%m-%d'",
+      "stack_trace": "File \"date_parser.py\", line 45, in parse_date\n    dt = datetime.strptime(date_string, '%Y-%m-%d')\nValueError",
+      "ground_truth": {
+        "root_cause": "Invalid date format - month 13 does not exist",
+        "recommendation": "Add date validation before parsing or use try/except to handle invalid dates",
+        "severity": "MEDIUM",
+        "confidence": 0.96,
+        "category": "CODE_ERROR",
+        "file_path": "date_parser.py",
+        "line_number": 45
+      },
+      "verified_by": "human_expert",
+      "verification_date": "2025-11-03"
+    },
+    {
+      "id": "TEST_056",
+      "category": "INFRA_ERROR",
+      "query": "RabbitMQ connection timeout: Failed to connect to broker",
+      "error_message": "AMQPConnectionError: Connection timeout to localhost:5672",
+      "stack_trace": "kombu.exceptions.OperationalError: timed out waiting for connection",
+      "ground_truth": {
+        "root_cause": "RabbitMQ message broker not running or not accessible",
+        "recommendation": "Start RabbitMQ: rabbitmq-server or docker run -d -p 5672:5672 rabbitmq",
+        "severity": "CRITICAL",
+        "confidence": 0.98,
+        "category": "INFRA_ERROR",
+        "service": "rabbitmq"
+      },
+      "verified_by": "human_expert",
+      "verification_date": "2025-11-03"
+    },
+    {
+      "id": "TEST_057",
+      "category": "DEPENDENCY_ERROR",
+      "query": "Incompatible SQLAlchemy version: requires <2.0, got 2.0.15",
+      "error_message": "ImportError: SQLAlchemy 2.0 is not supported by this package",
+      "stack_trace": "ImportError: This package requires SQLAlchemy<2.0, but SQLAlchemy 2.0.15 is installed",
+      "ground_truth": {
+        "root_cause": "SQLAlchemy version conflict - package requires v1.x but v2.x installed",
+        "recommendation": "Downgrade SQLAlchemy: pip install 'SQLAlchemy<2.0' or upgrade package to support 2.x",
+        "severity": "HIGH",
+        "confidence": 0.97,
+        "category": "DEPENDENCY_ERROR",
+        "package": "SQLAlchemy"
+      },
+      "verified_by": "human_expert",
+      "verification_date": "2025-11-03"
+    },
+    {
+      "id": "TEST_058",
+      "category": "CONFIG_ERROR",
+      "query": "GitHub API rate limit exceeded: 60 requests per hour",
+      "error_message": "github.GithubException.RateLimitExceededException: 403 API rate limit exceeded",
+      "stack_trace": "GithubException: 403 {'message': 'API rate limit exceeded for user'}",
+      "ground_truth": {
+        "root_cause": "GitHub API rate limit exceeded (60/hour for unauthenticated requests)",
+        "recommendation": "Add GITHUB_TOKEN to .env for authenticated requests (5000/hour limit)",
+        "severity": "MEDIUM",
+        "confidence": 0.98,
+        "category": "CONFIG_ERROR",
+        "config_key": "GITHUB_TOKEN"
+      },
+      "verified_by": "human_expert",
+      "verification_date": "2025-11-03"
+    },
+    {
+      "id": "TEST_059",
+      "category": "CODE_ERROR",
+      "query": "RuntimeWarning: divide by zero encountered in log",
+      "error_message": "RuntimeWarning: divide by zero encountered in log",
+      "stack_trace": "File \"calculations.py\", line 178, in calculate_log\n    result = np.log(values)\nRuntimeWarning: divide by zero encountered in log",
+      "ground_truth": {
+        "root_cause": "Attempting to calculate log of zero or negative numbers",
+        "recommendation": "Add check: values[values <= 0] = 1e-10 before np.log() or filter zero values",
+        "severity": "MEDIUM",
+        "confidence": 0.93,
+        "category": "CODE_ERROR",
+        "file_path": "calculations.py",
+        "line_number": 178
+      },
+      "verified_by": "human_expert",
+      "verification_date": "2025-11-03"
+    },
+    {
+      "id": "TEST_060",
+      "category": "TEST_ERROR",
+      "query": "Jest test timeout: async operation did not complete",
+      "error_message": "Error: Timeout - Async callback was not invoked within the 5000ms timeout",
+      "stack_trace": "thrown: \"Exceeded timeout of 5000 ms for a test\"",
+      "ground_truth": {
+        "root_cause": "Async test did not call done() or resolve promise within timeout",
+        "recommendation": "Increase timeout: jest.setTimeout(10000) or ensure async operation completes",
+        "severity": "MEDIUM",
+        "confidence": 0.91,
+        "category": "TEST_ERROR",
+        "test_name": "jest_async_test"
+      },
+      "verified_by": "human_expert",
+      "verification_date": "2025-11-03"
+    },
+    {
+      "id": "TEST_061",
+      "category": "INFRA_ERROR",
+      "query": "SSH connection refused: Permission denied (publickey)",
+      "error_message": "Permission denied (publickey)",
+      "stack_trace": "ssh: connect to host github.com port 22: Permission denied",
+      "ground_truth": {
+        "root_cause": "SSH key not configured or not added to GitHub account",
+        "recommendation": "Add SSH key to GitHub: ssh-keygen -t ed25519 && gh ssh-key add ~/.ssh/id_ed25519.pub",
+        "severity": "HIGH",
+        "confidence": 0.95,
+        "category": "INFRA_ERROR",
+        "service": "ssh"
+      },
+      "verified_by": "human_expert",
+      "verification_date": "2025-11-03"
+    },
+    {
+      "id": "TEST_062",
+      "category": "CODE_ERROR",
+      "query": "pandas.errors.MergeError: No common columns to perform merge on",
+      "error_message": "MergeError: No common columns to perform merge on",
+      "stack_trace": "File \"data_merge.py\", line 67, in merge_datasets\n    result = pd.merge(df1, df2)\nMergeError",
+      "ground_truth": {
+        "root_cause": "DataFrames have no common column names to merge on",
+        "recommendation": "Specify merge columns: pd.merge(df1, df2, on='column_name') or left_on/right_on",
+        "severity": "MEDIUM",
+        "confidence": 0.96,
+        "category": "CODE_ERROR",
+        "file_path": "data_merge.py",
+        "line_number": 67
+      },
+      "verified_by": "human_expert",
+      "verification_date": "2025-11-03"
+    },
+    {
+      "id": "TEST_063",
+      "category": "DEPENDENCY_ERROR",
+      "query": "CUDA out of memory error when loading PyTorch model",
+      "error_message": "RuntimeError: CUDA out of memory. Tried to allocate 1.56 GiB",
+      "stack_trace": "torch.cuda.OutOfMemoryError: CUDA out of memory",
+      "ground_truth": {
+        "root_cause": "GPU memory exhausted while loading model or processing batch",
+        "recommendation": "Reduce batch size, use smaller model, clear GPU cache: torch.cuda.empty_cache()",
+        "severity": "HIGH",
+        "confidence": 0.94,
+        "category": "DEPENDENCY_ERROR",
+        "package": "pytorch"
+      },
+      "verified_by": "human_expert",
+      "verification_date": "2025-11-03"
+    },
+    {
+      "id": "TEST_064",
+      "category": "CONFIG_ERROR",
+      "query": "Flask SECRET_KEY not configured for session management",
+      "error_message": "RuntimeError: The session is unavailable because no secret key was set",
+      "stack_trace": "RuntimeError: The session is unavailable because no secret key was set",
+      "ground_truth": {
+        "root_cause": "Flask app.config['SECRET_KEY'] not set for secure session management",
+        "recommendation": "Add SECRET_KEY to .env: SECRET_KEY=<random_secure_key> and load in Flask config",
+        "severity": "CRITICAL",
+        "confidence": 0.99,
+        "category": "CONFIG_ERROR",
+        "config_key": "SECRET_KEY"
+      },
+      "verified_by": "human_expert",
+      "verification_date": "2025-11-03"
+    },
+    {
+      "id": "TEST_065",
+      "category": "TEST_ERROR",
+      "query": "Mocked function not called in unit test",
+      "error_message": "AssertionError: Expected 'send_email' to have been called once. Called 0 times.",
+      "stack_trace": "AssertionError: Expected mock function to be called but was not",
+      "ground_truth": {
+        "root_cause": "Mocked function was not invoked during test execution",
+        "recommendation": "Verify test logic triggers the mocked function or check mock patch target",
+        "severity": "LOW",
+        "confidence": 0.87,
+        "category": "TEST_ERROR",
+        "test_name": "mock_call_test"
+      },
+      "verified_by": "human_expert",
+      "verification_date": "2025-11-03"
+    },
+    {
+      "id": "TEST_066",
+      "category": "CODE_ERROR",
+      "query": "requests.exceptions.SSLError: certificate verify failed",
+      "error_message": "SSLError: HTTPSConnectionPool(host='api.example.com', port=443): Max retries exceeded with url",
+      "stack_trace": "SSLError: [SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed",
+      "ground_truth": {
+        "root_cause": "SSL certificate verification failed for HTTPS request",
+        "recommendation": "Update CA certificates: pip install --upgrade certifi or add verify=False (not recommended for production)",
+        "severity": "MEDIUM",
+        "confidence": 0.92,
+        "category": "CODE_ERROR",
+        "file_path": "api_client.py",
+        "line_number": 0
+      },
+      "verified_by": "human_expert",
+      "verification_date": "2025-11-03"
+    },
+    {
+      "id": "TEST_067",
+      "category": "INFRA_ERROR",
+      "query": "Disk space full: No space left on device",
+      "error_message": "OSError: [Errno 28] No space left on device",
+      "stack_trace": "OSError: [Errno 28] No space left on device: '/tmp/tempfile'",
+      "ground_truth": {
+        "root_cause": "Disk space exhausted on filesystem",
+        "recommendation": "Free disk space: delete temp files, logs, or increase disk size",
+        "severity": "CRITICAL",
+        "confidence": 0.99,
+        "category": "INFRA_ERROR",
+        "service": "filesystem"
+      },
+      "verified_by": "human_expert",
+      "verification_date": "2025-11-03"
+    },
+    {
+      "id": "TEST_068",
+      "category": "DEPENDENCY_ERROR",
+      "query": "pip install fails: Could not find a version that satisfies requirement",
+      "error_message": "ERROR: Could not find a version that satisfies the requirement package==99.99.99",
+      "stack_trace": "ERROR: No matching distribution found for package==99.99.99",
+      "ground_truth": {
+        "root_cause": "Package version specified in requirements.txt does not exist on PyPI",
+        "recommendation": "Check available versions: pip index versions package and update requirements.txt",
+        "severity": "HIGH",
+        "confidence": 0.98,
+        "category": "DEPENDENCY_ERROR",
+        "package": "package"
+      },
+      "verified_by": "human_expert",
+      "verification_date": "2025-11-03"
+    },
+    {
+      "id": "TEST_069",
+      "category": "CONFIG_ERROR",
+      "query": "Timezone not set: using UTC instead of local time",
+      "error_message": "Warning: TZ environment variable not set, defaulting to UTC",
+      "stack_trace": "UserWarning: No timezone configured, using UTC",
+      "ground_truth": {
+        "root_cause": "TZ (timezone) environment variable not configured",
+        "recommendation": "Set TZ in .env: TZ=America/New_York or TZ=UTC explicitly",
+        "severity": "LOW",
+        "confidence": 0.93,
+        "category": "CONFIG_ERROR",
+        "config_key": "TZ"
+      },
+      "verified_by": "human_expert",
+      "verification_date": "2025-11-03"
+    },
+    {
+      "id": "TEST_070",
+      "category": "CODE_ERROR",
+      "query": "SQLAlchemy DetachedInstanceError: Instance is not bound to a Session",
+      "error_message": "DetachedInstanceError: Instance <User at 0x7f8b8c> is not bound to a Session",
+      "stack_trace": "sqlalchemy.orm.exc.DetachedInstanceError: Instance is not bound to a Session",
+      "ground_truth": {
+        "root_cause": "Accessing SQLAlchemy object attributes after session closed",
+        "recommendation": "Use session.merge(obj) or load relationships before session closes with lazy='joined'",
+        "severity": "MEDIUM",
+        "confidence": 0.91,
+        "category": "CODE_ERROR",
+        "file_path": "models.py",
+        "line_number": 0
+      },
+      "verified_by": "human_expert",
+      "verification_date": "2025-11-03"
+    },
+    {
+      "id": "TEST_071",
+      "category": "TEST_ERROR",
+      "query": "Cypress test failed: element is not visible",
+      "error_message": "CypressError: Timed out retrying: expected <button> to be visible",
+      "stack_trace": "CypressError: element is not visible because it has CSS property: display: none",
+      "ground_truth": {
+        "root_cause": "UI element is hidden (display: none) when test tries to interact with it",
+        "recommendation": "Wait for element: cy.get('button').should('be.visible') or check test timing",
+        "severity": "MEDIUM",
+        "confidence": 0.89,
+        "category": "TEST_ERROR",
+        "test_name": "cypress_test"
+      },
+      "verified_by": "human_expert",
+      "verification_date": "2025-11-03"
+    },
+    {
+      "id": "TEST_072",
+      "category": "INFRA_ERROR",
+      "query": "DNS resolution failed: Name or service not known",
+      "error_message": "socket.gaierror: [Errno -2] Name or service not known",
+      "stack_trace": "socket.gaierror: [Errno -2] Name or service not known: 'api.internal'",
+      "ground_truth": {
+        "root_cause": "DNS cannot resolve hostname 'api.internal' to IP address",
+        "recommendation": "Check DNS configuration, verify hostname in /etc/hosts or update DNS server",
+        "severity": "HIGH",
+        "confidence": 0.96,
+        "category": "INFRA_ERROR",
+        "service": "dns"
+      },
+      "verified_by": "human_expert",
+      "verification_date": "2025-11-03"
+    },
+    {
+      "id": "TEST_073",
+      "category": "CODE_ERROR",
+      "query": "asyncio.TimeoutError: Task took longer than 60 seconds",
+      "error_message": "asyncio.exceptions.TimeoutError",
+      "stack_trace": "File \"async_handler.py\", line 123, in process_async\n    result = await asyncio.wait_for(task, timeout=60)\nTimeoutError",
+      "ground_truth": {
+        "root_cause": "Async task exceeded 60-second timeout limit",
+        "recommendation": "Increase timeout or optimize async operation: await asyncio.wait_for(task, timeout=120)",
+        "severity": "MEDIUM",
+        "confidence": 0.92,
+        "category": "CODE_ERROR",
+        "file_path": "async_handler.py",
+        "line_number": 123
+      },
+      "verified_by": "human_expert",
+      "verification_date": "2025-11-03"
+    },
+    {
+      "id": "TEST_074",
+      "category": "DEPENDENCY_ERROR",
+      "query": "Conflicting dependencies: package-a requires package-b<2.0, package-c requires package-b>=2.0",
+      "error_message": "ResolutionImpossible: package-a requires package-b<2.0, but package-c requires package-b>=2.0",
+      "stack_trace": "pip._internal.exceptions.ResolutionImpossible: Cannot install because these package versions have conflicting dependencies",
+      "ground_truth": {
+        "root_cause": "Dependency conflict between package version requirements",
+        "recommendation": "Update packages to compatible versions or find alternative packages",
+        "severity": "HIGH",
+        "confidence": 0.95,
+        "category": "DEPENDENCY_ERROR",
+        "package": "package-b"
+      },
+      "verified_by": "human_expert",
+      "verification_date": "2025-11-03"
+    },
+    {
+      "id": "TEST_075",
+      "category": "CONFIG_ERROR",
+      "query": "Email SMTP configuration error: Authentication failed",
+      "error_message": "smtplib.SMTPAuthenticationError: (535, b'5.7.8 Username and Password not accepted')",
+      "stack_trace": "SMTPAuthenticationError: Username and Password not accepted",
+      "ground_truth": {
+        "root_cause": "Invalid SMTP credentials or app password not configured",
+        "recommendation": "Verify SMTP_USER and SMTP_PASSWORD in .env, enable app passwords for Gmail",
+        "severity": "HIGH",
+        "confidence": 0.97,
+        "category": "CONFIG_ERROR",
+        "config_key": "SMTP_PASSWORD"
+      },
+      "verified_by": "human_expert",
+      "verification_date": "2025-11-03"
+    },
+    {
+      "id": "TEST_076",
+      "category": "CODE_ERROR",
+      "query": "pickle.UnpicklingError: invalid load key",
+      "error_message": "pickle.UnpicklingError: invalid load key, 'v'",
+      "stack_trace": "File \"model_loader.py\", line 89, in load_model\n    model = pickle.load(f)\nUnpicklingError: invalid load key",
+      "ground_truth": {
+        "root_cause": "Attempting to unpickle corrupted or non-pickle file",
+        "recommendation": "Verify file is valid pickle format or re-save model with pickle.dump()",
+        "severity": "MEDIUM",
+        "confidence": 0.90,
+        "category": "CODE_ERROR",
+        "file_path": "model_loader.py",
+        "line_number": 89
+      },
+      "verified_by": "human_expert",
+      "verification_date": "2025-11-03"
+    },
+    {
+      "id": "TEST_077",
+      "category": "TEST_ERROR",
+      "query": "Snapshot test failed: received value does not match stored snapshot",
+      "error_message": "SnapshotError: Received value does not match stored snapshot",
+      "stack_trace": "SnapshotError: Expected UI component to match snapshot but differs in 3 places",
+      "ground_truth": {
+        "root_cause": "UI component output changed from previously saved snapshot",
+        "recommendation": "Review changes, update snapshot if intentional: pytest --snapshot-update",
+        "severity": "LOW",
+        "confidence": 0.85,
+        "category": "TEST_ERROR",
+        "test_name": "snapshot_test"
+      },
+      "verified_by": "human_expert",
+      "verification_date": "2025-11-03"
+    },
+    {
+      "id": "TEST_078",
+      "category": "INFRA_ERROR",
+      "query": "AWS Lambda timeout: Task timed out after 30 seconds",
+      "error_message": "Task timed out after 30.00 seconds",
+      "stack_trace": "LambdaTimeoutError: Function execution exceeded configured timeout",
+      "ground_truth": {
+        "root_cause": "Lambda function execution exceeded 30-second timeout limit",
+        "recommendation": "Increase Lambda timeout in configuration or optimize function performance",
+        "severity": "HIGH",
+        "confidence": 0.96,
+        "category": "INFRA_ERROR",
+        "service": "aws_lambda"
+      },
+      "verified_by": "human_expert",
+      "verification_date": "2025-11-03"
+    },
+    {
+      "id": "TEST_079",
+      "category": "CODE_ERROR",
+      "query": "IndentationError: expected an indented block",
+      "error_message": "IndentationError: expected an indented block",
+      "stack_trace": "File \"parser.py\", line 67\n    def process_data():\n    ^\nIndentationError: expected an indented block",
+      "ground_truth": {
+        "root_cause": "Python syntax error - missing indented block after function definition",
+        "recommendation": "Add indented code block after def or use pass statement if function is empty",
+        "severity": "HIGH",
+        "confidence": 0.99,
+        "category": "CODE_ERROR",
+        "file_path": "parser.py",
+        "line_number": 67
+      },
+      "verified_by": "human_expert",
+      "verification_date": "2025-11-03"
+    },
+    {
+      "id": "TEST_080",
+      "category": "DEPENDENCY_ERROR",
+      "query": "Docker build failed: npm ERR! peer dependency warning",
+      "error_message": "npm WARN EBADENGINE Unsupported engine {node: '^18.0.0'}",
+      "stack_trace": "npm ERR! Found incompatible module",
+      "ground_truth": {
+        "root_cause": "Node.js version in Docker image incompatible with package requirements",
+        "recommendation": "Update Dockerfile to use Node 18+ base image: FROM node:18-alpine",
+        "severity": "MEDIUM",
+        "confidence": 0.94,
+        "category": "DEPENDENCY_ERROR",
+        "package": "docker"
+      },
+      "verified_by": "human_expert",
+      "verification_date": "2025-11-03"
+    },
+    {
+      "id": "TEST_081",
+      "category": "CONFIG_ERROR",
+      "query": "S3 bucket policy denies access: Access Denied",
+      "error_message": "botocore.exceptions.ClientError: An error occurred (AccessDenied) when calling the PutObject operation",
+      "stack_trace": "ClientError: Access Denied - Check bucket policy and IAM permissions",
+      "ground_truth": {
+        "root_cause": "AWS IAM user/role lacks S3 PutObject permission for bucket",
+        "recommendation": "Add S3 permissions to IAM role or update bucket policy to allow PutObject",
+        "severity": "HIGH",
+        "confidence": 0.95,
+        "category": "CONFIG_ERROR",
+        "config_key": "AWS_PERMISSIONS"
+      },
+      "verified_by": "human_expert",
+      "verification_date": "2025-11-03"
+    },
+    {
+      "id": "TEST_082",
+      "category": "TEST_ERROR",
+      "query": "Flaky test: sometimes passes, sometimes fails",
+      "error_message": "Intermittent failure: test_concurrent_access fails randomly",
+      "stack_trace": "AssertionError: Expected result sometimes differs",
+      "ground_truth": {
+        "root_cause": "Test has race condition or relies on timing/external state",
+        "recommendation": "Add proper synchronization, mocking, or test isolation to eliminate flakiness",
+        "severity": "MEDIUM",
+        "confidence": 0.82,
+        "category": "TEST_ERROR",
+        "test_name": "test_concurrent_access"
+      },
+      "verified_by": "human_expert",
+      "verification_date": "2025-11-03"
+    },
+    {
+      "id": "TEST_083",
+      "category": "CODE_ERROR",
+      "query": "requests.exceptions.ConnectionError: Max retries exceeded",
+      "error_message": "ConnectionError: HTTPConnectionPool(host='api.example.com', port=80): Max retries exceeded",
+      "stack_trace": "requests.exceptions.ConnectionError: Max retries exceeded with url: /api/endpoint",
+      "ground_truth": {
+        "root_cause": "API endpoint unreachable after multiple retry attempts",
+        "recommendation": "Check network connectivity, verify API host is running, increase timeout/retries",
+        "severity": "HIGH",
+        "confidence": 0.93,
+        "category": "CODE_ERROR",
+        "file_path": "api_client.py",
+        "line_number": 0
+      },
+      "verified_by": "human_expert",
+      "verification_date": "2025-11-03"
+    },
+    {
+      "id": "TEST_084",
+      "category": "INFRA_ERROR",
+      "query": "Out of memory: Java heap space",
+      "error_message": "java.lang.OutOfMemoryError: Java heap space",
+      "stack_trace": "Exception in thread \"main\" java.lang.OutOfMemoryError: Java heap space",
+      "ground_truth": {
+        "root_cause": "JVM heap size insufficient for application memory requirements",
+        "recommendation": "Increase JVM heap: java -Xmx4g -jar app.jar or optimize memory usage",
+        "severity": "CRITICAL",
+        "confidence": 0.97,
+        "category": "INFRA_ERROR",
+        "service": "jvm"
+      },
+      "verified_by": "human_expert",
+      "verification_date": "2025-11-03"
+    },
+    {
+      "id": "TEST_085",
+      "category": "DEPENDENCY_ERROR",
+      "query": "Webpack build error: Cannot resolve module",
+      "error_message": "Module not found: Error: Can't resolve 'module-name' in '/path/to/src'",
+      "stack_trace": "ERROR in ./src/index.js\nModule not found: Error: Can't resolve 'module-name'",
+      "ground_truth": {
+        "root_cause": "Module not installed or incorrect import path in webpack config",
+        "recommendation": "Install module: npm install module-name or check import path and aliases",
+        "severity": "HIGH",
+        "confidence": 0.96,
+        "category": "DEPENDENCY_ERROR",
+        "package": "webpack"
+      },
+      "verified_by": "human_expert",
+      "verification_date": "2025-11-03"
+    },
+    {
+      "id": "TEST_086",
+      "category": "CONFIG_ERROR",
+      "query": "Invalid Gemini API key or quota exceeded",
+      "error_message": "google.api_core.exceptions.InvalidArgument: API key not valid",
+      "stack_trace": "InvalidArgument: 400 API key not valid. Please pass a valid API key",
+      "ground_truth": {
+        "root_cause": "GEMINI_API_KEY invalid or API quota/billing exceeded",
+        "recommendation": "Verify GEMINI_API_KEY in .env, check Google AI Studio for valid key and billing",
+        "severity": "CRITICAL",
+        "confidence": 0.98,
+        "category": "CONFIG_ERROR",
+        "config_key": "GEMINI_API_KEY"
+      },
+      "verified_by": "human_expert",
+      "verification_date": "2025-11-03"
+    },
+    {
+      "id": "TEST_087",
+      "category": "CODE_ERROR",
+      "query": "Pandas SettingWithCopyWarning: A value is trying to be set on a copy of a slice",
+      "error_message": "SettingWithCopyWarning: A value is trying to be set on a copy of a slice from a DataFrame",
+      "stack_trace": "SettingWithCopyWarning: Try using .loc[row_indexer,col_indexer] = value instead",
+      "ground_truth": {
+        "root_cause": "Modifying a pandas DataFrame slice that may be a view of original data",
+        "recommendation": "Use df.loc[] for assignment or create explicit copy: df = df.copy()",
+        "severity": "LOW",
+        "confidence": 0.89,
+        "category": "CODE_ERROR",
+        "file_path": "data_processing.py",
+        "line_number": 0
+      },
+      "verified_by": "human_expert",
+      "verification_date": "2025-11-03"
+    },
+    {
+      "id": "TEST_088",
+      "category": "TEST_ERROR",
+      "query": "E2E test failed: Page not loaded after navigation",
+      "error_message": "TimeoutError: Waiting for selector '.page-content' failed: timeout 30000ms exceeded",
+      "stack_trace": "TimeoutError: waiting for selector \".page-content\" failed",
+      "ground_truth": {
+        "root_cause": "Page navigation timing issue or selector not found on page",
+        "recommendation": "Increase timeout, check selector exists, or use waitForNavigation()",
+        "severity": "MEDIUM",
+        "confidence": 0.86,
+        "category": "TEST_ERROR",
+        "test_name": "e2e_test"
+      },
+      "verified_by": "human_expert",
+      "verification_date": "2025-11-03"
+    },
+    {
+      "id": "TEST_089",
+      "category": "INFRA_ERROR",
+      "query": "Kafka broker not available: Connection timed out",
+      "error_message": "kafka.errors.NoBrokersAvailable: NoBrokersAvailable: Unable to bootstrap from [('localhost', 9092)]",
+      "stack_trace": "NoBrokersAvailable: Unable to bootstrap from provided hosts",
+      "ground_truth": {
+        "root_cause": "Kafka broker not running or not accessible on localhost:9092",
+        "recommendation": "Start Kafka: kafka-server-start.sh config/server.properties or check KAFKA_BROKERS config",
+        "severity": "CRITICAL",
+        "confidence": 0.98,
+        "category": "INFRA_ERROR",
+        "service": "kafka"
+      },
+      "verified_by": "human_expert",
+      "verification_date": "2025-11-03"
+    },
+    {
+      "id": "TEST_090",
+      "category": "CODE_ERROR",
+      "query": "numpy.AxisError: axis 2 is out of bounds for array of dimension 2",
+      "error_message": "numpy.AxisError: axis 2 is out of bounds for array of dimension 2",
+      "stack_trace": "File \"matrix_ops.py\", line 234, in calculate\n    result = np.sum(array, axis=2)\nAxisError: axis 2 is out of bounds",
+      "ground_truth": {
+        "root_cause": "Attempting to access axis 2 on 2D array (only axes 0 and 1 exist)",
+        "recommendation": "Check array dimensions with array.shape and use valid axis index",
+        "severity": "MEDIUM",
+        "confidence": 0.95,
+        "category": "CODE_ERROR",
+        "file_path": "matrix_ops.py",
+        "line_number": 234
+      },
+      "verified_by": "human_expert",
+      "verification_date": "2025-11-03"
+    },
+    {
+      "id": "TEST_091",
+      "category": "DEPENDENCY_ERROR",
+      "query": "React version mismatch: react-dom requires react@^18.0.0",
+      "error_message": "npm ERR! peer react@\"^18.0.0\" from react-dom@18.2.0",
+      "stack_trace": "npm ERR! Could not resolve dependency: peer react@\"^18.0.0\"",
+      "ground_truth": {
+        "root_cause": "React version incompatible with react-dom version",
+        "recommendation": "Install matching versions: npm install react@18 react-dom@18",
+        "severity": "HIGH",
+        "confidence": 0.97,
+        "category": "DEPENDENCY_ERROR",
+        "package": "react"
+      },
+      "verified_by": "human_expert",
+      "verification_date": "2025-11-03"
+    },
+    {
+      "id": "TEST_092",
+      "category": "CONFIG_ERROR",
+      "query": "Database connection pool exhausted: OperationalError",
+      "error_message": "sqlalchemy.exc.OperationalError: (psycopg2.OperationalError) connection pool exhausted",
+      "stack_trace": "OperationalError: QueuePool limit of size 5 overflow 10 reached",
+      "ground_truth": {
+        "root_cause": "Database connection pool size too small for concurrent requests",
+        "recommendation": "Increase pool size in config: SQLALCHEMY_POOL_SIZE=20 or add pool_pre_ping=True",
+        "severity": "HIGH",
+        "confidence": 0.93,
+        "category": "CONFIG_ERROR",
+        "config_key": "SQLALCHEMY_POOL_SIZE"
+      },
+      "verified_by": "human_expert",
+      "verification_date": "2025-11-03"
+    },
+    {
+      "id": "TEST_093",
+      "category": "TEST_ERROR",
+      "query": "Pytest parametrize error: got multiple values for argument",
+      "error_message": "TypeError: test_function() got multiple values for argument 'param'",
+      "stack_trace": "TypeError: test_function() got multiple values for argument",
+      "ground_truth": {
+        "root_cause": "Pytest parametrize decorator conflicts with function argument names",
+        "recommendation": "Check parameter names in @pytest.mark.parametrize match function arguments",
+        "severity": "LOW",
+        "confidence": 0.91,
+        "category": "TEST_ERROR",
+        "test_name": "parametrize_test"
+      },
+      "verified_by": "human_expert",
+      "verification_date": "2025-11-03"
+    },
+    {
+      "id": "TEST_094",
+      "category": "CODE_ERROR",
+      "query": "Uncaught TypeError: Cannot read property 'map' of undefined",
+      "error_message": "TypeError: Cannot read property 'map' of undefined",
+      "stack_trace": "TypeError: Cannot read property 'map' of undefined\n  at Component.render (App.js:45)",
+      "ground_truth": {
+        "root_cause": "Attempting to call .map() on undefined array variable",
+        "recommendation": "Add null check: {array && array.map(...)} or initialize with default: array || []",
+        "severity": "MEDIUM",
+        "confidence": 0.94,
+        "category": "CODE_ERROR",
+        "file_path": "App.js",
+        "line_number": 45
+      },
+      "verified_by": "human_expert",
+      "verification_date": "2025-11-03"
+    },
+    {
+      "id": "TEST_095",
+      "category": "INFRA_ERROR",
+      "query": "Firewall blocking connection to external API",
+      "error_message": "requests.exceptions.ConnectTimeout: HTTPSConnectionPool: Read timed out",
+      "stack_trace": "ConnectTimeout: HTTPSConnectionPool(host='api.external.com', port=443): Read timed out",
+      "ground_truth": {
+        "root_cause": "Network firewall or proxy blocking outbound HTTPS connection",
+        "recommendation": "Configure proxy: export https_proxy=http://proxy:8080 or check firewall rules",
+        "severity": "HIGH",
+        "confidence": 0.88,
+        "category": "INFRA_ERROR",
+        "service": "firewall"
+      },
+      "verified_by": "human_expert",
+      "verification_date": "2025-11-03"
+    },
+    {
+      "id": "TEST_096",
+      "category": "DEPENDENCY_ERROR",
+      "query": "Rust compiler not found when building Python extension",
+      "error_message": "error: can't find Rust compiler",
+      "stack_trace": "error: can't find Rust compiler\n  If you are using an outdated pip version, it is possible a prebuilt wheel is available",
+      "ground_truth": {
+        "root_cause": "Rust compiler required for building Python package but not installed",
+        "recommendation": "Install Rust: curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh or upgrade pip",
+        "severity": "MEDIUM",
+        "confidence": 0.95,
+        "category": "DEPENDENCY_ERROR",
+        "package": "rust"
+      },
+      "verified_by": "human_expert",
+      "verification_date": "2025-11-03"
+    },
+    {
+      "id": "TEST_097",
+      "category": "CONFIG_ERROR",
+      "query": "Docker volume mount permission denied",
+      "error_message": "docker: Error response from daemon: error while creating mount source path: mkdir: permission denied",
+      "stack_trace": "Error response from daemon: error while creating mount source path",
+      "ground_truth": {
+        "root_cause": "Docker lacks permission to create volume mount directory on host",
+        "recommendation": "Create directory with proper permissions: sudo mkdir -p /path && sudo chown $USER /path",
+        "severity": "MEDIUM",
+        "confidence": 0.92,
+        "category": "CONFIG_ERROR",
+        "config_key": "DOCKER_VOLUMES"
+      },
+      "verified_by": "human_expert",
+      "verification_date": "2025-11-03"
+    },
+    {
+      "id": "TEST_098",
+      "category": "TEST_ERROR",
+      "query": "Integration test database connection failed",
+      "error_message": "psycopg2.OperationalError: could not connect to server: Connection refused\n\tIs the server running on host \"localhost\" (127.0.0.1) and accepting TCP/IP connections on port 5432?",
+      "stack_trace": "OperationalError: could not connect to test database",
+      "ground_truth": {
+        "root_cause": "Test database server not running or not configured correctly",
+        "recommendation": "Start test database or configure TEST_DATABASE_URL in .env.test",
+        "severity": "HIGH",
+        "confidence": 0.96,
+        "category": "TEST_ERROR",
+        "test_name": "integration_test"
+      },
+      "verified_by": "human_expert",
+      "verification_date": "2025-11-03"
+    },
+    {
+      "id": "TEST_099",
+      "category": "CODE_ERROR",
+      "query": "Maximum call stack size exceeded in recursive function",
+      "error_message": "RangeError: Maximum call stack size exceeded",
+      "stack_trace": "RangeError: Maximum call stack size exceeded\n  at processNode (tree.js:89)\n  at processNode (tree.js:89)",
+      "ground_truth": {
+        "root_cause": "Infinite recursion or deeply nested recursive calls exceeding stack limit",
+        "recommendation": "Add depth limit check or refactor to iterative approach using stack data structure",
+        "severity": "HIGH",
+        "confidence": 0.94,
+        "category": "CODE_ERROR",
+        "file_path": "tree.js",
+        "line_number": 89
+      },
+      "verified_by": "human_expert",
+      "verification_date": "2025-11-03"
+    },
+    {
+      "id": "TEST_100",
+      "category": "UNKNOWN_ERROR",
+      "query": "Intermittent 500 Internal Server Error with no logs",
+      "error_message": "500 Internal Server Error",
+      "stack_trace": "Error: Request failed with status code 500\n  No additional error details available",
+      "ground_truth": {
+        "root_cause": "Unknown server error without detailed logs or stack trace",
+        "recommendation": "Enable detailed error logging, check server logs, add error monitoring (Sentry)",
+        "severity": "HIGH",
+        "confidence": 0.65,
+        "category": "UNKNOWN_ERROR",
+        "file_path": "unknown",
+        "line_number": 0
+      },
+      "verified_by": "human_expert",
+      "verification_date": "2025-11-03"
+    }
+  ],
+  "metadata": {
+    "version": "1.0",
+    "created_date": "2025-11-03",
+    "total_test_cases": 100,
+    "category_distribution": {
+      "CODE_ERROR": 30,
+      "INFRA_ERROR": 20,
+      "CONFIG_ERROR": 20,
+      "DEPENDENCY_ERROR": 15,
+      "TEST_ERROR": 14,
+      "UNKNOWN_ERROR": 1
+    },
+    "verified_by": "human_expert",
+    "description": "Comprehensive test set with 100 diverse test cases covering all error categories with human-verified ground truth"
+  }
+}

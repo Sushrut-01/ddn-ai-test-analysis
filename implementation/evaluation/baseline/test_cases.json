@@ -1,0 +1,72 @@
+[
+  {
+    "test_number": 1,
+    "test_name": "should measure Lustre parallel I/O scalability",
+    "error_message": "getaddrinfo ENOTFOUND exascaler.ddn.local",
+    "job_name": "Performance-Scalability",
+    "build_id": "BUILD_1761769848792"
+  },
+  {
+    "test_number": 2,
+    "test_name": "should support S3 bucket policies",
+    "error_message": "Missing credentials in config, if using AWS_CONFIG_FILE, set AWS_SDK_LOAD_CONFIG=1",
+    "job_name": "S3-Bucket-Policy-Test",
+    "build_id": "BUILD_1761769848038"
+  },
+  {
+    "test_number": 3,
+    "test_name": "should prevent cross-tenant S3 access",
+    "error_message": "Expected AccessDenied, got: Missing credentials in config, if using AWS_CONFIG_FILE, set AWS_SDK_LOAD_CONFIG=1",
+    "job_name": "S3-Cross-Tenant-Access-Test",
+    "build_id": "BUILD_1761769839183"
+  },
+  {
+    "test_number": 4,
+    "test_name": "should verify 25x lower latency",
+    "error_message": "getaddrinfo ENOTFOUND ai400x.ddn.local",
+    "job_name": "Performance-Latency",
+    "build_id": "BUILD_1761769848775"
+  },
+  {
+    "test_number": 5,
+    "test_name": "should create isolated S3 buckets",
+    "error_message": "Missing credentials in config, if using AWS_CONFIG_FILE, set AWS_SDK_LOAD_CONFIG=1",
+    "job_name": "S3-Bucket-Creation-Test",
+    "build_id": "BUILD_1761769830267"
+  },
+  {
+    "test_number": 6,
+    "test_name": "should prevent cross-tenant S3 access",
+    "error_message": "Expected AccessDenied, got: Missing credentials in config, if using AWS_CONFIG_FILE, set AWS_SDK_LOAD_CONFIG=1",
+    "job_name": "S3-Cross-Tenant-Access-Test",
+    "build_id": "BUILD_1761755987030"
+  },
+  {
+    "test_number": 7,
+    "test_name": "should achieve 4x faster data loading",
+    "error_message": "getaddrinfo ENOTFOUND ai400x.ddn.local",
+    "job_name": "Performance-Data-Loading",
+    "build_id": "BUILD_1761769848757"
+  },
+  {
+    "test_number": 8,
+    "test_name": "should support S3 bucket policies",
+    "error_message": "Missing credentials in config, if using AWS_CONFIG_FILE, set AWS_SDK_LOAD_CONFIG=1",
+    "job_name": "S3-Bucket-Policy-Test",
+    "build_id": "BUILD_1761755996142"
+  },
+  {
+    "test_number": 9,
+    "test_name": "should verify real-time monitoring",
+    "error_message": "getaddrinfo ENOTFOUND exascaler.ddn.local",
+    "job_name": "Monitoring-Integration",
+    "build_id": "BUILD_1761769848738"
+  },
+  {
+    "test_number": 10,
+    "test_name": "should create isolated S3 buckets",
+    "error_message": "Missing credentials in config, if using AWS_CONFIG_FILE, set AWS_SDK_LOAD_CONFIG=1",
+    "job_name": "S3-Bucket-Creation-Test",
+    "build_id": "BUILD_1761755978299"
+  }
+]

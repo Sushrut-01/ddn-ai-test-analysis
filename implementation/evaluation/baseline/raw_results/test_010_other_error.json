@@ -1,0 +1,85 @@
+{
+  "test_number": 10,
+  "test_name": "should create isolated S3 buckets",
+  "error_type": "other_error",
+  "latency_seconds": 12.05,
+  "status": "success",
+  "response": {
+    "analysis": {
+      "ai_status": "SUCCESS",
+      "classification": "CONFIGURATION",
+      "confidence": 1.0,
+      "rag_enabled": true,
+      "rag_match": false,
+      "root_cause": "The AWS SDK utilized by the test suite failed to locate the necessary authentication credentials (AWS Access Key ID and Secret Access Key) required to initialize the S3 client and communicate with the DDN storage endpoint. This environment setup is missing required environment variables or configuration file loading flags.",
+      "severity": "HIGH",
+      "similar_error_docs": [
+        {
+          "category": "ENVIRONMENT",
+          "error_id": "ERR003",
+          "error_type": "DNSResolutionException",
+          "root_cause": "DNS cannot resolve the DDN storage hostname. Either DNS server is not configured, hostname is incorrect, or /etc/hosts file is missing entry.",
+          "severity": "HIGH",
+          "similarity_score": 0.310812,
+          "tags": [
+            "dns",
+            "hostname",
+            "network",
+            "configuration"
+          ]
+        }
+      ],
+      "solution": "1. Verify the correct S3 credentials for the DDN system. 2. Configure the test execution environment (e.g., Jenkins job parameters or test runner script) to export the required credentials as environment variables (AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY). 3. If using an AWS configuration file to store credentials, ensure the environment variable AWS_SDK_LOAD_CONFIG is set to 1 prior to test execution."
+    },
+    "analysis_id": null,
+    "failure_id": "6902434aec432ae99b656cf3",
+    "similar_failures": [
+      {
+        "id": "690279667237ed99adb42dab",
+        "metadata": {
+          "classification": "CONFIGURATION",
+          "resolved": false,
+          "test_name": "should create isolated S3 buckets"
+        },
+        "score": 0.99994278
+      },
+      {
+        "id": "6902435cec432ae99b656cf5",
+        "metadata": {
+          "classification": "CONFIGURATION",
+          "resolved": false,
+          "test_name": "should support S3 bucket policies"
+        },
+        "score": 0.99994278
+      },
+      {
+        "id": "690279787237ed99adb42dad",
+        "metadata": {
+          "classification": "CONFIGURATION",
+          "resolved": false,
+          "test_name": "should support S3 bucket policies"
+        },
+        "score": 0.99994278
+      },
+      {
+        "id": "69024353ec432ae99b656cf4",
+        "metadata": {
+          "classification": "CONFIGURATION",
+          "resolved": false,
+          "test_name": "should prevent cross-tenant S3 access"
+        },
+        "score": 0.865940154
+      },
+      {
+        "id": "6902796f7237ed99adb42dac",
+        "metadata": {
+          "classification": "CONFIGURATION",
+          "resolved": false,
+          "test_name": "should prevent cross-tenant S3 access"
+        },
+        "score": 0.865869522
+      }
+    ],
+    "status": "success"
+  }
+}

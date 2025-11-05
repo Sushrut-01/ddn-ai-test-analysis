@@ -2,15 +2,52 @@
 
 **Complete Dashboard-Centric System with MongoDB Integration**
 
-**Status**: ✅ Ready for Implementation | **Updated**: October 21, 2025
+**Status**: ✅ Production Ready - Docker Deployment Available | **Updated**: November 5, 2025
 
 ---
 
-## 🚀 Quick Start (Choose Your Path)
+## 🐳 NEW: Docker Deployment (Recommended)
 
-### **👉 Path 1: Complete Setup** (30 minutes - Recommended)
+**All 17 services containerized and ready to deploy!**
 
-**If you're ready to implement the system:**
+### **Quick Start with Docker** (5-10 minutes)
+
+```bash
+# 1. Start all services
+cd c:\DDN-AI-Project-Documentation
+docker-compose -f docker-compose-unified.yml up -d
+
+# 2. Verify deployment
+docker-compose -f docker-compose-unified.yml ps
+
+# 3. Access services
+start http://localhost:3000  # Dashboard UI
+start http://localhost:3001  # Langfuse (LLM Observability)
+start http://localhost:5555  # Flower (Celery Monitor)
+```
+
+**Complete Guide**: [DOCKER-DEPLOYMENT-PLAN.md](DOCKER-DEPLOYMENT-PLAN.md) ⭐
+
+**What's Included:**
+- ✅ 17 containerized services (PostgreSQL, MongoDB, Redis, APIs, UI)
+- ✅ Layer-by-layer deployment strategy
+- ✅ Health checks and verification procedures
+- ✅ Troubleshooting guide with common issues
+- ✅ Rollback procedures
+
+**Key Changes:**
+- PostgreSQL: Port 5434 (Docker) to avoid conflict with native port 5432
+- MongoDB: Port 27018 (Docker)
+- Redis: Port 6380 (Docker)
+- All services use Docker networking for internal communication
+
+---
+
+## 🚀 Alternative: Native Setup (Legacy)
+
+### **👉 Path 1: Complete Setup** (30 minutes)
+
+**If you prefer native Python services:**
 
 1. **MongoDB Setup** → [MONGODB-QUICKSTART.md](MONGODB-QUICKSTART.md) ⭐ (10 min)
 2. **Complete System Setup** → [COMPLETE-SETUP-CHECKLIST.md](COMPLETE-SETUP-CHECKLIST.md) ⭐ (20 min)
@@ -243,18 +280,74 @@ Dashboard Response (with GitHub/Jenkins links)
 
 ---
 
+## 🐳 Docker Services Architecture (17 Containers)
+
+### **Layer 1: Infrastructure** (Critical)
+| Service | Port | Container | Purpose |
+|---------|------|-----------|---------|
+| PostgreSQL | 5434 | `postgres` | Analysis storage, DDN data |
+| MongoDB | 27018 | `mongodb` | Test results, failure data |
+
+### **Layer 2: Caching & Monitoring**
+| Service | Port | Container | Purpose |
+|---------|------|-----------|---------|
+| Redis | 6380 | `redis` | RAG query caching |
+| Langfuse | 3001 | `langfuse` | LLM observability, traces |
+| Flower | 5555 | `flower` | Celery task monitoring |
+
+### **Layer 3: Workflow Engine**
+| Service | Port | Container | Purpose |
+|---------|------|-----------|---------|
+| Celery Worker | - | `celery-worker` | Async AI analysis tasks |
+
+### **Layer 4: AI Core Services**
+| Service | Port | Container | Purpose |
+|---------|------|-----------|---------|
+| LangGraph Agent | 5000 | `langgraph-service` | Main AI orchestrator |
+| LangGraph Classification | 5004 | `langgraph-classification` | Query routing |
+| AI Analysis | 5005 | `ai-analysis-service` | Root cause analysis |
+
+### **Layer 5: Integration Services**
+| Service | Port | Container | Purpose |
+|---------|------|-----------|---------|
+| JIRA Service | 5009 | `jira-service` | JIRA ticket creation |
+| Slack Service | 5010 | `slack-service` | Slack notifications |
+| MCP MongoDB | 5001 | `mcp-mongodb` | MongoDB MCP server |
+| MCP GitHub | 5002 | `mcp-github` | GitHub MCP server |
+| Self-Healing | 5011 | `self-healing-service` | Automated fix deployment |
+
+### **Layer 6: API Gateway**
+| Service | Port | Container | Purpose |
+|---------|------|-----------|---------|
+| Dashboard API | 5006 | `dashboard-api` | Main REST API |
+| Manual Trigger API | 5008 | `manual-trigger-api` | On-demand analysis |
+
+### **Layer 7: Frontend**
+| Service | Port | Container | Purpose |
+|---------|------|-----------|---------|
+| Dashboard UI | 3000 | `dashboard-ui` | React web interface |
+
+**Complete Port Reference**: See [ALL-SERVICES-REFERENCE.md](ALL-SERVICES-REFERENCE.md)
+
+---
+
 ## 🛠️ Technology Stack
 
-| Component | Technology | Purpose |
-|-----------|-----------|---------|
-| **Orchestration** | n8n | Workflow automation |
-| **AI Engine** | Claude 3.5 Sonnet | Code analysis |
-| **Agent** | LangGraph | Error classification |
-| **Vector DB** | Pinecone | RAG (similar errors) |
-| **Database** | MongoDB | Store failures & solutions |
-| **Protocol** | MCP | AI tool calling |
-| **Dashboard** | React | User interface |
-| **Notifications** | MS Teams | Alerts |
+| Component | Technology | Purpose | Deployment |
+|-----------|-----------|---------|------------|
+| **Orchestration** | LangGraph | AI workflow orchestration | Docker |
+| **AI Engine** | Claude 3.5 Sonnet, Gemini | Code analysis | API |
+| **Agent** | LangGraph | Error classification | Docker (Port 5000) |
+| **Vector DB** | Pinecone | RAG (similar errors) | Cloud |
+| **Database** | MongoDB | Store failures & solutions | Docker (Port 27018) |
+| **Database** | PostgreSQL | Analysis results | Docker (Port 5434) |
+| **Caching** | Redis | Query caching | Docker (Port 6380) |
+| **Protocol** | MCP | AI tool calling | Docker (Ports 5001-5002) |
+| **Dashboard** | React + Vite | User interface | Docker (Port 3000) |
+| **Task Queue** | Celery | Async processing | Docker |
+| **Monitoring** | Langfuse | LLM observability | Docker (Port 3001) |
+| **Monitoring** | Flower | Celery monitoring | Docker (Port 5555) |
+| **Container** | Docker Compose | Service orchestration | Local |
 
 ---
 
@@ -361,10 +454,30 @@ See [FILE-CLEANUP-ANALYSIS.md](FILE-CLEANUP-ANALYSIS.md) for details.
 
 ---
 
+## 📋 Recent Session Documentation (Nov 2025)
+
+### **PostgreSQL Port Change (Session: 2025-11-05)**
+- [POSTGRES-PORT-CHANGE-COMPLETE.md](POSTGRES-PORT-CHANGE-COMPLETE.md) - Port migration summary
+- [POSTGRESQL-PORT-CHANGE-IMPACT-ANALYSIS.md](POSTGRESQL-PORT-CHANGE-IMPACT-ANALYSIS.md) - Complete impact analysis
+- [POSTGRES-PORT-VERIFICATION-SUMMARY.md](POSTGRES-PORT-VERIFICATION-SUMMARY.md) - Verification results
+
+### **Docker Migration (Session: 2025-11-05)**
+- [DOCKER-DEPLOYMENT-PLAN.md](DOCKER-DEPLOYMENT-PLAN.md) ⭐ - Complete deployment strategy
+- [SESSION-2025-11-05-TASKS-AUDIT.md](SESSION-2025-11-05-TASKS-AUDIT.md) - Task audit and progress
+- [docker-compose-unified.yml](docker-compose-unified.yml) - Main orchestration file
+
+### **Session Summaries (Nov 2025)**
+- [SESSION-2025-11-04-PHASE-2-INTEGRATION.md](SESSION-2025-11-04-PHASE-2-INTEGRATION.md)
+- [SESSION-2025-11-03-SUMMARY.md](SESSION-2025-11-03-SUMMARY.md)
+- [SESSION-2025-11-02-SUMMARY.md](SESSION-2025-11-02-SUMMARY.md)
+
+---
+
 ## 📋 Change Log
 
 | Date | Version | Changes |
 |------|---------|---------|
+| 2025-11-05 | 3.0 | Docker deployment ready - 17 containerized services, PostgreSQL port migration |
 | 2025-10-17 | 2.0 | Complete dashboard-centric system with MongoDB integration |
 | 2025-10-17 | 1.0 | Initial documentation |
 
@@ -387,6 +500,6 @@ See [FILE-CLEANUP-ANALYSIS.md](FILE-CLEANUP-ANALYSIS.md) for details.
 
 ---
 
-**Last Updated**: October 21, 2025
+**Last Updated**: November 5, 2025 - Docker Deployment Added
 **Maintained By**: Rysun Labs Development Team
-**Status**: ✅ Production Ready
+**Status**: ✅ Production Ready - Docker & Native Deployment Options Available

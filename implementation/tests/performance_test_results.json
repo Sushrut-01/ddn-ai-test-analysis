@@ -1,0 +1,584 @@
+{
+  "test_run": {
+    "timestamp": "2025-11-02T18:02:29.427333",
+    "mode": "simulation",
+    "total_scenarios": 20
+  },
+  "summary": {
+    "total_tests": 20,
+    "successful_tests": 20,
+    "failed_tests": 0,
+    "success_rate": 100.0,
+    "avg_latency": 10.12,
+    "min_latency": 5.2,
+    "max_latency": 24.2,
+    "p80_latency": 22.0,
+    "under_10s_count": 15,
+    "under_10s_percentage": 75.0,
+    "under_30s_count": 20,
+    "under_30s_percentage": 100.0,
+    "meets_80_percent_target": false,
+    "meets_100_percent_target": true,
+    "avg_iterations": 2.25,
+    "min_iterations": 2,
+    "max_iterations": 3,
+    "avg_confidence": 0.8,
+    "min_confidence": 0.8,
+    "max_confidence": 0.8,
+    "github_fetch_count": 5,
+    "github_fetch_rate": 25.0,
+    "target_github_rate": 20.0,
+    "meets_github_target": true,
+    "total_retries": 0,
+    "avg_retries_per_test": 0.0,
+    "multi_file_count": 0,
+    "multi_file_percentage": 0.0
+  },
+  "detailed_results": [
+    {
+      "scenario_id": "PERF-001",
+      "scenario_name": "Simple Authentication Error",
+      "expected_category": "CODE_ERROR",
+      "expected_complexity": "simple",
+      "expected_latency": "< 10s",
+      "success": true,
+      "actual_category": "CODE_ERROR",
+      "classification_confidence": 0.85,
+      "solution_confidence": 0.8,
+      "iterations": 2,
+      "tools_used": [
+        "pinecone_knowledge",
+        "pinecone_error_library"
+      ],
+      "latency_seconds": 6.0,
+      "routing_stats": {
+        "total_decisions": 1,
+        "github_fetches": 0,
+        "github_skips": 1,
+        "github_fetch_percentage": 0.0
+      },
+      "multi_step": false,
+      "self_correction_retries": 0,
+      "root_cause": "Simulated analysis for CODE_ERROR...",
+      "mode": "simulation"
+    },
+    {
+      "scenario_id": "PERF-002",
+      "scenario_name": "Database Connection Timeout",
+      "expected_category": "INFRA_ERROR",
+      "expected_complexity": "simple",
+      "expected_latency": "< 10s",
+      "success": true,
+      "actual_category": "INFRA_ERROR",
+      "classification_confidence": 0.85,
+      "solution_confidence": 0.8,
+      "iterations": 2,
+      "tools_used": [
+        "pinecone_knowledge",
+        "pinecone_error_library"
+      ],
+      "latency_seconds": 7.7,
+      "routing_stats": {
+        "total_decisions": 1,
+        "github_fetches": 0,
+        "github_skips": 1,
+        "github_fetch_percentage": 0.0
+      },
+      "multi_step": false,
+      "self_correction_retries": 0,
+      "root_cause": "Simulated analysis for INFRA_ERROR...",
+      "mode": "simulation"
+    },
+    {
+      "scenario_id": "PERF-003",
+      "scenario_name": "Missing Environment Variable",
+      "expected_category": "CONFIG_ERROR",
+      "expected_complexity": "simple",
+      "expected_latency": "< 10s",
+      "success": true,
+      "actual_category": "CONFIG_ERROR",
+      "classification_confidence": 0.85,
+      "solution_confidence": 0.8,
+      "iterations": 2,
+      "tools_used": [
+        "pinecone_knowledge",
+        "pinecone_error_library"
+      ],
+      "latency_seconds": 7.2,
+      "routing_stats": {
+        "total_decisions": 1,
+        "github_fetches": 0,
+        "github_skips": 1,
+        "github_fetch_percentage": 0.0
+      },
+      "multi_step": false,
+      "self_correction_retries": 0,
+      "root_cause": "Simulated analysis for CONFIG_ERROR...",
+      "mode": "simulation"
+    },
+    {
+      "scenario_id": "PERF-004",
+      "scenario_name": "Missing Python Package",
+      "expected_category": "DEPENDENCY_ERROR",
+      "expected_complexity": "simple",
+      "expected_latency": "< 10s",
+      "success": true,
+      "actual_category": "DEPENDENCY_ERROR",
+      "classification_confidence": 0.85,
+      "solution_confidence": 0.8,
+      "iterations": 2,
+      "tools_used": [
+        "pinecone_knowledge",
+        "pinecone_error_library"
+      ],
+      "latency_seconds": 5.8,
+      "routing_stats": {
+        "total_decisions": 1,
+        "github_fetches": 0,
+        "github_skips": 1,
+        "github_fetch_percentage": 0.0
+      },
+      "multi_step": false,
+      "self_correction_retries": 0,
+      "root_cause": "Simulated analysis for DEPENDENCY_ERROR...",
+      "mode": "simulation"
+    },
+    {
+      "scenario_id": "PERF-005",
+      "scenario_name": "Complex Code Error - Low Confidence",
+      "expected_category": "CODE_ERROR",
+      "expected_complexity": "complex",
+      "expected_latency": "< 30s",
+      "success": true,
+      "actual_category": "CODE_ERROR",
+      "classification_confidence": 0.85,
+      "solution_confidence": 0.8,
+      "iterations": 3,
+      "tools_used": [
+        "pinecone_knowledge",
+        "pinecone_error_library",
+        "github_get_file"
+      ],
+      "latency_seconds": 23.2,
+      "routing_stats": {
+        "total_decisions": 2,
+        "github_fetches": 1,
+        "github_skips": 1,
+        "github_fetch_percentage": 33.3
+      },
+      "multi_step": false,
+      "self_correction_retries": 0,
+      "root_cause": "Simulated analysis for CODE_ERROR...",
+      "mode": "simulation"
+    },
+    {
+      "scenario_id": "PERF-006",
+      "scenario_name": "Multi-File Python Error",
+      "expected_category": "CODE_ERROR",
+      "expected_complexity": "complex",
+      "expected_latency": "< 30s",
+      "success": true,
+      "actual_category": "CODE_ERROR",
+      "classification_confidence": 0.85,
+      "solution_confidence": 0.8,
+      "iterations": 3,
+      "tools_used": [
+        "pinecone_knowledge",
+        "pinecone_error_library",
+        "github_get_file"
+      ],
+      "latency_seconds": 15.3,
+      "routing_stats": {
+        "total_decisions": 2,
+        "github_fetches": 1,
+        "github_skips": 1,
+        "github_fetch_percentage": 33.3
+      },
+      "multi_step": false,
+      "self_correction_retries": 0,
+      "root_cause": "Simulated analysis for CODE_ERROR...",
+      "mode": "simulation"
+    },
+    {
+      "scenario_id": "PERF-007",
+      "scenario_name": "Multi-File Java Error",
+      "expected_category": "CODE_ERROR",
+      "expected_complexity": "complex",
+      "expected_latency": "< 30s",
+      "success": true,
+      "actual_category": "CODE_ERROR",
+      "classification_confidence": 0.85,
+      "solution_confidence": 0.8,
+      "iterations": 3,
+      "tools_used": [
+        "pinecone_knowledge",
+        "pinecone_error_library",
+        "github_get_file"
+      ],
+      "latency_seconds": 24.2,
+      "routing_stats": {
+        "total_decisions": 2,
+        "github_fetches": 1,
+        "github_skips": 1,
+        "github_fetch_percentage": 33.3
+      },
+      "multi_step": false,
+      "self_correction_retries": 0,
+      "root_cause": "Simulated analysis for CODE_ERROR...",
+      "mode": "simulation"
+    },
+    {
+      "scenario_id": "PERF-008",
+      "scenario_name": "API Timeout with Retry",
+      "expected_category": "CODE_ERROR",
+      "expected_complexity": "simple",
+      "expected_latency": "< 10s",
+      "success": true,
+      "actual_category": "CODE_ERROR",
+      "classification_confidence": 0.85,
+      "solution_confidence": 0.8,
+      "iterations": 2,
+      "tools_used": [
+        "pinecone_knowledge",
+        "pinecone_error_library"
+      ],
+      "latency_seconds": 7.5,
+      "routing_stats": {
+        "total_decisions": 1,
+        "github_fetches": 0,
+        "github_skips": 1,
+        "github_fetch_percentage": 0.0
+      },
+      "multi_step": false,
+      "self_correction_retries": 0,
+      "root_cause": "Simulated analysis for CODE_ERROR...",
+      "mode": "simulation"
+    },
+    {
+      "scenario_id": "PERF-009",
+      "scenario_name": "Permission Denied Error",
+      "expected_category": "INFRA_ERROR",
+      "expected_complexity": "simple",
+      "expected_latency": "< 10s",
+      "success": true,
+      "actual_category": "INFRA_ERROR",
+      "classification_confidence": 0.85,
+      "solution_confidence": 0.8,
+      "iterations": 2,
+      "tools_used": [
+        "pinecone_knowledge",
+        "pinecone_error_library"
+      ],
+      "latency_seconds": 6.5,
+      "routing_stats": {
+        "total_decisions": 1,
+        "github_fetches": 0,
+        "github_skips": 1,
+        "github_fetch_percentage": 0.0
+      },
+      "multi_step": false,
+      "self_correction_retries": 0,
+      "root_cause": "Simulated analysis for INFRA_ERROR...",
+      "mode": "simulation"
+    },
+    {
+      "scenario_id": "PERF-010",
+      "scenario_name": "Missing Test Fixture",
+      "expected_category": "TEST_ERROR",
+      "expected_complexity": "simple",
+      "expected_latency": "< 10s",
+      "success": true,
+      "actual_category": "TEST_ERROR",
+      "classification_confidence": 0.85,
+      "solution_confidence": 0.8,
+      "iterations": 2,
+      "tools_used": [
+        "pinecone_knowledge",
+        "pinecone_error_library"
+      ],
+      "latency_seconds": 6.3,
+      "routing_stats": {
+        "total_decisions": 1,
+        "github_fetches": 0,
+        "github_skips": 1,
+        "github_fetch_percentage": 0.0
+      },
+      "multi_step": false,
+      "self_correction_retries": 0,
+      "root_cause": "Simulated analysis for TEST_ERROR...",
+      "mode": "simulation"
+    },
+    {
+      "scenario_id": "PERF-011",
+      "scenario_name": "JSON Decode Error",
+      "expected_category": "CODE_ERROR",
+      "expected_complexity": "simple",
+      "expected_latency": "< 10s",
+      "success": true,
+      "actual_category": "CODE_ERROR",
+      "classification_confidence": 0.85,
+      "solution_confidence": 0.8,
+      "iterations": 2,
+      "tools_used": [
+        "pinecone_knowledge",
+        "pinecone_error_library"
+      ],
+      "latency_seconds": 6.9,
+      "routing_stats": {
+        "total_decisions": 1,
+        "github_fetches": 0,
+        "github_skips": 1,
+        "github_fetch_percentage": 0.0
+      },
+      "multi_step": false,
+      "self_correction_retries": 0,
+      "root_cause": "Simulated analysis for CODE_ERROR...",
+      "mode": "simulation"
+    },
+    {
+      "scenario_id": "PERF-012",
+      "scenario_name": "Redis Connection Error",
+      "expected_category": "INFRA_ERROR",
+      "expected_complexity": "simple",
+      "expected_latency": "< 10s",
+      "success": true,
+      "actual_category": "INFRA_ERROR",
+      "classification_confidence": 0.85,
+      "solution_confidence": 0.8,
+      "iterations": 2,
+      "tools_used": [
+        "pinecone_knowledge",
+        "pinecone_error_library"
+      ],
+      "latency_seconds": 5.2,
+      "routing_stats": {
+        "total_decisions": 1,
+        "github_fetches": 0,
+        "github_skips": 1,
+        "github_fetch_percentage": 0.0
+      },
+      "multi_step": false,
+      "self_correction_retries": 0,
+      "root_cause": "Simulated analysis for INFRA_ERROR...",
+      "mode": "simulation"
+    },
+    {
+      "scenario_id": "PERF-013",
+      "scenario_name": "SSL Certificate Error",
+      "expected_category": "CONFIG_ERROR",
+      "expected_complexity": "simple",
+      "expected_latency": "< 10s",
+      "success": true,
+      "actual_category": "CONFIG_ERROR",
+      "classification_confidence": 0.85,
+      "solution_confidence": 0.8,
+      "iterations": 2,
+      "tools_used": [
+        "pinecone_knowledge",
+        "pinecone_error_library"
+      ],
+      "latency_seconds": 5.4,
+      "routing_stats": {
+        "total_decisions": 1,
+        "github_fetches": 0,
+        "github_skips": 1,
+        "github_fetch_percentage": 0.0
+      },
+      "multi_step": false,
+      "self_correction_retries": 0,
+      "root_cause": "Simulated analysis for CONFIG_ERROR...",
+      "mode": "simulation"
+    },
+    {
+      "scenario_id": "PERF-014",
+      "scenario_name": "Import Circular Dependency",
+      "expected_category": "CODE_ERROR",
+      "expected_complexity": "simple",
+      "expected_latency": "< 10s",
+      "success": true,
+      "actual_category": "CODE_ERROR",
+      "classification_confidence": 0.85,
+      "solution_confidence": 0.8,
+      "iterations": 2,
+      "tools_used": [
+        "pinecone_knowledge",
+        "pinecone_error_library"
+      ],
+      "latency_seconds": 5.7,
+      "routing_stats": {
+        "total_decisions": 1,
+        "github_fetches": 0,
+        "github_skips": 1,
+        "github_fetch_percentage": 0.0
+      },
+      "multi_step": false,
+      "self_correction_retries": 0,
+      "root_cause": "Simulated analysis for CODE_ERROR...",
+      "mode": "simulation"
+    },
+    {
+      "scenario_id": "PERF-015",
+      "scenario_name": "Memory Allocation Error",
+      "expected_category": "INFRA_ERROR",
+      "expected_complexity": "simple",
+      "expected_latency": "< 10s",
+      "success": true,
+      "actual_category": "INFRA_ERROR",
+      "classification_confidence": 0.85,
+      "solution_confidence": 0.8,
+      "iterations": 2,
+      "tools_used": [
+        "pinecone_knowledge",
+        "pinecone_error_library"
+      ],
+      "latency_seconds": 5.9,
+      "routing_stats": {
+        "total_decisions": 1,
+        "github_fetches": 0,
+        "github_skips": 1,
+        "github_fetch_percentage": 0.0
+      },
+      "multi_step": false,
+      "self_correction_retries": 0,
+      "root_cause": "Simulated analysis for INFRA_ERROR...",
+      "mode": "simulation"
+    },
+    {
+      "scenario_id": "PERF-016",
+      "scenario_name": "Docker Container Not Running",
+      "expected_category": "INFRA_ERROR",
+      "expected_complexity": "simple",
+      "expected_latency": "< 10s",
+      "success": true,
+      "actual_category": "INFRA_ERROR",
+      "classification_confidence": 0.85,
+      "solution_confidence": 0.8,
+      "iterations": 2,
+      "tools_used": [
+        "pinecone_knowledge",
+        "pinecone_error_library"
+      ],
+      "latency_seconds": 5.9,
+      "routing_stats": {
+        "total_decisions": 1,
+        "github_fetches": 0,
+        "github_skips": 1,
+        "github_fetch_percentage": 0.0
+      },
+      "multi_step": false,
+      "self_correction_retries": 0,
+      "root_cause": "Simulated analysis for INFRA_ERROR...",
+      "mode": "simulation"
+    },
+    {
+      "scenario_id": "PERF-017",
+      "scenario_name": "Invalid Configuration Format",
+      "expected_category": "CONFIG_ERROR",
+      "expected_complexity": "simple",
+      "expected_latency": "< 10s",
+      "success": true,
+      "actual_category": "CONFIG_ERROR",
+      "classification_confidence": 0.85,
+      "solution_confidence": 0.8,
+      "iterations": 2,
+      "tools_used": [
+        "pinecone_knowledge",
+        "pinecone_error_library"
+      ],
+      "latency_seconds": 6.5,
+      "routing_stats": {
+        "total_decisions": 1,
+        "github_fetches": 0,
+        "github_skips": 1,
+        "github_fetch_percentage": 0.0
+      },
+      "multi_step": false,
+      "self_correction_retries": 0,
+      "root_cause": "Simulated analysis for CONFIG_ERROR...",
+      "mode": "simulation"
+    },
+    {
+      "scenario_id": "PERF-018",
+      "scenario_name": "AWS Credentials Error",
+      "expected_category": "CONFIG_ERROR",
+      "expected_complexity": "simple",
+      "expected_latency": "< 10s",
+      "success": true,
+      "actual_category": "CONFIG_ERROR",
+      "classification_confidence": 0.85,
+      "solution_confidence": 0.8,
+      "iterations": 2,
+      "tools_used": [
+        "pinecone_knowledge",
+        "pinecone_error_library"
+      ],
+      "latency_seconds": 5.7,
+      "routing_stats": {
+        "total_decisions": 1,
+        "github_fetches": 0,
+        "github_skips": 1,
+        "github_fetch_percentage": 0.0
+      },
+      "multi_step": false,
+      "self_correction_retries": 0,
+      "root_cause": "Simulated analysis for CONFIG_ERROR...",
+      "mode": "simulation"
+    },
+    {
+      "scenario_id": "PERF-019",
+      "scenario_name": "Rate Limit Exceeded",
+      "expected_category": "CODE_ERROR",
+      "expected_complexity": "complex",
+      "expected_latency": "< 30s",
+      "success": true,
+      "actual_category": "CODE_ERROR",
+      "classification_confidence": 0.85,
+      "solution_confidence": 0.8,
+      "iterations": 3,
+      "tools_used": [
+        "pinecone_knowledge",
+        "pinecone_error_library",
+        "github_get_file"
+      ],
+      "latency_seconds": 23.6,
+      "routing_stats": {
+        "total_decisions": 2,
+        "github_fetches": 1,
+        "github_skips": 1,
+        "github_fetch_percentage": 33.3
+      },
+      "multi_step": false,
+      "self_correction_retries": 0,
+      "root_cause": "Simulated analysis for CODE_ERROR...",
+      "mode": "simulation"
+    },
+    {
+      "scenario_id": "PERF-020",
+      "scenario_name": "Unknown Edge Case Error",
+      "expected_category": "UNKNOWN",
+      "expected_complexity": "complex",
+      "expected_latency": "< 30s",
+      "success": true,
+      "actual_category": "UNKNOWN",
+      "classification_confidence": 0.85,
+      "solution_confidence": 0.8,
+      "iterations": 3,
+      "tools_used": [
+        "pinecone_knowledge",
+        "pinecone_error_library",
+        "github_get_file"
+      ],
+      "latency_seconds": 22.0,
+      "routing_stats": {
+        "total_decisions": 2,
+        "github_fetches": 1,
+        "github_skips": 1,
+        "github_fetch_percentage": 33.3
+      },
+      "multi_step": false,
+      "self_correction_retries": 0,
+      "root_cause": "Simulated analysis for UNKNOWN...",
+      "mode": "simulation"
+    }
+  ]
+}

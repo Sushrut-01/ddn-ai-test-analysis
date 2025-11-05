@@ -1,7 +1,7 @@
 {
-  "name": "DDN AI Complete Workflow - Full Context Engineering v2",
-  "version": "2.0.0",
-  "description": "Complete DDN Test Failure Analysis with FULL context extraction and intelligent routing",
+  "name": "DDN AI Complete Workflow - Dual-Index RAG v2.1",
+  "version": "2.1.0",
+  "description": "Complete DDN Test Failure Analysis with DUAL-INDEX RAG (ddn-knowledge-docs + ddn-error-library) and OPTION C routing (CODE_ERROR → Gemini+GitHub)",
   "nodes": [
     {
       "parameters": {
@@ -126,7 +126,7 @@
         }
       },
       "id": "langgraph-classify",
-      "name": "6. LangGraph Classification + RAG",
+      "name": "6. LangGraph ReAct Agent (Dual-Index RAG)",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [1050, 400]
@@ -141,6 +141,15 @@
           },
           "conditions": [
             {
+              "id": "is-code-error",
+              "leftValue": "={{ $json.error_category }}",
+              "rightValue": "CODE_ERROR",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            },
+            {
               "id": "needs-deep-analysis",
               "leftValue": "={{ $json.needs_code_analysis }}",
               "rightValue": true,
@@ -150,11 +159,11 @@
               }
             }
           ],
-          "combinator": "and"
+          "combinator": "or"
         }
       },
       "id": "route-decision",
-      "name": "7. Route: Deep Analysis Needed?",
+      "name": "7. OPTION C Route: CODE_ERROR or Deep Analysis?",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2,
       "position": [1250, 400]
@@ -164,7 +173,7 @@
         "jsCode": "// ===================================================================\n// RAG-BASED SOLUTION PATH (80% of cases)\n// Uses historical solutions from Pinecone\n// Full context available, but solution comes from RAG\n// ===================================================================\n\nconst classification = $input.first().json;\nconst contextBundle = $('build-context').first().json.context_bundle;\nconst errorSummary = $('build-context').first().json.error_summary;\n\nconsole.log('🎯 RAG Solution Path:', classification.error_category);\n\n// Get best RAG solutions\nconst ragSolutions = classification.similar_solutions || [];\nconst bestSolution = ragSolutions[0] || {};\n\n// Build solution using RAG + full context\nconst solution = {\n  // Identifiers\n  build_id: contextBundle.build_id,\n  job_name: contextBundle.job_name,\n  test_suite: contextBundle.test_suite,\n  build_url: contextBundle.build_url,\n  \n  // Timestamps\n  analysis_timestamp: new Date().toISOString(),\n  build_timestamp: contextBundle.timestamp,\n  \n  // Analysis metadata\n  analysis_type: 'RAG_BASED',\n  analysis_method: 'historical_solution_retrieval',\n  processing_time_ms: Math.floor(Math.random() * 2000) + 3000,\n  \n  // Classification\n  error_category: classification.error_category,\n  confidence_score: classification.confidence || bestSolution.confidence || 0.75,\n  priority: classification.priority || 'MEDIUM',\n  \n  // Error context (preserved fully)\n  error_context: {\n    error_preview: errorSummary.error_preview,\n    error_tail: errorSummary.error_tail,\n    stack_trace_preview: errorSummary.stack_trace_preview,\n    error_keywords: errorSummary.error_keywords,\n    mentioned_files: errorSummary.mentioned_files,\n    full_context_available: true,\n    full_context_size_bytes: contextBundle.metadata.total_context_size_bytes\n  },\n  \n  // Solution (from RAG)\n  root_cause: bestSolution.root_cause || 'Based on historical patterns - manual review recommended',\n  fix_recommendation: bestSolution.solution || bestSolution.fix_recommendation || 'Apply historical fix pattern',\n  prevention_strategy: bestSolution.prevention || 'Monitor for recurrence',\n  similar_cases_found: ragSolutions.length,\n  \n  // Historical context\n  historical_data: {\n    similar_solutions: ragSolutions.slice(0, 5),\n    recent_builds: contextBundle.historical_context.recent_builds,\n    recent_failure_rate: contextBundle.historical_context.recent_failure_rate\n  },\n  \n  // Code review flags\n  requires_code_review: false,\n  github_files_analyzed: [],\n  mcp_tools_used: [],\n  \n  // Action recommendations\n  action_required: ragSolutions.length > 0 && bestSolution.confidence > 0.85 ? 'AUTO_FIX_AVAILABLE' : 'REVIEW_RECOMMENDED',\n  estimated_fix_time: ragSolutions.length > 0 ? '15-30 minutes' : '1-2 hours',\n  \n  // Cost tracking\n  token_usage: 0,\n  api_calls_made: 1,\n  estimated_cost_usd: 0.01,\n  \n  // Full context reference\n  full_context_preserved: {\n    error_log_size: contextBundle.error_context.error_log_length,\n    console_size: contextBundle.error_context.console_length,\n    has_stack_trace: contextBundle.metadata.has_stack_trace,\n    has_system_info: contextBundle.metadata.has_system_info,\n    context_completeness: contextBundle.metadata.context_completeness_score\n  }\n};\n\nconsole.log('✅ RAG Solution Generated:', {\n  category: solution.error_category,\n  confidence: solution.confidence_score,\n  similar_found: solution.similar_cases_found,\n  action: solution.action_required,\n  context_size_kb: (contextBundle.metadata.total_context_size_bytes / 1024).toFixed(2)\n});\n\nreturn { json: solution };"
       },
       "id": "rag-solution",
-      "name": "8a. RAG Solution (Full Context)",
+      "name": "8a. RAG Solution (Dual-Index + Full Context)",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [1450, 300],
@@ -196,7 +205,7 @@
         }
       },
       "id": "claude-deep-analysis",
-      "name": "8b. Claude Deep Analysis (Full Context)",
+      "name": "8b. Claude Deep Analysis (CODE_ERROR + Gemini+GitHub)",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [1450, 500],
@@ -286,7 +295,7 @@
         }
       },
       "id": "store-pinecone",
-      "name": "13. Store in Pinecone RAG",
+      "name": "13. Store in Pinecone (ddn-knowledge-docs)",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [2450, 400],
@@ -409,6 +418,6 @@
     }
   ],
   "triggerCount": 1,
-  "updatedAt": "2025-10-17T00:00:00.000Z",
-  "versionId": "2.0.0-full-context"
+  "updatedAt": "2025-11-05T00:00:00.000Z",
+  "versionId": "2.1.0-dual-index-option-c"
 }

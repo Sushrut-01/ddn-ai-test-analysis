@@ -8,8 +8,8 @@ from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMIT
 import os
 from dotenv import load_dotenv
 
-# Load environment variables
-load_dotenv()
+# Load environment variables from master config
+load_dotenv('../.env.MASTER')
 
 # PostgreSQL configuration
 POSTGRES_HOST = os.getenv('POSTGRES_HOST', 'localhost')
@@ -40,7 +40,7 @@ try:
     )
     conn.set_isolation_level(ISOLATION_LEVEL_AUTOCOMMIT)
     cursor = conn.cursor()
-    print("✅ Connected to PostgreSQL server")
+    print("[OK] Connected to PostgreSQL server")
     print()
 
     # Step 2: Create database if it doesn't exist
@@ -50,9 +50,9 @@ try:
 
     if not exists:
         cursor.execute(f'CREATE DATABASE {POSTGRES_DB}')
-        print(f"✅ Database '{POSTGRES_DB}' created successfully")
+        print(f"[OK] Database '{POSTGRES_DB}' created successfully")
     else:
-        print(f"ℹ️  Database '{POSTGRES_DB}' already exists")
+        print(f"[INFO]  Database '{POSTGRES_DB}' already exists")
 
     cursor.close()
     conn.close()
@@ -68,7 +68,7 @@ try:
         database=POSTGRES_DB
     )
     cursor = conn.cursor()
-    print(f"✅ Connected to '{POSTGRES_DB}' database")
+    print(f"[OK] Connected to '{POSTGRES_DB}' database")
     print()
 
     # Step 4: Create tables
@@ -91,7 +91,7 @@ try:
             updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
     """)
-    print("✅ Table 'failure_analysis' created")
+    print("[OK] Table 'failure_analysis' created")
 
     # Table 2: build_metadata
     print("Creating table: build_metadata...")
@@ -109,7 +109,7 @@ try:
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
     """)
-    print("✅ Table 'build_metadata' created")
+    print("[OK] Table 'build_metadata' created")
 
     # Table 3: user_feedback
     print("Creating table: user_feedback...")
@@ -123,7 +123,7 @@ try:
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
     """)
-    print("✅ Table 'user_feedback' created")
+    print("[OK] Table 'user_feedback' created")
 
     # Table 4: failure_patterns
     print("Creating table: failure_patterns...")
@@ -138,7 +138,7 @@ try:
             success_rate FLOAT
         )
     """)
-    print("✅ Table 'failure_patterns' created")
+    print("[OK] Table 'failure_patterns' created")
 
     # Table 5: ai_model_metrics
     print("Creating table: ai_model_metrics...")
@@ -154,7 +154,7 @@ try:
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
     """)
-    print("✅ Table 'ai_model_metrics' created")
+    print("[OK] Table 'ai_model_metrics' created")
 
     # Table 6: manual_trigger_log
     print("Creating table: manual_trigger_log...")
@@ -169,7 +169,7 @@ try:
             completed_at TIMESTAMP
         )
     """)
-    print("✅ Table 'manual_trigger_log' created")
+    print("[OK] Table 'manual_trigger_log' created")
 
     print()
     print("Step 5: Creating indexes for performance...")
@@ -180,7 +180,7 @@ try:
     cursor.execute("CREATE INDEX IF NOT EXISTS idx_error_category ON failure_analysis(error_category)")
     cursor.execute("CREATE INDEX IF NOT EXISTS idx_build_metadata_build_id ON build_metadata(build_id)")
 
-    print("✅ Indexes created")
+    print("[OK] Indexes created")
     print()
 
     # Commit changes
@@ -189,7 +189,7 @@ try:
     conn.close()
 
     print("=" * 80)
-    print("✅ DATABASE SETUP COMPLETE!")
+    print("[OK] DATABASE SETUP COMPLETE!")
     print("=" * 80)
     print()
     print("Created tables:")
@@ -206,7 +206,7 @@ try:
 except psycopg2.OperationalError as e:
     print()
     print("=" * 80)
-    print("❌ ERROR: Could not connect to PostgreSQL")
+    print("[ERROR] ERROR: Could not connect to PostgreSQL")
     print("=" * 80)
     print()
     print("Error details:", str(e))
@@ -228,7 +228,7 @@ except psycopg2.OperationalError as e:
 except Exception as e:
     print()
     print("=" * 80)
-    print("❌ ERROR: Database setup failed")
+    print("[ERROR] ERROR: Database setup failed")
     print("=" * 80)
     print()
     print("Error details:", str(e))

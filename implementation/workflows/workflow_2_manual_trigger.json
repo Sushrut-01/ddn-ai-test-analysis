@@ -1,7 +1,7 @@
 {
-  "name": "DDN AI - Manual Trigger from Dashboard",
-  "version": "2.0.0",
-  "description": "On-demand test failure analysis triggered by dashboard users. No aging requirement. Returns detailed results with GitHub/Jenkins links.",
+  "name": "DDN AI - Manual Trigger from Dashboard (Dual-Index)",
+  "version": "2.1.0",
+  "description": "On-demand test failure analysis with DUAL-INDEX RAG (ddn-knowledge-docs + ddn-error-library) and OPTION C routing (CODE_ERROR → Gemini+GitHub). No aging requirement. Returns detailed results with GitHub/Jenkins links.",
   "nodes": [
     {
       "parameters": {
@@ -109,7 +109,7 @@
         }
       },
       "id": "classify-error",
-      "name": "5. LangGraph Classification",
+      "name": "5. LangGraph ReAct (Dual-Index RAG)",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [1050, 300]
@@ -122,6 +122,15 @@
           },
           "conditions": [
             {
+              "id": "is-code-error",
+              "leftValue": "={{ $json.error_category }}",
+              "rightValue": "CODE_ERROR",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            },
+            {
               "id": "needs-code",
               "leftValue": "={{ $json.needs_code_analysis }}",
               "rightValue": true,
@@ -130,11 +139,12 @@
                 "operation": "equals"
               }
             }
-          ]
+          ],
+          "combinator": "or"
         }
       },
       "id": "routing",
-      "name": "6. Route by Category",
+      "name": "6. OPTION C Route: CODE_ERROR or Deep Analysis?",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2,
       "position": [1250, 300]
@@ -144,7 +154,7 @@
         "jsCode": "// ================================================================\n// RAG SOLUTION - Fast Path for Infrastructure/Dependency Errors\n// ================================================================\n\nconst classification = $input.first().json;\nconst buildData = $('get-build-data').first().json;\nconst request = $('validate-request').first().json;\n\nconsole.log('🎯 RAG Path - Manual Trigger for:', buildData.build_id);\n\n// Extract best solution\nconst solutions = classification.similar_solutions || [];\nlet bestSolution = null;\n\nif (solutions.length > 0) {\n  bestSolution = solutions[0];\n}\n\n// Build GitHub link (generic, actual files extracted later)\nconst githubBaseUrl = `https://github.com/${buildData.repository || 'your-org/ddn-repo'}`;\nconst githubLink = `${githubBaseUrl}/tree/${buildData.branch || 'main'}`;\n\n// Build Jenkins link\nconst jenkinsLink = buildData.build_url || '#';\n\n// Prepare solution\nconst solution = {\n  // Metadata\n  build_id: buildData.build_id,\n  analysis_timestamp: new Date().toISOString(),\n  analysis_type: 'RAG_RETRIEVAL',\n  triggered_by: request.user_email,\n  trigger_type: 'MANUAL',\n  processing_time_ms: Math.floor(Math.random() * 2000) + 3000,\n  \n  // Build info\n  job_name: buildData.job_name,\n  test_suite: buildData.test_suite,\n  build_url: jenkinsLink,\n  repository: buildData.repository,\n  branch: buildData.branch,\n  commit_sha: buildData.commit_sha,\n  \n  // Classification\n  error_category: classification.error_category,\n  error_log: buildData.error_log,\n  confidence_score: bestSolution?.confidence || 0.75,\n  \n  // Solution\n  root_cause: bestSolution?.root_cause || 'Based on historical pattern analysis',\n  fix_recommendation: bestSolution?.solution || bestSolution?.fix_recommendation || 'Review similar past cases',\n  prevention_strategy: bestSolution?.prevention || 'Monitor for recurrence',\n  \n  // Links for dashboard\n  links: {\n    jenkins: jenkinsLink,\n    github_repo: githubLink,\n    github_files: [] // Populated if code files identified\n  },\n  \n  // Analysis details\n  requires_code_review: false,\n  similar_cases_found: solutions.length,\n  similar_solutions: solutions.slice(0, 5),\n  \n  // Actions\n  action_required: bestSolution?.confidence > 0.85 ? 'AUTO_FIX_AVAILABLE' : 'REVIEW_RECOMMENDED',\n  priority: classification.priority || 'MEDIUM',\n  \n  // Cost\n  token_usage: 0,\n  api_calls_made: 1,\n  estimated_cost_usd: 0.01,\n  \n  // User feedback capability\n  can_refine: true,\n  refinement_count: 0\n};\n\nconsole.log('✅ RAG Solution Generated:', {\n  build_id: solution.build_id,\n  category: solution.error_category,\n  confidence: solution.confidence_score\n});\n\nreturn { json: solution };"
       },
       "id": "rag-solution",
-      "name": "7a. RAG Solution (Fast)",
+      "name": "7a. RAG Solution (Dual-Index Fast Path)",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [1450, 200],
@@ -180,7 +190,7 @@
         }
       },
       "id": "claude-mcp",
-      "name": "7b. Claude MCP Analysis (Deep)",
+      "name": "7b. Claude MCP Analysis (CODE_ERROR + GitHub)",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [1450, 400],
@@ -321,6 +331,6 @@
     }
   ],
   "triggerCount": 1,
-  "updatedAt": "2025-10-17T00:00:00.000Z",
-  "versionId": "2.0.0"
+  "updatedAt": "2025-11-05T00:00:00.000Z",
+  "versionId": "2.1.0-dual-index-option-c"
 }

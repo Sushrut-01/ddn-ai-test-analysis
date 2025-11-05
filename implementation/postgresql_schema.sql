@@ -161,7 +161,51 @@ CREATE INDEX idx_user_feedback_type ON user_feedback(feedback_type);
 CREATE INDEX idx_user_feedback_submitted_at ON user_feedback(submitted_at DESC);
 
 -- ===================================================================
--- 5. FAILURE PATTERN TABLE
+-- 5. ACCEPTANCE TRACKING TABLE
+-- Phase 0-HITL: Tracks validation lifecycle and refinement iterations
+-- ===================================================================
+
+CREATE TABLE IF NOT EXISTS acceptance_tracking (
+    id SERIAL PRIMARY KEY,
+    analysis_id INTEGER NOT NULL REFERENCES failure_analysis(id) ON DELETE CASCADE,
+    build_id VARCHAR(255) NOT NULL,
+
+    -- Validation status tracking
+    validation_status VARCHAR(20) NOT NULL DEFAULT 'pending',  -- pending, accepted, rejected, refining, refined
+    refinement_count INTEGER DEFAULT 0,
+    final_acceptance BOOLEAN DEFAULT NULL,  -- NULL until final decision made
+
+    -- Validator information
+    validator_name VARCHAR(100),
+    validator_email VARCHAR(255),
+
+    -- Feedback details
+    feedback_comment TEXT,
+
+    -- Refinement tracking
+    previous_analysis_id INTEGER REFERENCES failure_analysis(id),  -- Links to previous version if refined
+    confidence_improvement DECIMAL(3,2),  -- Improvement in confidence after refinement
+
+    -- Timestamps
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    validated_at TIMESTAMP,  -- When final validation occurred
+
+    -- Constraints
+    CHECK (validation_status IN ('pending', 'accepted', 'rejected', 'refining', 'refined')),
+    CHECK (refinement_count >= 0)
+);
+
+-- Indexes for performance
+CREATE INDEX idx_acceptance_tracking_analysis_id ON acceptance_tracking(analysis_id);
+CREATE INDEX idx_acceptance_tracking_build_id ON acceptance_tracking(build_id);
+CREATE INDEX idx_acceptance_tracking_validation_status ON acceptance_tracking(validation_status);
+CREATE INDEX idx_acceptance_tracking_final_acceptance ON acceptance_tracking(final_acceptance);
+CREATE INDEX idx_acceptance_tracking_created_at ON acceptance_tracking(created_at DESC);
+CREATE INDEX idx_acceptance_tracking_validator ON acceptance_tracking(validator_email);
+
+-- ===================================================================
+-- 6. FAILURE PATTERN TABLE
 -- Tracks recurring failure patterns
 -- ===================================================================
 
@@ -194,7 +238,7 @@ CREATE INDEX idx_failure_patterns_occurrence ON failure_patterns(occurrence_coun
 CREATE INDEX idx_failure_patterns_last_seen ON failure_patterns(last_seen DESC);
 
 -- ===================================================================
--- 6. MANUAL TRIGGER LOG TABLE
+-- 7. MANUAL TRIGGER LOG TABLE
 -- Phase 2: Tracks manual AI analysis triggers
 -- ===================================================================
 
@@ -223,7 +267,7 @@ CREATE INDEX idx_manual_trigger_log_user ON manual_trigger_log(triggered_by_user
 CREATE INDEX idx_manual_trigger_log_triggered_at ON manual_trigger_log(triggered_at DESC);
 
 -- ===================================================================
--- 7. AI MODEL METRICS TABLE
+-- 8. AI MODEL METRICS TABLE
 -- Tracks AI model performance over time
 -- ===================================================================
 
@@ -462,6 +506,11 @@ CREATE TRIGGER update_failure_analysis_updated_at
     FOR EACH ROW
     EXECUTE FUNCTION update_updated_at_column();
 
+CREATE TRIGGER update_acceptance_tracking_updated_at
+    BEFORE UPDATE ON acceptance_tracking
+    FOR EACH ROW
+    EXECUTE FUNCTION update_updated_at_column();
+
 -- ===================================================================
 -- SAMPLE DATA (for testing)
 -- ===================================================================
@@ -500,6 +549,57 @@ GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO ddn_ai_app;
 GRANT EXECUTE ON ALL FUNCTIONS IN SCHEMA public TO ddn_ai_app;
 
 -- ===================================================================
+-- 10. KNOWLEDGE DOC CHANGES TABLE
+-- Task 0-HITL-KM.5: Audit trail for knowledge documentation
+-- ===================================================================
+
+CREATE TABLE IF NOT EXISTS knowledge_doc_changes (
+    id SERIAL PRIMARY KEY,
+
+    -- Document identification
+    doc_id VARCHAR(255) NOT NULL,           -- Vector ID in Pinecone (e.g., error_doc_ERR001)
+
+    -- Change tracking
+    action VARCHAR(50) NOT NULL,            -- add, update, delete
+    user_email VARCHAR(255) NOT NULL,       -- Who made the change
+
+    -- Change details (JSON)
+    details JSONB,                          -- Additional change details (updated_fields, error_type, category, etc.)
+
+    -- Timestamps
+    changed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+    -- Constraints
+    CONSTRAINT valid_action CHECK (action IN ('add', 'update', 'delete'))
+);
+
+-- Create indexes for common queries
+CREATE INDEX idx_knowledge_doc_changes_doc_id ON knowledge_doc_changes(doc_id);
+CREATE INDEX idx_knowledge_doc_changes_action ON knowledge_doc_changes(action);
+CREATE INDEX idx_knowledge_doc_changes_user_email ON knowledge_doc_changes(user_email);
+CREATE INDEX idx_knowledge_doc_changes_changed_at ON knowledge_doc_changes(changed_at DESC);
+CREATE INDEX idx_knowledge_doc_changes_details ON knowledge_doc_changes USING GIN (details);
+
+-- Add comments for documentation
+COMMENT ON TABLE knowledge_doc_changes IS
+    'Audit trail for all knowledge documentation changes in Pinecone knowledge base';
+
+COMMENT ON COLUMN knowledge_doc_changes.doc_id IS
+    'Vector ID in Pinecone (e.g., error_doc_ERR001)';
+
+COMMENT ON COLUMN knowledge_doc_changes.action IS
+    'Type of change: add, update, or delete';
+
+COMMENT ON COLUMN knowledge_doc_changes.user_email IS
+    'Email of user who made the change';
+
+COMMENT ON COLUMN knowledge_doc_changes.details IS
+    'JSON object with additional details (error_type, category, updated_fields, etc.)';
+
+COMMENT ON COLUMN knowledge_doc_changes.changed_at IS
+    'Timestamp when change was made';
+
+-- ===================================================================
 -- CLEANUP (Optional)
 -- ===================================================================
 
@@ -518,6 +618,10 @@ BEGIN
     -- Delete old manual trigger logs
     DELETE FROM manual_trigger_log
     WHERE triggered_at < CURRENT_DATE - (days_to_keep || ' days')::INTERVAL;
+
+    -- Delete old knowledge doc changes (keep longer - 180 days for audit compliance)
+    DELETE FROM knowledge_doc_changes
+    WHERE changed_at < CURRENT_DATE - '180 days'::INTERVAL;
 
     RAISE NOTICE 'Cleanup completed: Deleted data older than % days', days_to_keep;
 END;

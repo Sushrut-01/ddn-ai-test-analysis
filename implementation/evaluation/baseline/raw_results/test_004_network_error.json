@@ -1,0 +1,88 @@
+{
+  "test_number": 4,
+  "test_name": "should verify 25x lower latency",
+  "error_type": "network_error",
+  "latency_seconds": 12.45,
+  "status": "success",
+  "response": {
+    "analysis": {
+      "ai_status": "SUCCESS",
+      "classification": "ENVIRONMENT",
+      "confidence": 1.0,
+      "rag_enabled": true,
+      "rag_match": true,
+      "root_cause": "The test runner operating system failed to resolve the hostname 'ai400x.ddn.local' to an IP address. This is typically due to missing DNS entries, incorrect DNS configuration on the host machine, or the required entry being absent from the local hosts file (e.g., /etc/hosts or C:\\Windows\\System32\\drivers\\etc\\hosts).",
+      "severity": "MEDIUM",
+      "similar_error_docs": [
+        {
+          "category": "ENVIRONMENT",
+          "error_id": "ERR003",
+          "error_type": "DNSResolutionException",
+          "root_cause": "DNS cannot resolve the DDN storage hostname. Either DNS server is not configured, hostname is incorrect, or /etc/hosts file is missing entry.",
+          "severity": "HIGH",
+          "similarity_score": 0.495731354,
+          "tags": [
+            "dns",
+            "hostname",
+            "network",
+            "configuration"
+          ]
+        }
+      ],
+      "solution": "1. Verify the exact IP address of the DDN storage node 'ai400x.ddn.local'. 2. On the test execution environment (the Jenkins runner machine), update the hosts file to manually map this hostname to its IP address. 3. Alternatively, ensure the DNS server configured for the test environment includes the necessary A record for 'ai400x.ddn.local'."
+    },
+    "analysis_id": null,
+    "failure_id": "690279787237ed99adb42dc8",
+    "similar_failures": [
+      {
+        "id": "690279787237ed99adb42dc9",
+        "metadata": {
+          "classification": "ENVIRONMENT",
+          "resolved": false,
+          "test_name": "should measure Lustre parallel I/O scalability"
+        },
+        "score": 0.756624222
+      },
+      {
+        "id": "error_doc_ERR003",
+        "metadata": {
+          "category": "ENVIRONMENT",
+          "component": "Network Configuration",
+          "doc_type": "error_documentation",
+          "error_id": "ERR003",
+          "error_message": "java.net.UnknownHostException: exascaler.ddn.local: Name or service not known",
+          "error_type": "DNSResolutionException",
+          "file_path": "src/main/resources/application.properties",
+          "frequency": "Common in new deployments",
+          "line_range": "12-15",
+          "root_cause": "DNS cannot resolve the DDN storage hostname. Either DNS server is not configured, hostname is incorrect, or /etc/hosts file is missing entry.",
+          "severity": "HIGH",
+          "subcategory": "DNS Configuration",
+          "tags": "dns,hostname,network,configuration",
+          "test_scenarios": "All DDN connectivity tests,Initial deployment",
+          "uploaded_at": "2025-10-24T17:53:18.995693"
+        },
+        "score": 0.495697021
+      },
+      {
+        "id": "6902796f7237ed99adb42dac",
+        "metadata": {
+          "classification": "CONFIGURATION",
+          "resolved": false,
+          "test_name": "should prevent cross-tenant S3 access"
+        },
+        "score": 0.27596283
+      },
+      {
+        "id": "690279787237ed99adb42dad",
+        "metadata": {
+          "classification": "CONFIGURATION",
+          "resolved": false,
+          "test_name": "should support S3 bucket policies"
+        },
+        "score": 0.235530853
+      }
+    ],
+    "status": "success"
+  }
+}

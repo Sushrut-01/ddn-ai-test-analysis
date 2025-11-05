@@ -21,7 +21,7 @@ services:
     image: postgres:16
     container_name: ddn-postgres
     ports:
-      - "5432:5432"
+      - "5434:5432"  # External port 5434 (avoid conflict with native PostgreSQL on 5432)
     environment:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=password

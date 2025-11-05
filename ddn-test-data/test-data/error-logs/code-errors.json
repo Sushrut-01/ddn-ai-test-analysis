@@ -1,0 +1,96 @@
+{
+  "description": "Sample error logs for testing CODE_ERROR analysis with GitHub integration",
+  "version": "1.0",
+  "generated": "2025-11-03",
+  "errors": [
+    {
+      "id": "error_001",
+      "error_type": "CODE_ERROR",
+      "category": "timeout",
+      "test_name": "test_ha_failover_timeout",
+      "test_suite": "TestHAFailover",
+      "error_message": "TimeoutError: Operation timed out after 30s",
+      "file": "tests/python/test_ha_failover.py",
+      "line": 145,
+      "stack_trace": "Traceback (most recent call last):\n  File \"tests/python/test_ha_failover.py\", line 145, in test_ha_failover_timeout\n    result = connection.execute_operation()\n  File \"src/network/connection.py\", line 87, in execute_operation\n    raise TimeoutError('Operation timed out after 30s')\nTimeoutError: Operation timed out after 30s",
+      "timestamp": "2025-11-03T10:15:30Z",
+      "severity": "high",
+      "notes": "Common error in HA failover scenarios when backup node is unavailable"
+    },
+    {
+      "id": "error_002",
+      "error_type": "CODE_ERROR",
+      "category": "null_pointer",
+      "test_name": "test_storage_allocation",
+      "test_suite": "StorageTest",
+      "error_message": "NullPointerException at DDNStorage.allocate",
+      "file": "src/storage/DDNStorage.java",
+      "line": 142,
+      "stack_trace": "java.lang.NullPointerException: Cannot invoke \"java.nio.ByteBuffer.allocate(int)\" because \"this.buffer\" is null\n\tat com.ddn.storage.DDNStorage.allocate(DDNStorage.java:142)\n\tat com.ddn.tests.StorageTest.testAllocation(StorageTest.java:45)\n\tat java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke0(Native Method)\n\tat java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:77)\n\tat java.base/jdk.internal.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)",
+      "timestamp": "2025-11-03T10:20:15Z",
+      "severity": "critical",
+      "notes": "Buffer not initialized before allocate() call. Need to call initialize() first."
+    },
+    {
+      "id": "error_003",
+      "error_type": "CODE_ERROR",
+      "category": "connection_error",
+      "test_name": "test_network_partition_handling",
+      "test_suite": "TestHAFailover",
+      "error_message": "ConnectionError: Network partition detected",
+      "file": "tests/python/test_ha_failover.py",
+      "line": 198,
+      "stack_trace": "Traceback (most recent call last):\n  File \"tests/python/test_ha_failover.py\", line 198, in test_network_partition_handling\n    connection.execute_operation()\n  File \"src/network/connection.py\", line 62, in execute_operation\n    raise ConnectionError('Network partition detected')\nConnectionError: Network partition detected",
+      "timestamp": "2025-11-03T10:25:45Z",
+      "severity": "medium",
+      "notes": "Expected behavior during network partition testing"
+    },
+    {
+      "id": "error_004",
+      "error_type": "CODE_ERROR",
+      "category": "illegal_state",
+      "test_name": "test_storage_read_uninitialized",
+      "test_suite": "StorageTest",
+      "error_message": "IllegalStateException: DDNStorage not initialized",
+      "file": "src/storage/DDNStorage.java",
+      "line": 116,
+      "stack_trace": "java.lang.IllegalStateException: DDNStorage not initialized. Call initialize() first.\n\tat com.ddn.storage.DDNStorage.read(DDNStorage.java:116)\n\tat com.ddn.tests.StorageTest.testReadUninitialized(StorageTest.java:78)\n\tat java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke0(Native Method)",
+      "timestamp": "2025-11-03T10:30:20Z",
+      "severity": "high",
+      "notes": "Attempting to read before initialization. Good error handling, but should be prevented at API design level."
+    },
+    {
+      "id": "error_005",
+      "error_type": "CODE_ERROR",
+      "category": "assertion_error",
+      "test_name": "test_concurrent_failover",
+      "test_suite": "TestHAFailover",
+      "error_message": "AssertionError: Failover should have succeeded",
+      "file": "tests/python/test_ha_failover.py",
+      "line": 178,
+      "stack_trace": "Traceback (most recent call last):\n  File \"tests/python/test_ha_failover.py\", line 178, in test_concurrent_failover\n    assert result[\"status\"] == \"success\", \"Failover should have succeeded\"\nAssertionError: Failover should have succeeded",
+      "timestamp": "2025-11-03T10:35:10Z",
+      "severity": "high",
+      "notes": "Concurrent failover logic may have race condition"
+    }
+  ],
+  "statistics": {
+    "total_errors": 5,
+    "by_severity": {
+      "critical": 1,
+      "high": 3,
+      "medium": 1
+    },
+    "by_category": {
+      "timeout": 1,
+      "null_pointer": 1,
+      "connection_error": 1,
+      "illegal_state": 1,
+      "assertion_error": 1
+    },
+    "by_language": {
+      "python": 3,
+      "java": 2
+    }
+  }
+}

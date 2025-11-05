@@ -1,0 +1,97 @@
+================================================================================
+DDN AI ANALYSIS SYSTEM - BASELINE METRICS
+================================================================================
+Generated: 2025-10-30 17:50:52
+System Version: Current (Before RAG Enhancements)
+Test Count: 10
+
+================================================================================
+PERFORMANCE METRICS
+================================================================================
+Successful Analyses:    10/10
+Failed Analyses:        0/10
+
+Average Latency:        13.15 seconds
+Min Latency:            10.09 seconds
+Max Latency:            17.30 seconds
+Median Latency:         12.58 seconds
+
+================================================================================
+ERROR TYPE DISTRIBUTION
+================================================================================
+network_error................. 4
+other_error................... 6
+
+================================================================================
+DETAILED TEST RESULTS
+================================================================================
+
+Test 1:
+  Test Name:     should measure Lustre parallel I/O scalability
+  Error Type:    network_error
+  Latency:       17.30s
+  Status:        success
+
+Test 2:
+  Test Name:     should support S3 bucket policies
+  Error Type:    other_error
+  Latency:       13.15s
+  Status:        success
+
+Test 3:
+  Test Name:     should prevent cross-tenant S3 access
+  Error Type:    other_error
+  Latency:       15.08s
+  Status:        success
+
+Test 4:
+  Test Name:     should verify 25x lower latency
+  Error Type:    network_error
+  Latency:       12.45s
+  Status:        success
+
+Test 5:
+  Test Name:     should create isolated S3 buckets
+  Error Type:    other_error
+  Latency:       12.71s
+  Status:        success
+
+Test 6:
+  Test Name:     should prevent cross-tenant S3 access
+  Error Type:    other_error
+  Latency:       10.68s
+  Status:        success
+
+Test 7:
+  Test Name:     should achieve 4x faster data loading
+  Error Type:    network_error
+  Latency:       10.81s
+  Status:        success
+
+Test 8:
+  Test Name:     should support S3 bucket policies
+  Error Type:    other_error
+  Latency:       17.16s
+  Status:        success
+
+Test 9:
+  Test Name:     should verify real-time monitoring
+  Error Type:    network_error
+  Latency:       10.09s
+  Status:        success
+
+Test 10:
+  Test Name:     should create isolated S3 buckets
+  Error Type:    other_error
+  Latency:       12.05s
+  Status:        success
+
+================================================================================
+NOTES
+================================================================================
+- This baseline was captured BEFORE implementing RAG enhancements
+- Enhancements to be added: Re-ranking, Hybrid Search, Caching, Query Expansion
+- Expected improvements: +20-30% accuracy, 31% cost reduction, faster retrieval
+- Compare with ENHANCED-METRICS.txt after Phase 2-5 implementation
+
+================================================================================
