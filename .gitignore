@@ -168,3 +168,20 @@ dump/
 !.github/
 !scripts/
 !jenkins/
+
+# Rancher Desktop D: drive storage (do not commit)
+# Note: All actual data is on D: drive, these patterns prevent
+# accidental commits of local paths or temporary files
+
+# D: drive path references (if accidentally created in project)
+/D:/
+D:\
+
+# Rancher Desktop specific
+.rancher/
+rancher-desktop.log
+
+# Deployment test reports
+deployment-test-report.txt
+RANCHER-INSTALL-SUMMARY.md
+RANCHER-SETUP-COMPLETE.txt
