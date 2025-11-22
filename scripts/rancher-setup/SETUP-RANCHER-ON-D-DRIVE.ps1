@@ -188,7 +188,7 @@ function Invoke-SetupPhase {
     $script:currentPhase++
 
     Write-Host "`n====================================================================`n" -ForegroundColor Cyan
-    Write-Host "PHASE $PhaseNumber/$totalPhases: $PhaseName" -ForegroundColor Cyan
+    Write-Host "PHASE ${PhaseNumber}/${totalPhases}: $PhaseName" -ForegroundColor Cyan
     Write-Host "====================================================================`n" -ForegroundColor Cyan
 
     if ($RequiresAdmin) {
