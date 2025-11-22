@@ -1,0 +1,111 @@
+# .dockerignore - Exclude unnecessary files from Docker build context
+# This reduces build time and image size by not copying unused files
+
+# ============= Version Control =============
+.git/
+.github/
+.gitignore
+.gitattributes
+
+# ============= IDE & Editors =============
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+.editorconfig
+*.sublime-project
+
+# ============= Python & Virtual Environments =============
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+.coverage
+htmlcov/
+.venv/
+venv/
+env/
+ENV/
+*.egg-info/
+dist/
+build/
+
+# ============= Documentation =============
+*.md
+docs/
+docs-build/
+
+# ============= Tests =============
+tests/
+robot-tests/
+.coveragerc
+pytest.ini
+
+# ============= Temporary & Backup Files =============
+*.log
+logs/
+*.tmp
+*.bak
+*.backup
+*BACKUP*/
+*.old
+~*
+.swp
+.swo
+nul
+jenkins.war.tmp
+
+# ============= Development Files =============
+.env
+.env.local
+.env.example
+DEVELOPMENT.md
+CONTRIBUTING.md
+SECURITY.md
+
+# ============= Node.js (Dashboard UI) =============
+node_modules/
+.next/
+dist/
+npm-debug.log
+yarn-error.log
+
+# ============= Docker =============
+docker-compose.override.yml
+Dockerfile.dev
+.dockerignore
+
+# ============= CI/CD =============
+.github/workflows/
+Jenkinsfile
+.gitlab-ci.yml
+.circleci/
+
+# ============= Archives & Old Files =============
+archive/
+backup*/
+docker-reset-backups/
+old-backups/
+session-logs/
+task-logs/
+
+# ============= Miscellaneous =============
+.env.MASTER
+README.md
+ROADMAP.md
+CHANGELOG.md
+LICENSE
+*.DS_Store
+Thumbs.db
+
+# ============= Large Files =============
+*.tar
+*.tar.gz
+*.zip
+*.rar
+*.7z
+*.iso
+docker-desktop-check.tar

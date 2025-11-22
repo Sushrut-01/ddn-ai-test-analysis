@@ -1,0 +1,24 @@
+CODEOWNERS file for code review assignments
+
+# All changes require review
+* @Sushrut-01
+
+# Core agent logic
+implementation/agents/ @Sushrut-01
+
+# Services
+implementation/services/ @Sushrut-01
+
+# API endpoints
+implementation/api/ @Sushrut-01
+
+# Dashboard
+dashboard/ @Sushrut-01
+
+# Documentation
+*.md @Sushrut-01
+docs/ @Sushrut-01
+
+# Configuration
+docker-compose.yml @Sushrut-01
+requirements*.txt @Sushrut-01
