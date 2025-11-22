@@ -121,6 +121,7 @@ coverage/
 *.temp
 .cache/
 .parcel-cache/
+nul
 
 # Jupyter
 .ipynb_checkpoints
@@ -140,6 +141,8 @@ gcp-key.json
 *.bak
 *.backup
 *~
+*-BACKUP-*/
+BACKUP-*/
 
 # Local configuration
 config.local.js
