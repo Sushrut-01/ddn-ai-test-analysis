@@ -24,24 +24,10 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
-
-  # PostgreSQL - Structured data storage (DDN AI Analysis)
-  postgres:
-    image: postgres:16
-    container_name: ddn-postgres
-    ports:
-      - "5434:5432"  # External port 5434 (avoid conflict with native PostgreSQL on 5432)
-    environment:
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=password
-      - POSTGRES_DB=ddn_ai_analysis
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-      - ./implementation/postgresql_schema.sql:/docker-entrypoint-initdb.d/init.sql
-    networks:
-      - ddn-network
-    restart: unless-stopped
-    healthcheck:
+    # NOTE: MongoDB is expected to be provided externally (MongoDB Atlas).
+    # The local `mongodb` container has been removed to enforce using a
+    # managed Atlas instance. Set `MONGODB_URI` in your environment or
+    # `.env` file to point to your Atlas connection string.
       test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 10s
       timeout: 5s

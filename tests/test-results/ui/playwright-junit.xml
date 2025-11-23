@@ -1,0 +1,26 @@
+<testsuites id="" name="" tests="1" failures="1" skipped="0" errors="0" time="11.152037">
+<testsuite name="manual_analyze.spec.ts" timestamp="2025-11-23T06:59:53.673Z" hostname="" tests="1" failures="1" skipped="0" time="0.677" errors="0">
+<testcase name="Manual Analyze Now flow › start analysis and validate results via API" classname="manual_analyze.spec.ts" time="0.677">
+<failure message="manual_analyze.spec.ts:8:7 start analysis and validate results via API" type="FAILURE">
+<![CDATA[  manual_analyze.spec.ts:8:7 › Manual Analyze Now flow › start analysis and validate results via API 
+
+    AggregateError: Error
+
+      10 |
+      11 |     // Check API health
+    > 12 |     const health = await api.health();
+         |                    ^
+      13 |     expect(health.status).toBe(200);
+      14 |
+      15 |     // Visit dashboard UI
+        at Function.AxiosError.from (C:\DDN-AI-Project-Documentation\tests\ui\node_modules\axios\lib\core\AxiosError.js:96:14)
+        at RedirectableRequest.handleRequestError (C:\DDN-AI-Project-Documentation\tests\ui\node_modules\axios\lib\adapters\http.js:817:25)
+        at ClientRequest.eventHandlers.<computed> (C:\DDN-AI-Project-Documentation\tests\ui\node_modules\follow-redirects\index.js:49:24)
+        at Axios.request (C:\DDN-AI-Project-Documentation\tests\ui\node_modules\axios\lib\core\Axios.js:45:41)
+        at C:\DDN-AI-Project-Documentation\tests\ui\manual_analyze.spec.ts:12:20
+    [cause]: AggregateError: 
+]]>
+</failure>
+</testcase>
+</testsuite>
+</testsuites>

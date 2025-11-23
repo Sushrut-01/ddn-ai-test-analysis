@@ -67,6 +67,9 @@ def init_mongodb():
     """Initialize MongoDB connection"""
     global mongo_client, mongo_db
     try:
+        if not MONGODB_URI:
+            logger.error("❌ MONGODB_URI not configured. Please set MONGODB_URI to your MongoDB Atlas connection string.")
+            return False
         mongo_client = MongoClient(MONGODB_URI)
         mongo_db = mongo_client[MONGODB_DB]
         # Test connection

@@ -2,62 +2,60 @@
 
 ## How It Works (Zero Configuration Required)
 
-When Jenkins runs your tests, **failures are automatically saved to MongoDB** - no manual configuration needed!
+When Jenkins runs your tests, **failures are automatically saved to MongoDB Atlas** (cloud). Tests will write to the database referenced by the `MONGODB_URI` environment variable and the Dashboard reads from the same Atlas instance.
 
 ```
-Jenkins → npm test → Test fails → Automatically writes to MongoDB → Dashboard shows it
+Jenkins → npm test → Test fails → Writes to MongoDB Atlas → Dashboard shows it
 ```
 
-## For the Client: Nothing to Configure!
+## For the Client: Minimal configuration
 
 The test scripts **automatically**:
 1. Detect when a test fails
-2. Connect to MongoDB (localhost:27017)
+2. Connect to the MongoDB instance specified by `MONGODB_URI`
 3. Save the failure with all details
-4. Dashboard reads from MongoDB and displays it
+4. Dashboard reads from MongoDB Atlas and displays it
 
-**You don't need to:**
-- ❌ Configure Jenkins
-- ❌ Modify GitHub scripts
-- ❌ Set up webhooks
-- ❌ Install anything extra
-
-**It just works!**
+**You only need to provide a MongoDB Atlas connection string once** (see below). We recommend storing the Atlas URI securely in Jenkins credentials or in a `.env` file for local development.
 
 ---
 
 ## How to Use
 
-### 1. Make sure MongoDB is running:
-```cmd
-# MongoDB should be running on localhost:27017
-# Check if it's running:
-mongosh
+### 1. Configure MongoDB Atlas (one-time)
+
+1. Create a free or paid cluster at https://cloud.mongodb.com/ and create a database user with read/write permissions for the test database (example: `ddn_tests`).
+2. Copy the connection string (MongoDB SRV URI) and set it in your `.env` file or as a Jenkins credential named `MONGODB_URI`.
+
+Example `.env` entry:
+```env
+MONGODB_URI=mongodb+srv://ddn_user:MySecret%40123@cluster0.abcd.mongodb.net/ddn_tests?retryWrites=true&w=majority
+MONGODB_DATABASE=ddn_tests
+MONGODB_COLLECTION_FAILURES=test_failures
 ```
 
-### 2. Run tests (they automatically report to MongoDB):
-```cmd
+### 2. Run tests (they report to Atlas)
+
+From your CI job or developer machine (with `MONGODB_URI` available):
+```powershell
 cd tests
-npm install
+npm ci
 npm test
 ```
 
-### 3. View failures in MongoDB:
-```javascript
-// Connect to MongoDB
+### 3. View failures in Atlas (Atlas UI or mongosh)
+
+Use the Atlas web UI to inspect the `test_failures` collection, or connect via `mongosh` using the same SRV URI:
+```powershell
+mongosh "${MONGODB_URI}"
 use ddn_tests
-
-// See all test failures
-db.test_failures.find().pretty()
-
-// See latest failure
-db.test_failures.find().sort({timestamp: -1}).limit(1).pretty()
+db.test_failures.find().sort({timestamp: -1}).limit(5).pretty()
 ```
 
-### 4. Dashboard automatically shows failures:
-- Dashboard reads from MongoDB
-- No configuration needed
-- Real-time updates
+### 4. Dashboard automatically shows failures
+- Dashboard reads from `MONGODB_URI` and displays failures from the configured Atlas database.
+
+If `MONGODB_URI` is not set, the Dashboard will log a clear error and startup will fail; set the environment variable or inject it from Jenkins credentials.
 
 ---
 
@@ -110,16 +108,7 @@ The system automatically creates these collections:
 
 ## Environment Variables (Optional)
 
-If you want to customize MongoDB settings, create a `.env` file:
-
-```env
-# MongoDB Configuration (Optional - defaults work out of the box)
-MONGODB_URI=mongodb://localhost:27017/ddn_tests
-MONGODB_DATABASE=ddn_tests
-MONGODB_COLLECTION_FAILURES=test_failures
-```
-
-**But you don't need to!** The defaults work automatically.
+If you want to customize MongoDB settings, create a `.env` file and set the `MONGODB_URI` to your Atlas connection string. Do NOT check secrets into source control; add `.env` to your `.gitignore` or use Jenkins credentials for CI.
 
 ---
 
