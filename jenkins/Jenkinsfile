@@ -247,6 +247,25 @@ pipeline {
             }
         }
 
+                stage('QA Agent') {
+                    when {
+                        expression { return params.TEST_SUITE == 'all' || params.TEST_SUITE == 'ui' || env.RUN_UI_TESTS == 'true' }
+                    }
+                    steps {
+                        script {
+                            echo "🧩 Running QA Agent UI tests..."
+                        }
+
+                        // Run Playwright UI tests (CI-friendly)
+                        sh '''
+                            set -e
+                            echo "Starting UI tests"
+                            cd tests
+                            npm run test:ci:ui || true
+                        '''
+                    }
+                }
+
         stage('Analyze Results') {
             steps {
                 script {
