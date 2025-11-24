@@ -7,6 +7,7 @@ Documentation    DDN Real-Time Test Scenarios - Robot Framework Version
 ...              - IntelliFlash (Enterprise storage)
 ...              All failures automatically reported to MongoDB via listener
 
+Library          BuiltIn
 Library          DDN_Keywords.py
 Library          Collections
 Library          String

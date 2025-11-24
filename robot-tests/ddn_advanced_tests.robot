@@ -9,6 +9,7 @@ Documentation    DDN Advanced Real-Time Test Scenarios - Robot Framework
 ...              - Data governance and compliance
 ...              All failures automatically reported to MongoDB via listener
 
+Library          BuiltIn
 Library          DDN_Keywords.py
 Library          Collections
 Library          String
