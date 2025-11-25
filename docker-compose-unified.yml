@@ -21,7 +21,7 @@ services:
       - POSTGRES_PASSWORD=langfuse123
       - POSTGRES_DB=langfuse
     volumes:
-      - langfuse_db_data:/var/lib/postgresql/data
+      - D:/rancher-storage/volumes/langfuse-db-data:/var/lib/postgresql/data
     networks:
       - ddn-network
     restart: unless-stopped
@@ -42,7 +42,7 @@ services:
       - POSTGRES_PASSWORD=password
       - POSTGRES_DB=ddn_ai_analysis
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - D:/rancher-storage/volumes/postgres-data:/var/lib/postgresql/data
     networks:
       - ddn-network
     restart: unless-stopped
@@ -63,7 +63,7 @@ services:
     ports:
       - "6379:6379"
     volumes:
-      - redis_data:/data
+      - D:/rancher-storage/volumes/redis-data:/data
     networks:
       - ddn-network
     restart: unless-stopped
@@ -141,7 +141,7 @@ services:
       - DB_POSTGRESDB_PASSWORD=password
       - WEBHOOK_URL=http://localhost:5678/
     volumes:
-      - n8n_data:/home/node/.n8n
+      - D:/rancher-storage/volumes/n8n-data:/home/node/.n8n
       - ./implementation/workflows:/workflows
     networks:
       - ddn-network
@@ -496,6 +496,31 @@ services:
       - dashboard-api
     restart: unless-stopped
 
+  # ============================================================================
+  # CI/CD
+  # ============================================================================
+
+  # Jenkins CI Server
+  jenkins:
+    image: jenkins/jenkins:lts
+    container_name: ddn-jenkins
+    ports:
+      - "8081:8081"
+      - "50000:50000"
+    environment:
+      - JENKINS_OPTS=--httpPort=8081
+    volumes:
+      - D:/rancher-storage/volumes/jenkins-data:/var/jenkins_home
+    networks:
+      - ddn-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8081/login || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 120s
+
 # ============================================================================
 # NETWORKS
 # ============================================================================
@@ -504,14 +529,7 @@ networks:
     driver: bridge
 
 # ============================================================================
-# VOLUMES
+# VOLUMES (Using D: drive for Rancher Desktop)
 # ============================================================================
-volumes:
-  postgres_data:
-    driver: local
-  langfuse_db_data:
-    driver: local
-  redis_data:
-    driver: local
-  n8n_data:
-    driver: local
+# All volumes now use bind mounts to D:/rancher-storage/volumes/
+# No named volumes needed - data persists on D: drive
