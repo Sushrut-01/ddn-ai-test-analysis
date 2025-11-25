@@ -259,7 +259,7 @@ curl -X POST http://localhost:8080/job/YOUR_JOB/build \
 | **Dashboard UI** | http://localhost:3000 | None |
 | **n8n Workflows** | http://localhost:5678 | admin / password |
 | **Dashboard API** | http://localhost:5005 | None |
-| **MongoDB** | localhost:27017 | admin / password |
+| **MongoDB** | set `MONGODB_URI` to your MongoDB connection string (Atlas recommended) | use `MONGODB_URI` |
 | **PostgreSQL** | localhost:5432 | postgres / password |
 | **Jenkins** | http://localhost:8080 | admin / (your password) |
 
@@ -343,17 +343,19 @@ curl http://localhost:5678        # n8n
 
 ### MongoDB
 
-```bash
-# Connect to MongoDB
-docker exec -it ddn-mongodb mongosh -u admin -p password
+The project uses the connection string supplied in `MONGODB_URI`. For local debugging you can connect to a local container, otherwise use your Atlas string.
 
-# Use database
+Example (PowerShell):
+```powershell
+# Connect using mongosh and connection string
+mongosh "<YOUR_MONGODB_URI>"
+
+# Example (replace placeholders):
+# mongosh "mongodb+srv://<user>:<pass>@cluster0.xxxxx.mongodb.net/ddn_ai_project"
+
+# Then run:
 use jenkins_failure_analysis
-
-# View builds
 db.builds.find().pretty()
-
-# View analysis results
 db.analysis_solutions.find().pretty()
 
 # Exit
@@ -499,7 +501,8 @@ docker-compose restart mongodb
 timeout /t 10
 
 # Test again
-docker exec -it ddn-mongodb mongosh -u admin -p password
+# Connect using your `MONGODB_URI` (Atlas recommended). Example:
+# mongosh "mongodb+srv://<user>:<pass>@cluster0.xxxxx.mongodb.net/ddn_ai_project"
 ```
 
 ---

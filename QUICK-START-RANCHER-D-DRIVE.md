@@ -210,7 +210,7 @@ After deployment, access services at:
 | **n8n Workflows** | http://localhost:5678 | Workflow automation |
 | **Langfuse** | http://localhost:3001 | LLM observability |
 | **Flower** | http://localhost:5555 | Celery task monitor |
-| **MongoDB** | mongodb://localhost:27017 | Database |
+| **MongoDB** | set `MONGODB_URI` to your MongoDB connection string (Atlas recommended) | Database |
 | **PostgreSQL** | localhost:5434 | Database |
 | **Redis** | localhost:6379 | Cache |
 

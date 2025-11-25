@@ -32,39 +32,20 @@
 ## 1️⃣ **MongoDB** (Unstructured Data Storage)
 
 ### Configuration
-- **Container Name:** `ddn-mongodb`
-- **Image:** `mongo:7.0`
-- **Port:** `27017`
-- **Network:** `ddn-network`
+- **Connection:** The project requires a MongoDB connection string provided via the `MONGODB_URI` environment variable.
+    - Example Atlas connection (replace placeholders):
+        `mongodb+srv://<user>:<pass>@cluster0.xxxxx.mongodb.net/ddn_ai_project?retryWrites=true&w=majority`
+    - For local development you can run a local MongoDB and set `MONGODB_URI` to `mongodb://localhost:27017/<db>` but production and CI should use Atlas.
 
 ### Environment Variables
 ```bash
-MONGO_INITDB_ROOT_USERNAME=admin
-MONGO_INITDB_ROOT_PASSWORD=password
-```
-
-### Volumes
-- `mongodb_data:/data/db`
-
-### Health Check
-```bash
-mongosh --eval "db.adminCommand('ping')"
+# Required: set your MongoDB connection string (Atlas recommended)
+MONGODB_URI=mongodb+srv://<user>:<pass>@cluster0.xxxxx.mongodb.net/ddn_ai_project?retryWrites=true&w=majority
+MONGODB_DB=jenkins_failure_analysis
 ```
 
 ### Purpose
-Stores unstructured test failure data, analysis results, and historical records
-
-### Dependencies
-None (Base infrastructure)
-
-### Access
-```bash
-# Connection string
-mongodb://admin:password@localhost:27017/
-
-# Database
-jenkins_failure_analysis
-```
+Stores unstructured test failure data, analysis results, and historical records (accessed via `MONGODB_URI`)
 
 ---
 
@@ -334,7 +315,7 @@ REDIS_URL=redis://redis:6379/0
 ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
 OPENAI_API_KEY=${OPENAI_API_KEY}
 GEMINI_API_KEY=${GEMINI_API_KEY}
-MONGODB_URI=mongodb://admin:password@mongodb:27017/
+MONGODB_URI=${MONGODB_URI}
 PINECONE_API_KEY=${PINECONE_API_KEY}
 LANGFUSE_ENABLED=true
 LANGFUSE_HOST=http://langfuse-server:3000
@@ -379,7 +360,7 @@ Execute async tasks: AI analysis, batch processing, cleanup
 ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
 OPENAI_API_KEY=${OPENAI_API_KEY}
 GEMINI_API_KEY=${GEMINI_API_KEY}
-MONGODB_URI=mongodb://admin:password@mongodb:27017/
+MONGODB_URI=${MONGODB_URI}
 MONGODB_DB=jenkins_failure_analysis
 PINECONE_API_KEY=${PINECONE_API_KEY}
 PINECONE_INDEX_NAME=test-failures
@@ -426,7 +407,7 @@ http://localhost:5003
 
 ### Environment Variables
 ```bash
-MONGODB_URI=mongodb://admin:password@mongodb:27017/
+MONGODB_URI=${MONGODB_URI}
 MONGODB_DB=jenkins_failure_analysis
 ```
 
@@ -535,7 +516,7 @@ POSTGRES_PORT=5432
 POSTGRES_DB=ddn_ai_analysis
 POSTGRES_USER=postgres
 POSTGRES_PASSWORD=password
-MONGODB_URI=mongodb://admin:password@mongodb:27017/
+MONGODB_URI=${MONGODB_URI}
 MONGODB_DB=jenkins_failure_analysis
 MANUAL_TRIGGER_API=http://manual-trigger-api:5004
 GITHUB_TOKEN=${GITHUB_TOKEN}
@@ -867,7 +848,7 @@ JENKINS_TOKEN=...
 | 5432 | PostgreSQL (DDN) | localhost:5432 |
 | 5433 | PostgreSQL (Langfuse) | localhost:5433 |
 | 6379 | Redis | localhost:6379 |
-| 27017 | MongoDB | localhost:27017 |
+| 27017 | MongoDB | set via `MONGODB_URI` (use MongoDB Atlas for production) |
 
 ---
 

@@ -2,7 +2,7 @@ import { test, expect } from '@playwright/test';
 import { getApi } from './helpers/dashboard-helpers';
 
 const DASHBOARD_URL = process.env.DASHBOARD_URL || 'http://localhost:5173';
-const DASHBOARD_API = process.env.DASHBOARD_API || 'http://localhost:5005';
+const DASHBOARD_API = process.env.DASHBOARD_API || 'http://localhost:5006';
 
 test.describe('Manual Analyze Now flow', () => {
   test('start analysis and validate results via API', async ({ page }) => {
@@ -17,7 +17,8 @@ test.describe('Manual Analyze Now flow', () => {
     await expect(page).toHaveTitle(/Dashboard|DDN/i);
 
     // Basic presence check for Analyze Now button (best-effort selector)
-    const analyzeButton = page.locator('button', { hasText: /Analyze Now|Analyze/i }).first();
+    // Note: UI may show "Analyze Now", "Analyze", or "Trigger Analysis" depending on version
+    const analyzeButton = page.locator('button', { hasText: /Analyze Now|Analyze|Trigger Analysis/i }).first();
     await expect(analyzeButton).toBeVisible({ timeout: 10000 });
 
     // Click analyze and wait for a job id to appear in the UI or API

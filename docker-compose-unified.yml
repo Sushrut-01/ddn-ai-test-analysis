@@ -5,33 +5,10 @@ services:
   # DATABASE LAYER
   # ============================================================================
 
-  # MongoDB - Unstructured data storage
-  mongodb:
-    image: mongo:7.0
-    container_name: ddn-mongodb
-    ports:
-      - "27017:27017"
-    environment:
-      - MONGO_INITDB_ROOT_USERNAME=admin
-      - MONGO_INITDB_ROOT_PASSWORD=password
-    volumes:
-      - mongodb_data:/data/db
-    networks:
-      - ddn-network
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-    # NOTE: MongoDB is expected to be provided externally (MongoDB Atlas).
-    # The local `mongodb` container has been removed to enforce using a
-    # managed Atlas instance. Set `MONGODB_URI` in your environment or
-    # `.env` file to point to your Atlas connection string.
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
+  # NOTE: MongoDB Atlas is used (cloud-hosted).
+  # Services use the `MONGODB_URI` environment variable from `.env`
+  # pointing to your Atlas connection string.
+  # No local MongoDB container needed.
 
   # PostgreSQL - Langfuse observability platform
   langfuse-db:
@@ -50,6 +27,27 @@ services:
     restart: unless-stopped
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U langfuse"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # PostgreSQL - Primary application database
+  postgres:
+    image: postgres:15
+    container_name: ddn-postgres
+    ports:
+      - "5434:5432"
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=ddn_ai_analysis
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - ddn-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -84,10 +82,10 @@ services:
     image: ghcr.io/langfuse/langfuse:2
     container_name: langfuse-server
     ports:
-      - "3001:3000"  # CHANGED: Avoid conflict with dashboard-ui
+      - "3000:3000"
     environment:
       - DATABASE_URL=postgresql://langfuse:langfuse123@langfuse-db:5432/langfuse
-      - NEXTAUTH_URL=http://localhost:3001
+      - NEXTAUTH_URL=http://localhost:3000
       - NEXTAUTH_SECRET=very-secret-key-change-this-in-production-12345678
       - SALT=salt-change-this-in-production-abcdefgh
       - TELEMETRY_ENABLED=false
@@ -167,7 +165,7 @@ services:
       - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
       - OPENAI_API_KEY=${OPENAI_API_KEY}
       - GEMINI_API_KEY=${GEMINI_API_KEY}
-      - MONGODB_URI=mongodb://admin:password@mongodb:27017/
+      - MONGODB_URI=${MONGODB_URI}
       - PINECONE_API_KEY=${PINECONE_API_KEY}
       - LANGFUSE_ENABLED=true
       - LANGFUSE_HOST=http://langfuse-server:3000
@@ -177,7 +175,6 @@ services:
       - ddn-network
     depends_on:
       - redis
-      - mongodb
     restart: unless-stopped
     command: celery -A tasks.celery_tasks worker --loglevel=info --concurrency=4 --pool=solo
 
@@ -192,12 +189,12 @@ services:
       dockerfile: Dockerfile
     container_name: ddn-langgraph
     ports:
-      - "5003:5003"  # CHANGED: Was 5000, conflicts with other services
+      - "5000:5000"
     environment:
       - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
       - OPENAI_API_KEY=${OPENAI_API_KEY}
       - GEMINI_API_KEY=${GEMINI_API_KEY}
-      - MONGODB_URI=mongodb://admin:password@mongodb:27017/
+      - MONGODB_URI=${MONGODB_URI}
       - MONGODB_DB=jenkins_failure_analysis
       - PINECONE_API_KEY=${PINECONE_API_KEY}
       - PINECONE_INDEX_NAME=test-failures
@@ -209,8 +206,6 @@ services:
     networks:
       - ddn-network
     depends_on:
-      mongodb:
-        condition: service_healthy
       redis:
         condition: service_healthy
     restart: unless-stopped
@@ -229,13 +224,10 @@ services:
     ports:
       - "5001:5001"
     environment:
-      - MONGODB_URI=mongodb://admin:password@mongodb:27017/
+      - MONGODB_URI=${MONGODB_URI}
       - MONGODB_DB=jenkins_failure_analysis
     networks:
       - ddn-network
-    depends_on:
-      mongodb:
-        condition: service_healthy
     restart: unless-stopped
     command: python mcp_mongodb_server.py
 
@@ -296,7 +288,7 @@ services:
       - POSTGRES_DB=ddn_ai_analysis
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=password
-      - MONGODB_URI=mongodb://admin:password@mongodb:27017/
+      - MONGODB_URI=${MONGODB_URI}
       - MONGODB_DB=jenkins_failure_analysis
       - MANUAL_TRIGGER_API=http://manual-trigger-api:5004
       - GITHUB_TOKEN=${GITHUB_TOKEN}
@@ -305,8 +297,6 @@ services:
       - ddn-network
     depends_on:
       postgres:
-        condition: service_healthy
-      mongodb:
         condition: service_healthy
     restart: unless-stopped
     command: python dashboard_api_full.py
@@ -322,7 +312,7 @@ services:
       dockerfile: Dockerfile
     container_name: ddn-jira
     ports:
-      - "5007:5007"
+      - "5009:5009"
     environment:
       - POSTGRES_HOST=postgres
       - POSTGRES_PORT=5432
@@ -348,7 +338,7 @@ services:
       dockerfile: Dockerfile
     container_name: ddn-slack
     ports:
-      - "5008:5008"  # CHANGED: Was 5007, conflicts with Jira
+      - "5012:5012"
     environment:
       - POSTGRES_HOST=postgres
       - POSTGRES_PORT=5432
@@ -374,7 +364,7 @@ services:
       dockerfile: Dockerfile
     container_name: ddn-self-healing
     ports:
-      - "5009:5009"  # CHANGED: Was 5008, conflicts with Slack
+      - "5008:5008"
     environment:
       - POSTGRES_HOST=postgres
       - POSTGRES_PORT=5432
@@ -397,6 +387,95 @@ services:
     restart: unless-stopped
     command: python self_healing_service.py
 
+  # Service Manager API
+  service-manager:
+    build:
+      context: ./implementation
+      dockerfile: Dockerfile
+    container_name: ddn-service-manager
+    ports:
+      - "5007:5007"
+    environment:
+      - POSTGRES_HOST=postgres
+      - POSTGRES_PORT=5432
+      - POSTGRES_DB=ddn_ai_analysis
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=password
+      - MONGODB_URI=${MONGODB_URI}
+      - MONGODB_DB=jenkins_failure_analysis
+      - SERVICE_MANAGER_PORT=5007
+    networks:
+      - ddn-network
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+    command: python service_manager_api.py
+
+  # Aging Service
+  aging-service:
+    build:
+      context: ./implementation
+      dockerfile: Dockerfile
+    container_name: ddn-aging-service
+    ports:
+      - "5010:5010"
+    environment:
+      - POSTGRES_HOST=postgres
+      - POSTGRES_PORT=5432
+      - POSTGRES_DB=ddn_ai_analysis
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=password
+      - MONGODB_URI=${MONGODB_URI}
+      - MONGODB_DB=jenkins_failure_analysis
+      - AGING_SERVICE_PORT=5010
+      - CHECK_INTERVAL_HOURS=24
+    networks:
+      - ddn-network
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+    command: python aging_service.py
+
+  # Knowledge Management API
+  knowledge-management-api:
+    build:
+      context: ./implementation
+      dockerfile: Dockerfile
+    container_name: ddn-knowledge-mgmt
+    ports:
+      - "5015:5015"
+    environment:
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - PINECONE_API_KEY=${PINECONE_API_KEY}
+      - PINECONE_INDEX_NAME=test-failures
+      - KNOWLEDGE_API_PORT=5015
+      - MONGODB_URI=${MONGODB_URI}
+      - MONGODB_DB=jenkins_failure_analysis
+    networks:
+      - ddn-network
+    restart: unless-stopped
+    command: python knowledge_management_api.py
+
+  # Re-Ranking Service
+  reranking-service:
+    build:
+      context: ./implementation
+      dockerfile: Dockerfile
+    container_name: ddn-reranking
+    ports:
+      - "5011:5011"
+    environment:
+      - RERANKING_SERVICE_PORT=5011
+      - RERANKING_MODEL=cross-encoder/ms-marco-MiniLM-L-6-v2
+      - MONGODB_URI=${MONGODB_URI}
+      - MONGODB_DB=jenkins_failure_analysis
+    networks:
+      - ddn-network
+    restart: unless-stopped
+    command: python reranking_service.py
+
   # ============================================================================
   # FRONTEND
   # ============================================================================
@@ -408,9 +487,9 @@ services:
       dockerfile: Dockerfile
     container_name: ddn-dashboard-ui
     ports:
-      - "3000:3000"
+      - "5173:5173"
     environment:
-      - VITE_API_URL=http://localhost:5006  # CHANGED: Updated to new dashboard-api port
+      - VITE_API_URL=http://localhost:5006
     networks:
       - ddn-network
     depends_on:
@@ -428,8 +507,6 @@ networks:
 # VOLUMES
 # ============================================================================
 volumes:
-  mongodb_data:
-    driver: local
   postgres_data:
     driver: local
   langfuse_db_data:

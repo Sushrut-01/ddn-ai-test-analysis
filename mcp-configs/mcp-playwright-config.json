@@ -1,0 +1,108 @@
+{
+  "mcpServers": {
+    "playwright": {
+      "command": "npx",
+      "args": [
+        "@ejazullah/mcp-playwright@latest"
+      ],
+      "description": "Enhanced Playwright MCP server with CDP support for browser automation",
+      "env": {
+        "PLAYWRIGHT_BROWSERS_PATH": "0",
+        "PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD": "0"
+      }
+    }
+  },
+  "tools": {
+    "navigation": [
+      "playwright_navigate",
+      "playwright_click",
+      "playwright_fill",
+      "playwright_select",
+      "playwright_evaluate"
+    ],
+    "interaction": [
+      "playwright_keyboard_press",
+      "playwright_keyboard_type",
+      "playwright_keyboard_press_sequentially",
+      "playwright_mouse_move",
+      "playwright_mouse_wheel",
+      "playwright_drag_and_drop"
+    ],
+    "inspection": [
+      "playwright_screenshot",
+      "playwright_pdf",
+      "playwright_get_element_text",
+      "playwright_get_element_attribute",
+      "playwright_get_element_property",
+      "playwright_get_element_css"
+    ],
+    "waiting": [
+      "playwright_wait_for_selector",
+      "playwright_wait_for_navigation",
+      "playwright_wait_for_load_state",
+      "playwright_wait_for_timeout"
+    ],
+    "extraction": [
+      "playwright_get_links",
+      "playwright_get_images",
+      "playwright_get_tables",
+      "playwright_extract_text"
+    ],
+    "cdp": [
+      "playwright_cdp_list_targets",
+      "playwright_cdp_connect",
+      "playwright_cdp_send_command"
+    ],
+    "agents": {
+      "generator": "playwright_generate_test",
+      "healer": "playwright_heal_test",
+      "planner": "playwright_plan_test"
+    }
+  },
+  "features": {
+    "agents": {
+      "test_generator": {
+        "description": "Automatically generates Playwright test scripts from user interactions",
+        "enabled": true,
+        "config": {
+          "output_dir": "tests/ui/generated",
+          "template": "playwright-test"
+        }
+      },
+      "test_healer": {
+        "description": "Automatically repairs failing tests by detecting and fixing selector issues",
+        "enabled": true,
+        "config": {
+          "retry_strategies": ["css_fallback", "xpath_fallback", "text_based", "role_based"],
+          "max_attempts": 3
+        }
+      },
+      "test_planner": {
+        "description": "Plans test scenarios and generates test suites from requirements",
+        "enabled": true,
+        "config": {
+          "output_format": "gherkin",
+          "include_accessibility_checks": true
+        }
+      }
+    },
+    "accessibility": {
+      "enabled": true,
+      "snapshot_format": "tree"
+    },
+    "cdp_support": {
+      "enabled": true,
+      "connect_to_existing": true
+    },
+    "form_automation": {
+      "enabled": true,
+      "auto_detect": true
+    }
+  },
+  "test": {
+    "dashboard_trigger_analysis": {
+      "description": "Test the Dashboard Trigger Analysis button",
+      "enabled": true
+    }
+  }
+}

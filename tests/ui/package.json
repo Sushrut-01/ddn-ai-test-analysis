@@ -6,10 +6,17 @@
     "axios": "^1.6.2"
   },
   "devDependencies": {
+    "@ejazullah/mcp-playwright": "^0.0.47",
     "@playwright/test": "^1.44.0"
   },
   "scripts": {
     "test:ui": "npx playwright test",
-    "test:ci:ui": "npx playwright test --reporter=list --reporter=junit"
+    "test:ci:ui": "npx playwright test --reporter=list --reporter=junit",
+    "test:headed": "npx playwright test --headed",
+    "test:debug": "npx playwright test --debug",
+    "mcp:server": "npx @ejazullah/mcp-playwright",
+    "agent:generate": "echo 'Use Claude/Copilot: Generate a Playwright test for...'",
+    "agent:heal": "echo 'Use Claude/Copilot: Heal failing tests with alternative selectors'",
+    "agent:plan": "echo 'Use Claude/Copilot: Create a test plan for...'"
   }
 }

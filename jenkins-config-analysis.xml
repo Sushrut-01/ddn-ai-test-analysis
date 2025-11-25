@@ -1,0 +1,103 @@
+<?xml version='1.1' encoding='UTF-8'?>
+<flow-definition plugin="workflow-job@1436.vfa_244484591f">
+  <actions/>
+  <description></description>
+  <keepDependencies>false</keepDependencies>
+  <properties>
+    <hudson.model.ParametersDefinitionProperty>
+      <parameterDefinitions>
+        <hudson.model.StringParameterDefinition>
+          <name>MONGODB_URI</name>
+          <description>MongoDB connection string (leave empty to use default from environment)</description>
+          <defaultValue></defaultValue>
+          <trim>true</trim>
+        </hudson.model.StringParameterDefinition>
+      </parameterDefinitions>
+    </hudson.model.ParametersDefinitionProperty>
+  </properties>
+  <definition class="org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition" plugin="workflow-cps@3950.ve4eee98277ab_">
+    <script>pipeline {
+    agent any
+
+    stages {
+        stage(&apos;Setup Environment&apos;) {
+            steps {
+                script {
+                    // Set MongoDB URI - use parameter if provided, otherwise use default
+                    env.MONGODB_URI = params.MONGODB_URI ?: &apos;mongodb+srv://ddnuser:DqpgW1TWjXf5YRVs@ddn-cluster.wudcfln.mongodb.net/ddn_tests?retryWrites=true&amp;w=majority&apos;
+
+                    // Set other required environment variables
+                    env.JOB_NAME = env.JOB_NAME
+                    env.BUILD_NUMBER = env.BUILD_NUMBER
+                    env.BUILD_URL = env.BUILD_URL
+                    env.GIT_COMMIT = env.GIT_COMMIT ?: &apos;unknown&apos;
+                    env.GIT_BRANCH = env.GIT_BRANCH ?: &apos;unknown&apos;
+
+                    echo &quot;MongoDB URI: ${env.MONGODB_URI}&quot;
+                    echo &quot;Build ID: ${env.JOB_NAME}-${env.BUILD_NUMBER}&quot;
+                }
+            }
+        }
+
+        stage(&apos;Install Dependencies&apos;) {
+            steps {
+                bat &apos;&apos;&apos;
+                    echo Installing Python dependencies...
+                    python -m pip install --quiet robotframework pymongo python-dotenv boto3 requests
+
+                    echo Installing Node.js dependencies...
+                    cd tests
+                    call npm install
+                    cd ..
+                &apos;&apos;&apos;
+            }
+        }
+
+        stage(&apos;Run Robot Framework Tests&apos;) {
+            steps {
+                bat &apos;&apos;&apos;
+                    echo =========================================
+                    echo Running Robot Framework Tests
+                    echo =========================================
+
+                    python -m robot --outputdir robot-results --listener implementation.mongodb_robot_listener.MongoDBListener robot-tests
+
+                    echo Robot Framework tests completed (exit code ignored for reporting)
+                &apos;&apos;&apos;
+            }
+        }
+
+        stage(&apos;Run Mocha Tests&apos;) {
+            steps {
+                bat &apos;&apos;&apos;
+                    echo =========================================
+                    echo Running Mocha/JavaScript Tests
+                    echo =========================================
+
+                    cd tests
+                    call npm test
+                    cd ..
+
+                    echo Mocha tests completed (exit code ignored for reporting)
+                &apos;&apos;&apos;
+            }
+        }
+    }
+
+    post {
+        always {
+            echo &quot;Build completed. Check MongoDB for test results.&quot;
+            echo &quot;Dashboard: http://localhost:5173/failures&quot;
+        }
+    }
+}
+</script>
+    <sandbox>true</sandbox>
+  </definition>
+  <triggers>
+    <hudson.triggers.TimerTrigger>
+      <spec>H 2 * * *</spec>
+    </hudson.triggers.TimerTrigger>
+  </triggers>
+  <disabled>false</disabled>
+</flow-definition>

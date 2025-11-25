@@ -149,14 +149,16 @@ def get_aged_failures() -> List[Dict]:
 
     try:
         db = mongo_client[MONGODB_DB]
-        builds_collection = db['builds']
+        # BUG FIX #2: Changed from 'builds' to 'test_failures' (actual collection name)
+        builds_collection = db['test_failures']
 
         # Aggregation pipeline to group builds by build_id and calculate span
         pipeline = [
             # Stage 1: Match only failures that haven't been analyzed
+            # BUG FIX #2: Changed status from "FAILURE" to "failed" (Robot Framework listener uses lowercase)
             {
                 "$match": {
-                    "status": "FAILURE",
+                    "status": "failed",
                     "analyzed": {"$ne": True}
                 }
             },
@@ -388,11 +390,12 @@ def process_aged_failures():
 
         # Mark ALL occurrences of this build_id as analyzed in MongoDB
         # This prevents re-triggering the same build pattern
+        # BUG FIX #2: Changed from 'builds' to 'test_failures' and status from 'FAILURE' to 'failed'
         try:
             if mongo_client:
                 db = mongo_client[MONGODB_DB]
-                update_result = db['builds'].update_many(
-                    {'build_id': build_id, 'status': 'FAILURE'},
+                update_result = db['test_failures'].update_many(
+                    {'build_id': build_id, 'status': 'failed'},
                     {'$set': {
                         'analyzed': True,
                         'analyzed_at': datetime.now(),

@@ -147,14 +147,14 @@ A production-ready system that enables:
 
 ## 🗄️ MongoDB Integration
 
-### **Your Existing MongoDB:**
+The project requires a MongoDB connection string set via the `MONGODB_URI` environment variable. MongoDB Atlas is recommended for production and CI.
+
+Example Atlas connection (replace placeholders):
 ```
-Host: 127.0.0.1 (localhost)
-Port: 27017
-Connection: mongodb://localhost:27017
-Data Directory: C:\DDN-Project\mongodb-data
-Status: ✅ Running
+mongodb+srv://<user>:<pass>@cluster0.xxxxx.mongodb.net/ddn_ai_project?retryWrites=true&w=majority
 ```
+
+For local development you may run a local MongoDB and set `MONGODB_URI` to `mongodb://localhost:27017/<db>`, but code and CI expect `MONGODB_URI` to be present.
 
 ### **New Database Created:**
 ```
@@ -243,7 +243,7 @@ http://localhost:5678
 
 # 2. Add MongoDB credential
 Settings → Credentials → Add → MongoDB
-Connection: mongodb://localhost:27017/ddn_ai_project
+Connection: set to your `MONGODB_URI` (Atlas recommended)
 
 # 3. Import 3 workflows
 Workflows → Import from File
@@ -286,8 +286,10 @@ curl -X POST http://localhost:5678/webhook/ddn-manual-trigger \
   -H "Content-Type: application/json" \
   -d '{"build_id": "SAMPLE_12345", "user_email": "test@example.com"}'
 
-# Verify in database
-mongosh mongodb://localhost:27017/ddn_ai_project
+# Verify in database (use `MONGODB_URI`)
+mongosh "<YOUR_MONGODB_URI>"
+# Example:
+# mongosh "mongodb+srv://<user>:<pass>@cluster0.xxxxx.mongodb.net/ddn_ai_project"
 db.analysis_solutions.findOne()
 ```
 
@@ -480,7 +482,7 @@ All guides are in `C:\DDN-AI-Project-Documentation\`
 3. [COMPLETE_SYSTEM_OVERVIEW.md](implementation/workflows/COMPLETE_SYSTEM_OVERVIEW.md) - Architecture
 
 ### **Quick Reference:**
-- MongoDB: `mongodb://localhost:27017/ddn_ai_project`
+- MongoDB: set `MONGODB_URI` to your MongoDB Atlas connection string (example above)
 - n8n: `http://localhost:5678`
 - LangGraph: `http://localhost:5000`
 

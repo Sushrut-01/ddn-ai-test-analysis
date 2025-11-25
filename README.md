@@ -10,6 +10,8 @@
 
 **All 17 services containerized and ready to deploy!**
 
+> **Note for QA/Testing**: UI button text may vary between versions (e.g., "Analyze Now" vs "Trigger Analysis"). Playwright tests use flexible selectors to handle these variations. See `tests/ui/manual_analyze.spec.ts` for details.
+
 ### **Quick Start with Docker** (5-10 minutes)
 
 ```bash
@@ -133,27 +135,18 @@ C:\DDN-AI-Project-Documentation\
 
 ## 🗄️ MongoDB Integration (Two Options)
 
-### **🖥️ Option 1: Local MongoDB** (Development)
+### **MongoDB (Recommended: Atlas)**
 ```
-✅ Status: Running on localhost:27017
-✅ Best for: Development, testing
-✅ Setup: 5 minutes
-👉 Guide: MONGODB-QUICKSTART.md
-```
+The project requires a MongoDB connection string supplied via the `MONGODB_URI` environment variable.
 
-### **☁️ Option 2: MongoDB Atlas** (Production)
-```
-✅ Account: Available at cloud.mongodb.com
-✅ Best for: Production, team collaboration
-✅ Setup: 5 minutes
-👉 Guide: implementation/database/MONGODB-ATLAS-SETUP.md
-```
+Use MongoDB Atlas for production and CI. For local development you may run a local MongoDB and set `MONGODB_URI` accordingly,
+but all code and CI expect `MONGODB_URI` to be present.
 
-### **Both Create:**
-```
+Example Atlas connection (replace placeholders):
+mongodb+srv://<user>:<pass>@cluster0.xxxxx.mongodb.net/ddn_ai_project?retryWrites=true&w=majority
+
 Database: ddn_ai_project
-Collections: 5 (builds, console_logs, test_results, analysis_solutions, refinement_history)
-Sample Data: Yes (ready for testing)
+Collections: builds, console_logs, test_results, analysis_solutions, refinement_history
 ```
 
 **Quick Decision**: [MONGODB-OPTIONS-GUIDE.md](MONGODB-OPTIONS-GUIDE.md)
@@ -208,16 +201,20 @@ Sample Data: Yes (ready for testing)
 
 ### **MongoDB Setup:**
 ```bash
+# Set your MongoDB connection string (Atlas recommended)
+# Example (PowerShell):
+$env:MONGODB_URI = 'mongodb+srv://<user>:<pass>@cluster0.xxxxx.mongodb.net/ddn_ai_project?retryWrites=true&w=majority'
+
 cd C:\DDN-AI-Project-Documentation\implementation\database
-python setup_mongodb.py           # Create database
-python test_mongodb_connection.py # Verify setup
+python setup_mongodb.py           # Create database (reads MONGODB_URI)
+python test_mongodb_connection.py # Verify setup (reads MONGODB_URI)
 ```
 
 ### **n8n Configuration:**
 ```
 1. Open: http://localhost:5678
 2. Settings → Credentials → Add → MongoDB
-3. Connection: mongodb://localhost:27017/ddn_ai_project
+3. Connection: set to your `MONGODB_URI` (Atlas recommended)
 4. Import 3 workflows from: implementation/workflows/
 5. Activate all workflows
 ```
@@ -406,7 +403,7 @@ See [FILE-CLEANUP-ANALYSIS.md](FILE-CLEANUP-ANALYSIS.md) for details.
 4. [DASHBOARD_INTEGRATION_GUIDE.md](implementation/dashboard/DASHBOARD_INTEGRATION_GUIDE.md)
 
 ### **Quick Reference:**
-- **MongoDB**: `mongodb://localhost:27017/ddn_ai_project`
+- **MongoDB**: set `MONGODB_URI` to your MongoDB Atlas connection string (example above)
 - **n8n**: `http://localhost:5678`
 - **LangGraph**: `http://localhost:5000`
 

@@ -1,0 +1,70 @@
+pipeline {
+    agent any
+
+    environment {
+        MONGODB_URI = 'mongodb+srv://sushrutnistane097_db_user:Sharu%40051220@ddn-cluster.wudcfln.mongodb.net/ddn_tests?retryWrites=true&w=majority'
+    }
+
+    stages {
+        stage('Setup') {
+            steps {
+                script {
+                    echo "========================================="
+                    echo "DDN AI Project - Build ${env.BUILD_NUMBER}"
+                    echo "Job: ${env.JOB_NAME}"
+                    echo "Workspace: ${env.WORKSPACE}"
+                    echo "========================================="
+                }
+            }
+        }
+
+        stage('Install Dependencies') {
+            steps {
+                sh '''
+                    echo "Installing Robot Framework and dependencies..."
+                    python3 -m pip install --quiet --upgrade pip --break-system-packages
+                    python3 -m pip install --quiet --break-system-packages robotframework pymongo python-dotenv boto3 requests
+                '''
+            }
+        }
+
+        stage('Run Robot Tests') {
+            steps {
+                sh '''
+                    # Create output directory
+                    mkdir -p robot-results
+
+                    echo "Running Robot Framework tests with MongoDB integration..."
+                    echo "Git Branch: $GIT_BRANCH"
+                    echo "Git Commit: $GIT_COMMIT"
+
+                    python3 -m robot \
+                        --outputdir robot-results \
+                        --listener implementation.mongodb_robot_listener.MongoDBListener \
+                        robot-tests/
+                '''
+            }
+        }
+    }
+
+    post {
+        always {
+            echo "========================================="
+            echo "Robot Framework Tests completed!"
+            echo "Build URL: ${env.BUILD_URL}"
+            echo "========================================="
+
+            // Archive robot results
+            archiveArtifacts artifacts: 'robot-results/**/*', allowEmptyArchive: true
+
+            // Publish Robot Framework results (if plugin is installed)
+            // robot outputPath: 'robot-results', logFileName: 'log.html', reportFileName: 'report.html', outputFileName: 'output.xml'
+        }
+        success {
+            echo "✅ All tests passed successfully!"
+        }
+        failure {
+            echo "❌ Tests failed - check MongoDB for details"
+        }
+    }
+}

@@ -185,3 +185,14 @@ rancher-desktop.log
 deployment-test-report.txt
 RANCHER-INSTALL-SUMMARY.md
 RANCHER-SETUP-COMPLETE.txt
+
+# Playwright
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/
+/playwright/.auth/
+
+# Separate Git Repositories (have their own GitHub repos)
+ddn-jenkins-testing/
+ddn-playwright-automation/

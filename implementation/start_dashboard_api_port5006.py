@@ -21,13 +21,20 @@ from pinecone import Pinecone
 import os
 from dotenv import load_dotenv
 
-# Load master configuration file
-load_dotenv('../.env.MASTER')
+# Load configuration file from implementation/.env
+load_dotenv('.env', override=True)  # Force load from implementation/.env
 
 if __name__ == '__main__':
     logger.info("=" * 60)
     logger.info("Starting Enhanced Dashboard API on PORT 5006")
     logger.info("=" * 60)
+    
+    # Verify MongoDB URI is loaded
+    mongo_uri = os.getenv('MONGODB_URI')
+    if mongo_uri:
+        logger.info(f"✓ MONGODB_URI loaded: {mongo_uri[:50]}...")
+    else:
+        logger.error("✗ MONGODB_URI not loaded from .env!")
 
     # Initialize MongoDB
     logger.info("Initializing MongoDB connection...")

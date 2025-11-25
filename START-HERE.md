@@ -216,7 +216,7 @@ Results appear in:
 | **Dashboard** | http://localhost:3000 | None needed |
 | **n8n Workflows** | http://localhost:5678 | admin / password |
 | **Dashboard API** | http://localhost:5005 | None needed |
-| **MongoDB** | localhost:27017 | admin / password |
+| **MongoDB** | set `MONGODB_URI` to your MongoDB connection string (Atlas recommended) | use `MONGODB_URI` |
 | **PostgreSQL** | localhost:5432 | postgres / password |
 
 ---
@@ -393,9 +393,17 @@ curl http://localhost:5678        # Should return n8n login page
 
 ### Check 3: MongoDB Data
 
-```bash
-docker exec -it ddn-mongodb mongosh -u admin -p password
+The project reads the connection from `MONGODB_URI`. For local debugging you can use a local container, otherwise use your Atlas string.
 
+Example (PowerShell):
+```powershell
+# Using mongosh with a connection string
+mongosh "<YOUR_MONGODB_URI>"
+
+# Example (replace placeholders):
+# mongosh "mongodb+srv://<user>:<pass>@cluster0.xxxxx.mongodb.net/ddn_ai_project"
+
+# Then run:
 use jenkins_failure_analysis
 db.builds.find()
 ```

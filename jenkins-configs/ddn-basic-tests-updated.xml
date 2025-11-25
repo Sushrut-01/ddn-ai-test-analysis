@@ -1,0 +1,82 @@
+<?xml version="1.1" encoding="UTF-8"?>
+<project>
+  <actions/>
+  <description>DDN Storage Basic Tests - Robot Framework with MongoDB Integration</description>
+  <keepDependencies>false</keepDependencies>
+  <properties>
+    <jenkins.model.BuildDiscarderProperty>
+      <strategy class="hudson.tasks.LogRotator">
+        <daysToKeep>-1</daysToKeep>
+        <numToKeep>10</numToKeep>
+        <artifactDaysToKeep>-1</artifactDaysToKeep>
+        <artifactNumToKeep>-1</artifactNumToKeep>
+      </strategy>
+    </jenkins.model.BuildDiscarderProperty>
+  </properties>
+  <scm class="hudson.plugins.git.GitSCM" plugin="git@5.7.2">
+    <configVersion>2</configVersion>
+    <userRemoteConfigs>
+      <hudson.plugins.git.UserRemoteConfig>
+        <url>https://github.com/Sushrut-01/ddn-ai-test-analysis.git</url>
+      </hudson.plugins.git.UserRemoteConfig>
+    </userRemoteConfigs>
+    <branches>
+      <hudson.plugins.git.BranchSpec>
+        <name>*/main</name>
+      </hudson.plugins.git.BranchSpec>
+    </branches>
+    <doGenerateSubmoduleConfigurations>false</doGenerateSubmoduleConfigurations>
+    <submoduleCfg class="empty-list"/>
+    <extensions/>
+  </scm>
+  <canRoam>true</canRoam>
+  <disabled>false</disabled>
+  <blockBuildWhenDownstreamBuilding>false</blockBuildWhenDownstreamBuilding>
+  <blockBuildWhenUpstreamBuilding>false</blockBuildWhenUpstreamBuilding>
+  <triggers>
+    <hudson.triggers.SCMTrigger>
+      <spec>H/15 * * * *</spec>
+      <ignorePostCommitHooks>false</ignorePostCommitHooks>
+    </hudson.triggers.SCMTrigger>
+  </triggers>
+  <concurrentBuild>false</concurrentBuild>
+  <builders>
+    <hudson.tasks.Shell>
+      <command>#!/bin/bash
+echo "========================================="
+echo "DDN Basic Robot Framework Tests - Build $BUILD_NUMBER"
+echo "Job: $JOB_NAME"
+echo "Workspace: $WORKSPACE"
+echo "========================================="
+
+# Install Robot Framework and dependencies
+echo "Installing dependencies..."
+python3 -m pip install --quiet --upgrade pip --break-system-packages
+python3 -m pip install --quiet --break-system-packages robotframework pymongo python-dotenv boto3 requests
+
+# Set MongoDB reporter environment variables
+export MONGODB_URI='mongodb+srv://sushrutnistane097_db_user:Sharu%40051220@ddn-cluster.wudcfln.mongodb.net/ddn_tests?retryWrites=true&amp;w=majority'
+export JOB_NAME="$JOB_NAME"
+export BUILD_NUMBER="$BUILD_NUMBER"
+export BUILD_URL="$BUILD_URL"
+export GIT_COMMIT="$GIT_COMMIT"
+export GIT_BRANCH="$GIT_BRANCH"
+
+# Create output directory
+mkdir -p robot-results
+
+echo "Running Basic Robot Framework tests..."
+echo "Git Branch: $GIT_BRANCH"
+echo "Git Commit: $GIT_COMMIT"
+python3 -m robot --outputdir robot-results --listener implementation.mongodb_robot_listener.MongoDBListener --include basic robot-tests/
+
+echo "========================================="
+echo "Basic Robot Framework Tests completed!"
+echo "Build URL: $BUILD_URL"
+echo "========================================="</command>
+      <configuredLocalRules/>
+    </hudson.tasks.Shell>
+  </builders>
+  <publishers/>
+  <buildWrappers/>
+</project>

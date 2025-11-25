@@ -176,10 +176,8 @@ MONGODB_URI=mongodb+srv://ddn_admin:YOUR_PASSWORD@ddn-ai-cluster.xxxxx.mongodb.n
 # Database name
 MONGODB_DB=jenkins_failure_analysis
 
-# ===================== Keep these if using local MongoDB =====================
-# Comment out or remove if using Atlas only
-
-# MONGODB_LOCAL_URI=mongodb://admin:password@mongodb:27017/
+# If you previously used a local MongoDB, remove or comment out any local URI settings
+# in your `.env` file. Production and CI should use Atlas via `MONGODB_URI`.
 ```
 
 **Full example:**
@@ -364,13 +362,14 @@ mongodb:
   # Only start if needed: docker-compose up mongodb
 ```
 
-Use environment variable to switch:
+Use environment variable to switch. For local development you may point `MONGODB_URI` at a local MongoDB,
+but production and CI should use MongoDB Atlas.
 
 ```env
-# Development: use local
-MONGODB_URI=mongodb://admin:password@mongodb:27017/
+# Development (optional): local MongoDB instance
+# MONGODB_URI=mongodb://localhost:27017/ddn_tests
 
-# Production: use Atlas
+# Production (recommended): MongoDB Atlas
 MONGODB_URI=mongodb+srv://ddn_admin:pass@cluster.mongodb.net/
 ```
 

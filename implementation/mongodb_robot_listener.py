@@ -54,6 +54,7 @@ class MongoDBListener:
 
             # Store current suite and test context
             self.current_suite = None
+            self.current_suite_stats = None  # BUG FIX: Track suite statistics
             self.current_test = None
             self.build_number = os.getenv('BUILD_NUMBER', 'local')
             self.job_name = os.getenv('JOB_NAME', 'robot-framework-tests')
@@ -81,6 +82,13 @@ class MongoDBListener:
     def start_suite(self, data, result):
         """Called when a test suite starts"""
         self.current_suite = result.name
+        # BUG FIX: Initialize suite stats tracking
+        self.current_suite_stats = {
+            'suite_name': result.name,
+            'pass_count': 0,
+            'fail_count': 0,
+            'total_count': 0
+        }
         print(f"[MongoDB Listener] Suite started: {result.name}")
 
     def start_test(self, data, result):
@@ -121,14 +129,16 @@ class MongoDBListener:
                 if not stack_trace:
                     stack_trace = error_message
 
-                # Create failure document
+                # BUG FIX #1: Include suite statistics in failure document
                 failure_doc = {
                     'timestamp': end_time,
                     'test_name': result.name,
                     'test_suite': self.current_suite,
+                    'suite_name': self.current_suite_stats.get('suite_name') if self.current_suite_stats else self.current_suite,
                     'error_message': error_message,
                     'stack_trace': stack_trace,
                     'build_number': self.build_number,
+                    'build_id': f"{self.job_name}-{self.build_number}",  # Standardized build ID
                     'job_name': self.job_name,
                     'duration_ms': duration_ms,
                     'status': 'failed',
@@ -154,6 +164,11 @@ class MongoDBListener:
                         print(f"[MongoDB Listener] WARNING: PII redaction failed: {e}")
                         # Continue with unredacted data (better to store data than lose it)
 
+                # BUG FIX #1: Update suite statistics before storing
+                if self.current_suite_stats:
+                    self.current_suite_stats['fail_count'] += 1
+                    self.current_suite_stats['total_count'] += 1
+
                 # Store in MongoDB
                 insert_result = self.collection.insert_one(failure_doc)
                 print(f"[MongoDB Listener] ✓ Failure stored: {result.name} (ID: {insert_result.inserted_id})")
@@ -162,11 +177,41 @@ class MongoDBListener:
                 print(f"[MongoDB Listener] ERROR storing failure: {str(e)}")
                 print(traceback.format_exc())
         else:
+            # BUG FIX #1: Track passed tests in suite statistics
+            if self.current_suite_stats:
+                self.current_suite_stats['pass_count'] += 1
+                self.current_suite_stats['total_count'] += 1
             print(f"[MongoDB Listener] ✓ Test passed: {result.name}")
 
     def end_suite(self, data, result):
-        """Called when a test suite ends"""
-        print(f"[MongoDB Listener] Suite ended: {result.name} - Status: {result.status}")
+        """Called when a test suite ends - BUG FIX #1: Update all failures with final suite stats"""
+        if self.current_suite_stats and self.client:
+            try:
+                # Update all failures from this suite with final statistics
+                update_result = self.collection.update_many(
+                    {
+                        'test_suite': self.current_suite,
+                        'build_number': self.build_number,
+                        'job_name': self.job_name
+                    },
+                    {
+                        '$set': {
+                            'suite_name': self.current_suite_stats['suite_name'],
+                            'pass_count': self.current_suite_stats['pass_count'],
+                            'fail_count': self.current_suite_stats['fail_count'],
+                            'total_count': self.current_suite_stats['total_count']
+                        }
+                    }
+                )
+                print(f"[MongoDB Listener] ✓ Suite ended: {result.name} - "
+                      f"Pass: {self.current_suite_stats['pass_count']}, "
+                      f"Fail: {self.current_suite_stats['fail_count']}, "
+                      f"Total: {self.current_suite_stats['total_count']} "
+                      f"({update_result.modified_count} records updated)")
+            except Exception as e:
+                print(f"[MongoDB Listener] WARNING: Failed to update suite statistics: {e}")
+        else:
+            print(f"[MongoDB Listener] Suite ended: {result.name} - Status: {result.status}")
 
     def close(self):
         """Called when all tests are completed"""

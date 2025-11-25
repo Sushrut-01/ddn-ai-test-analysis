@@ -12,7 +12,13 @@ const { MongoClient } = require('mongodb');
 
 class MongoDBReporter {
     constructor() {
-        this.mongodbUri = process.env.MONGODB_URI || 'mongodb://localhost:27017/ddn_tests';
+        // Require an explicit MongoDB connection string via environment variable.
+        // The project uses MongoDB Atlas in production. Example:
+        // mongodb+srv://<user>:<pass>@cluster0.xxxxx.mongodb.net/ddn_tests?retryWrites=true&w=majority
+        this.mongodbUri = process.env.MONGODB_URI;
+        if (!this.mongodbUri) {
+            throw new Error('MONGODB_URI is required. Set it to your MongoDB Atlas connection string.');
+        }
         this.database = process.env.MONGODB_DATABASE || 'ddn_tests';
         this.collection = process.env.MONGODB_COLLECTION_FAILURES || 'test_failures';
         this.client = null;
@@ -48,8 +54,17 @@ class MongoDBReporter {
                 error_message: failureData.error_message,
                 stack_trace: failureData.stack_trace,
 
+                // Suite metadata (Bug #1 fix)
+                suite_name: failureData.suite_name || failureData.test_category || 'Unknown Suite',
+                pass_count: failureData.pass_count || 0,
+                fail_count: failureData.fail_count || 1,
+                total_count: failureData.total_count || 1,
+
                 // Build Information (from Jenkins environment variables)
-                build_id: process.env.BUILD_ID || process.env.BUILD_NUMBER || 'local',
+                // Bug #3 fix: Standardized build_id format: JobName-BuildNumber
+                build_id: process.env.JOB_NAME && process.env.BUILD_NUMBER 
+                    ? `${process.env.JOB_NAME}-${process.env.BUILD_NUMBER}`
+                    : (process.env.BUILD_ID || process.env.BUILD_NUMBER || 'local'),
                 job_name: process.env.JOB_NAME || 'manual-run',
                 build_url: process.env.BUILD_URL || 'local',
 

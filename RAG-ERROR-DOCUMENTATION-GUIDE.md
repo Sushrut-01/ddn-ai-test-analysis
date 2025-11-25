@@ -1915,8 +1915,10 @@ POSTGRES_USER=postgres
 POSTGRES_PASSWORD=postgres123
 
 # MongoDB
-MONGO_URI=mongodb://localhost:27017
-MONGO_DB=ddn_qa_automation
+# Use `MONGODB_URI` (MongoDB Atlas recommended). Example:
+# mongodb+srv://<user>:<pass>@cluster0.xxxxx.mongodb.net/ddn_qa_automation?retryWrites=true&w=majority
+MONGODB_URI=mongodb+srv://<user>:<pass>@cluster0.xxxxx.mongodb.net/ddn_qa_automation?retryWrites=true&w=majority
+MONGODB_DB=ddn_qa_automation
 
 # Redis (for caching)
 REDIS_HOST=localhost
