@@ -187,9 +187,9 @@ def get_system_status():
             'error': str(e)[:200]
         }
 
-    # 4. AI Service Status
+    # 4. AI Service Status (langgraph uses /health not /api/health)
     try:
-        response = requests.get(f'{AI_SERVICE_URL}/api/health', timeout=5)
+        response = requests.get(f'{AI_SERVICE_URL}/health', timeout=5)
         if response.status_code == 200:
             ai_health = response.json()
             status['components']['ai_service'] = {

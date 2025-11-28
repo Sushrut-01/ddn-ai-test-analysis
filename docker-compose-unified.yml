@@ -283,6 +283,9 @@ services:
       - MANUAL_TRIGGER_API=http://manual-trigger-api:5004
       - GITHUB_TOKEN=${GITHUB_TOKEN}
       - GITHUB_REPO=${GITHUB_REPO}
+      - PINECONE_API_KEY=${PINECONE_API_KEY}
+      - PINECONE_INDEX_NAME=${PINECONE_INDEX_NAME}
+      - PINECONE_HOST=${PINECONE_HOST}
     networks:
       - ddn-network
     depends_on:
