@@ -1,6 +1,7 @@
 """
 Service Manager API - Control all services from dashboard
 Provides endpoints to start, stop, and check status of all services
+Docker-aware: Uses Docker service names when running in container
 """
 
 from flask import Flask, jsonify, request
@@ -13,9 +14,36 @@ import time
 import json
 import sys
 import platform
+import socket
 
 app = Flask(__name__)
 CORS(app)
+
+# Docker environment detection
+IS_DOCKER = os.path.exists('/.dockerenv') or os.environ.get('DOCKER_CONTAINER', 'false').lower() == 'true'
+
+# Docker service name mapping (service_id -> (docker_hostname, internal_port))
+# These are the Docker Compose service names that can be resolved within the ddn-network
+DOCKER_SERVICE_MAP = {
+    "postgresql": ("postgres", 5432),
+    "ai_analysis": ("langgraph-service", 5000),
+    "dashboard_api": ("dashboard-api", 5006),
+    "dashboard_ui": ("dashboard-ui", 5173),
+    "n8n": ("n8n", 5678),
+    "jenkins": ("jenkins", 8081),
+    "reranking": ("reranking-service", 5011),
+    "knowledge_api": ("knowledge-management-api", 5015),
+    "langfuse": ("langfuse-server", 3000),
+    "redis": ("redis", 6379),
+    "flower": ("flower", 5555),
+    "manual_trigger": ("manual-trigger-api", 5004),
+    "jira": ("jira-service", 5009),
+    "slack": ("slack-service", 5012),
+    "self_healing": ("self-healing-service", 5008),
+    "aging": ("aging-service", 5010),
+}
+
+print(f"[Service Manager] Running in {'Docker' if IS_DOCKER else 'Local'} mode")
 
 # Service configurations
 SERVICES = {
@@ -29,15 +57,15 @@ SERVICES = {
     "ai_analysis": {
         "name": "AI Analysis Service",
         "port": 5000,
-        "script": "ai_analysis_service.py",  # Python script to run
-        "stop_cmd": None,  # Will use port to find and kill
+        "script": "ai_analysis_service.py",
+        "stop_cmd": None,
         "type": "python",
         "process": None
     },
     "dashboard_api": {
         "name": "Dashboard API",
         "port": 5006,
-        "script": "start_dashboard_api_port5006.py",  # Python script to run
+        "script": "start_dashboard_api_port5006.py",
         "stop_cmd": None,
         "type": "python",
         "process": None
@@ -45,7 +73,7 @@ SERVICES = {
     "dashboard_ui": {
         "name": "Dashboard UI",
         "port": 5173,
-        "start_cmd": "cd dashboard-ui && npm run dev",  # Relative to implementation/ directory
+        "start_cmd": "cd dashboard-ui && npm run dev",
         "stop_cmd": None,
         "type": "node",
         "process": None
@@ -61,44 +89,56 @@ SERVICES = {
     "jenkins": {
         "name": "Jenkins CI/CD",
         "port": 8081,
-        "start_cmd": "cd .. && java -jar jenkins.war --httpPort=8081 --enable-future-java",  # Go up one level to find jenkins.war
+        "start_cmd": "cd .. && java -jar jenkins.war --httpPort=8081 --enable-future-java",
         "stop_cmd": None,
         "type": "java",
         "process": None
     },
     "reranking": {
         "name": "Re-Ranking Service",
-        "port": 5009,
-        "script": "reranking_service.py",  # Python script to run
-        "stop_cmd": None,  # Will use port to find and kill
+        "port": 5011,
+        "script": "reranking_service.py",
+        "stop_cmd": None,
         "type": "python",
         "process": None,
         "description": "Phase 2: CrossEncoder re-ranking for improved RAG accuracy (+15-20%)"
     },
     "knowledge_api": {
         "name": "Knowledge Management API",
-        "port": 5008,
-        "script": "knowledge_management_api.py",  # Python script to run
-        "stop_cmd": None,  # Will use port to find and kill
+        "port": 5015,
+        "script": "knowledge_management_api.py",
+        "stop_cmd": None,
         "type": "python",
         "process": None,
         "description": "Phase 0-HITL-KM: Human-in-the-loop knowledge management system"
     }
 }
 
-def check_port(port):
+def check_port(port, host=None):
     """Check if a port is in use (using socket test - no admin rights needed)"""
-    import socket
     try:
-        # Try to connect to the port
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        sock.settimeout(1)  # 1 second timeout
-        result = sock.connect_ex(('127.0.0.1', port))
+        sock.settimeout(2)
+        target_host = host or '127.0.0.1'
+        result = sock.connect_ex((target_host, port))
         sock.close()
-        # If connect_ex returns 0, the port is listening
         return result == 0
     except Exception as e:
-        print(f"Port check error for {port}: {e}")
+        print(f"Port check error for {host or '127.0.0.1'}:{port}: {e}")
+        return False
+
+def check_service_running(service_id):
+    """Check if a service is running, using Docker service names when in Docker"""
+    if IS_DOCKER and service_id in DOCKER_SERVICE_MAP:
+        docker_host, docker_port = DOCKER_SERVICE_MAP[service_id]
+        if docker_port is None:
+            return False
+        is_running = check_port(docker_port, docker_host)
+        print(f"[Docker] Checking {service_id} -> {docker_host}:{docker_port} = {is_running}")
+        return is_running
+    else:
+        if service_id in SERVICES:
+            return check_port(SERVICES[service_id]["port"])
         return False
 
 def kill_process_on_port(port):
@@ -106,10 +146,7 @@ def kill_process_on_port(port):
     killed = False
 
     try:
-        # Use netstat to find PID (works without admin rights on Windows)
-        import platform
         if platform.system() == 'Windows':
-            # Use netstat to find PID on Windows
             result = subprocess.run(
                 f'netstat -ano | findstr ":{port} " | findstr "LISTENING"',
                 shell=True,
@@ -118,8 +155,6 @@ def kill_process_on_port(port):
             )
 
             if result.returncode == 0 and result.stdout:
-                # Parse netstat output to get PID
-                # Example line: "  TCP    0.0.0.0:5000           0.0.0.0:0              LISTENING       12345"
                 for line in result.stdout.strip().split('\n'):
                     parts = line.split()
                     if len(parts) >= 5:
@@ -130,7 +165,6 @@ def kill_process_on_port(port):
                             proc = psutil.Process(pid)
                             print(f"Killing process {proc.name()} (PID: {pid})")
 
-                            # Also kill parent if it's a Python/Node/Java process (Flask watchdog)
                             try:
                                 parent = proc.parent()
                                 if parent and parent.name() in ['python.exe', 'python', 'node.exe', 'node', 'java.exe', 'java']:
@@ -142,7 +176,6 @@ def kill_process_on_port(port):
                             except:
                                 pass
 
-                            # Kill the main process
                             proc.terminate()
                             time.sleep(0.5)
                             if proc.is_running():
@@ -154,7 +187,6 @@ def kill_process_on_port(port):
                         except Exception as e:
                             print(f"Error killing process {pid}: {e}")
         else:
-            # Unix/Linux: use lsof
             result = subprocess.run(
                 f'lsof -ti:{port}',
                 shell=True,
@@ -188,7 +220,7 @@ def get_service_status():
         status[service_id] = {
             "name": service["name"],
             "port": service["port"],
-            "running": check_port(service["port"])
+            "running": check_service_running(service_id)
         }
     return status
 
@@ -210,10 +242,12 @@ def start_service(service_id):
 
     service = SERVICES[service_id]
 
-    # Check if already running
-    if check_port(service["port"]):
+    if check_service_running(service_id):
         print(f"INFO: {service['name']} is already running on port {service['port']}")
         return jsonify({"message": f"{service['name']} is already running"}), 200
+
+    if IS_DOCKER:
+        return jsonify({"error": "Cannot start services from within Docker. Use docker-compose to manage services."}), 400
 
     try:
         print(f"INFO: Starting {service['name']}...")
@@ -223,26 +257,20 @@ def start_service(service_id):
             result = subprocess.run(service["start_cmd"], shell=True, check=True, capture_output=True, text=True)
             print(f"OUTPUT: {result.stdout}")
         elif service["type"] == "python":
-            # Start Python service using sys.executable for proper process creation
             script_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), service["script"])
             print(f"Python: {sys.executable}")
             print(f"Script: {script_path}")
 
-            # Create background process on Windows
             if platform.system() == 'Windows':
-                # Use CREATE_NO_WINDOW to run without console window
                 CREATE_NO_WINDOW = 0x08000000
                 CREATE_NEW_PROCESS_GROUP = 0x00000200
 
-                # Don't use DEVNULL - let process inherit parent's environment
-                # This ensures .env file is loaded correctly
                 process = subprocess.Popen(
                     [sys.executable, script_path],
                     cwd=os.path.dirname(script_path),
                     creationflags=CREATE_NO_WINDOW | CREATE_NEW_PROCESS_GROUP
                 )
             else:
-                # Unix/Linux
                 process = subprocess.Popen(
                     [sys.executable, script_path],
                     cwd=os.path.dirname(script_path),
@@ -252,7 +280,6 @@ def start_service(service_id):
             service["process"] = process
             print(f"Process started with PID: {process.pid}")
         else:
-            # Other service types (Node, Java) - use shell command
             print(f"Command: {service.get('start_cmd', 'No start command')}")
             result = subprocess.run(
                 service["start_cmd"],
@@ -262,13 +289,10 @@ def start_service(service_id):
             )
             print(f"Start command executed")
 
-        # Wait for service to start (10 seconds to allow for initialization)
-        # AI services need time to initialize Gemini, MongoDB, Pinecone, etc.
         print(f"Waiting 10 seconds for {service['name']} to initialize...")
         time.sleep(10)
 
-        # Check if started
-        if check_port(service["port"]):
+        if check_service_running(service_id):
             print(f"SUCCESS: {service['name']} started on port {service['port']}")
             return jsonify({"message": f"{service['name']} started successfully"}), 200
         else:
@@ -296,10 +320,12 @@ def stop_service(service_id):
     print(f"Service: {service['name']}")
     print(f"Port: {service['port']}")
 
-    # Check if running
-    if not check_port(service["port"]):
+    if not check_service_running(service_id):
         print(f"INFO: {service['name']} is not running")
         return jsonify({"message": f"{service['name']} is not running"}), 200
+
+    if IS_DOCKER:
+        return jsonify({"error": "Cannot stop services from within Docker. Use docker-compose to manage services."}), 400
 
     try:
         print(f"INFO: Stopping {service['name']}...")
@@ -308,7 +334,6 @@ def stop_service(service_id):
             print(f"Using Windows service stop command: {service['stop_cmd']}")
             subprocess.run(service["stop_cmd"], shell=True, check=True)
         else:
-            # Kill process on port
             print(f"Killing process on port {service['port']}...")
             killed = kill_process_on_port(service["port"])
             if killed:
@@ -316,12 +341,10 @@ def stop_service(service_id):
             else:
                 print(f"WARNING: No processes found to kill on port {service['port']}")
 
-        # Wait a bit
         print("Waiting 2 seconds for service to stop...")
         time.sleep(2)
 
-        # Check if stopped
-        if not check_port(service["port"]):
+        if not check_service_running(service_id):
             print(f"SUCCESS: {service['name']} stopped successfully")
             return jsonify({"message": f"{service['name']} stopped successfully"}), 200
         else:
@@ -337,17 +360,16 @@ def stop_service(service_id):
 @app.route('/api/services/start-all', methods=['POST'])
 def start_all():
     """Start all services in correct order"""
-    results = []
+    if IS_DOCKER:
+        return jsonify({"error": "Cannot start services from within Docker. Use docker-compose to manage services."}), 400
 
-    # Start in order: Database first, reranking (for AI), then backend, then frontend
-    # Reranking MUST start before ai_analysis so AI service can detect it on startup
-    # knowledge_api is independent and can start anytime
+    results = []
     order = ["postgresql", "reranking", "knowledge_api", "ai_analysis", "dashboard_api", "n8n", "jenkins", "dashboard_ui"]
 
     for service_id in order:
         if service_id in SERVICES:
             try:
-                if not check_port(SERVICES[service_id]["port"]):
+                if not check_service_running(service_id):
                     response = start_service(service_id)
                     results.append({
                         "service": SERVICES[service_id]["name"],
@@ -358,7 +380,7 @@ def start_all():
                         "service": SERVICES[service_id]["name"],
                         "status": "already running"
                     })
-                time.sleep(2)  # Wait between services
+                time.sleep(2)
             except Exception as e:
                 results.append({
                     "service": SERVICES[service_id]["name"],
@@ -370,16 +392,16 @@ def start_all():
 @app.route('/api/services/stop-all', methods=['POST'])
 def stop_all():
     """Stop all services in reverse order (excludes Dashboard UI to keep control panel accessible)"""
-    results = []
+    if IS_DOCKER:
+        return jsonify({"error": "Cannot stop services from within Docker. Use docker-compose to manage services."}), 400
 
-    # Stop in reverse order: Backend services, then database
-    # NOTE: Dashboard UI is EXCLUDED to keep the control panel accessible
+    results = []
     order = ["jenkins", "n8n", "dashboard_api", "ai_analysis", "knowledge_api", "reranking", "postgresql"]
 
     for service_id in order:
         if service_id in SERVICES:
             try:
-                if check_port(SERVICES[service_id]["port"]):
+                if check_service_running(service_id):
                     response = stop_service(service_id)
                     results.append({
                         "service": SERVICES[service_id]["name"],
@@ -400,13 +422,12 @@ def stop_all():
 
 @app.route('/api/services/restart-all', methods=['POST'])
 def restart_all():
-    """Restart all services (stop all, then start all)
-    NOTE: Dashboard UI remains running to keep control panel accessible"""
-    # First stop all (excludes dashboard_ui)
+    """Restart all services (stop all, then start all)"""
+    if IS_DOCKER:
+        return jsonify({"error": "Cannot restart services from within Docker. Use docker-compose to manage services."}), 400
+
     stop_results = stop_all()
     time.sleep(3)
-
-    # Then start all
     start_results = start_all()
 
     return jsonify({
@@ -417,11 +438,24 @@ def restart_all():
 @app.route('/health', methods=['GET'])
 def health():
     """Health check endpoint"""
-    return jsonify({"status": "healthy", "service": "Service Manager API"})
+    return jsonify({
+        "status": "healthy",
+        "service": "Service Manager API",
+        "mode": "docker" if IS_DOCKER else "local"
+    })
+
+@app.route('/api/services/mode', methods=['GET'])
+def get_mode():
+    """Get the current running mode (docker or local)"""
+    return jsonify({
+        "mode": "docker" if IS_DOCKER else "local",
+        "docker_services_available": list(DOCKER_SERVICE_MAP.keys()) if IS_DOCKER else []
+    })
 
 if __name__ == '__main__':
     print("="*60)
     print("Service Manager API")
+    print(f"Mode: {'Docker' if IS_DOCKER else 'Local'}")
     print("="*60)
     print("Control all services from: http://localhost:5007")
     print("="*60)
