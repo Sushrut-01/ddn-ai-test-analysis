@@ -95,7 +95,7 @@ services:
         condition: service_healthy
     restart: unless-stopped
     healthcheck:
-      test: ["CMD-SHELL", "wget -q --spider http://localhost:3000/api/public/health || exit 1"]
+      test: ["CMD-SHELL", "wget -q --spider http://0.0.0.0:3000/api/public/health || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -271,7 +271,7 @@ services:
       dockerfile: Dockerfile
     container_name: ddn-dashboard-api
     ports:
-      - "5006:5006"  # CHANGED: Was 5005
+      - "5006:5006"  # Dashboard API port
     environment:
       - POSTGRES_HOST=postgres
       - POSTGRES_PORT=5432

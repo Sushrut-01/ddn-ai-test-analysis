@@ -1436,8 +1436,11 @@ if __name__ == '__main__':
     except Exception as e:
         logger.warning(f"⚠ Pinecone connection issue: {str(e)[:100]}")
 
+    # Use port 5006 to match frontend API_BASE_URL expectation
+    port = int(os.environ.get('DASHBOARD_API_PORT', 5006))
+
     logger.info("=" * 60)
-    logger.info("Dashboard API running on http://0.0.0.0:5005")
+    logger.info(f"Dashboard API running on http://0.0.0.0:{port}")
     logger.info("=" * 60)
     logger.info("\nAvailable Endpoints:")
     logger.info("  GET /api/system/status    - System health status")
@@ -1449,4 +1452,4 @@ if __name__ == '__main__':
     logger.info("  GET /api/health           - Health check")
     logger.info("=" * 60)
 
-    app.run(host='0.0.0.0', port=5005, debug=True)
+    app.run(host='0.0.0.0', port=port, debug=True)
