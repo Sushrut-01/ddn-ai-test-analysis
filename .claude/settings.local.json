@@ -1,11 +1,33 @@
 {
   "permissions": {
     "allow": [
-      "Bash(del:*)",
-      "Bash(python:*)",
-      "Bash(timeout /t 2)",
-      "Bash(npm install:*)",
-      "Bash(mkdir:*)"
+      "Bash(\"/c/Program Files/Rancher Desktop/resources/resources/win32/bin/docker.exe\" ps --format \"table {{.Names}}\\t{{.Status}}\\t{{.Ports}}\")",
+      "Bash(\"/c/Program Files/Rancher Desktop/resources/resources/win32/bin/docker.exe\" exec ddn-postgres bash -c \"echo ''host all all 0.0.0.0/0 trust'' >> /var/lib/postgresql/data/pg_hba.conf && pg_ctl reload -D /var/lib/postgresql/data\")",
+      "Bash(\"/c/Program Files/Rancher Desktop/resources/resources/win32/bin/docker.exe\" exec -u postgres ddn-postgres bash -c \"echo ''host all all 0.0.0.0/0 trust'' >> /var/lib/postgresql/data/pg_hba.conf && pg_ctl reload -D /var/lib/postgresql/data\")",
+      "Bash(\"/c/Program Files/Rancher Desktop/resources/resources/win32/bin/docker.exe\" exec:*)",
+      "Bash(\"/c/Program Files/Rancher Desktop/resources/resources/win32/bin/docker.exe\" restart langfuse-server ddn-dashboard-api ddn-n8n)",
+      "Bash(\"/c/Program Files/Rancher Desktop/resources/resources/win32/bin/docker.exe\" logs ddn-n8n --tail 15)",
+      "Bash(dir:*)",
+      "Bash(\"/c/Program Files/Rancher Desktop/resources/resources/win32/bin/docker.exe\" exec ddn-postgres psql -U postgres -c \"\\l\")",
+      "Bash(\"/c/Program Files/Rancher Desktop/resources/resources/win32/bin/docker.exe\" volume ls)",
+      "Bash(\"/c/Program Files/Rancher Desktop/resources/resources/win32/bin/docker.exe\" compose -f \"C:/DDN-AI-Project-Documentation/docker-compose-unified.yml\" up -d --force-recreate n8n)",
+      "Bash(\"/c/Program Files/Rancher Desktop/resources/resources/win32/bin/docker.exe\" logs ddn-n8n --tail 20)",
+      "Bash(\"/c/Program Files/Rancher Desktop/resources/resources/win32/bin/docker.exe\" logs ddn-n8n --tail 10)",
+      "Bash(\"/c/Program Files/Rancher Desktop/resources/resources/win32/bin/docker.exe\" logs ddn-n8n --tail 5)",
+      "Bash(\"/c/Program Files/Rancher Desktop/resources/resources/win32/bin/docker.exe\" stop ddn-jenkins)",
+      "Bash(\"/c/Program Files/Rancher Desktop/resources/resources/win32/bin/docker.exe\" ps -a --format \"{{.Names}}\\t{{.Status}}\")",
+      "Bash(wsl:*)",
+      "Bash(\"/c/Program Files/Rancher Desktop/resources/resources/win32/bin/docker.exe\" info)",
+      "Bash(\"/c/Program Files/Rancher Desktop/resources/resources/win32/bin/docker.exe\" context use default)",
+      "Bash(\"/c/Program Files/Rancher Desktop/resources/resources/win32/bin/docker.exe\" ps -a --format \"table {{.Names}}\\t{{.Status}}\\t{{.Ports}}\")",
+      "Bash(\"/c/Program Files/Rancher Desktop/resources/resources/win32/bin/docker.exe\" compose -f \"C:/DDN-AI-Project-Documentation/docker-compose-unified.yml\" up -d langfuse-server)",
+      "Bash(\"/c/Program Files/Rancher Desktop/resources/resources/win32/bin/docker.exe\" ps --filter \"name=langfuse-server\" --format \"table {{.Names}}\\t{{.Status}}\")",
+      "Bash(\"/c/Program Files/Rancher Desktop/resources/resources/win32/bin/docker.exe\" exec langfuse-server which wget)",
+      "Bash(\"/c/Program Files/Rancher Desktop/resources/resources/win32/bin/docker.exe\" logs langfuse-server --tail 10)",
+      "Bash(\"/c/Program Files/Rancher Desktop/resources/resources/win32/bin/docker.exe\" exec langfuse-server wget -q --spider http://localhost:3000/api/public/health)",
+      "Bash(\"/c/Program Files/Rancher Desktop/resources/resources/win32/bin/docker.exe\" exec langfuse-server wget -q --spider http://127.0.0.1:3000/api/public/health)",
+      "Bash(\"/c/Program Files/Rancher Desktop/resources/resources/win32/bin/docker.exe\" exec langfuse-server netstat -tlnp)",
+      "Bash(\"/c/Program Files/Rancher Desktop/resources/resources/win32/bin/docker.exe\" exec langfuse-server wget -q --spider http://172.18.0.9:3000/api/public/health)"
     ],
     "deny": [],
     "ask": []

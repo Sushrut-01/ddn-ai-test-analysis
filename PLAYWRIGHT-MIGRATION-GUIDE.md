@@ -135,3 +135,7 @@ After migration:
 ---
 
 **Note:** This cleanup was performed to stop failing CI builds caused by example Playwright tests running against external sites. Real Dashboard tests are preserved and should be moved to the dedicated testing repo.
+
+---
+
+**Note:** This is a test repo. Please do NOT use this repo for production or any other purpose.

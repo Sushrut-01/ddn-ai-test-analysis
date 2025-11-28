@@ -71,6 +71,7 @@ pydantic-settings==2.6.1
 # Utilities
 python-dateutil==2.9.0
 pytz==2024.2
+psutil==5.9.8
 
 # Testing (Optional)
 pytest==8.3.4

@@ -1,80 +1,88 @@
-# GitHub Copilot - Playwright Agents Instructions
+################################################################################
+# GitHub Copilot Project Instructions                                          #
+################################################################################
 
-Use these prompt prefixes in Copilot Chat to invoke specialized testing agents:
+Purpose:
+Provide the assistant (Copilot / AI agents) with clear, stable guidance for this
+repository (backend + infra + documentation) now that UI/E2E automation was
+split into the separate `ddn-playwright-automation` repo.
 
-## @workspace /playwright-test-generator
-Generate Playwright test scripts from user interactions.
+Scope (What belongs here):
+- Python services, infra configs (docker-compose, Rancher migration assets)
+- Jenkins integration assets (pipeline/job XML, build scripts)
+- Architecture + operations documentation (all *.md, *.html exports)
+- System monitoring & maintenance scripts (PowerShell/Bash/BAT) NOT test code
+- Migration guides, recovery plans
 
-**Instructions:**
-- Create E2E tests for the DDN Dashboard (http://localhost:5173)
-- Generate Playwright test code with flexible selectors (text-based, role-based)
-- Include assertions and proper waits
-- Save to tests/ui/generated/
-- Dashboard API: http://localhost:5006
-- Main button text: 'Trigger Analysis'
+Out of Scope (moved or to remain external):
+- Playwright test specs, Playwright config, UI test workflows
+- Performance/load test harnesses (to be added later in dedicated repos)
 
-**Usage:** `@workspace /playwright-test-generator Generate a test for the Trigger Analysis button`
+Repository Separation:
+- `ddn-ai-test-analysis` (this repo): backend/services/docs/tooling
+- `ddn-playwright-automation`: all UI/E2E Playwright tests + its own workflows
+  Nightly cron (02:00 UTC) and PR/push triggers must live only in that repo.
 
----
+CI Policy (This Repo):
+- No Playwright workflows here. Avoid noisy test failure emails.
+- Workflows allowed: build, lint, security scans (to add later), doc validation.
+- Keep concurrency groups per workflow type to prevent duplicate runs.
 
-## @workspace /playwright-test-healer
-Repair failing Playwright tests by fixing selector issues.
+Coding & Documentation Standards:
+- Python: prefer explicit function names, avoid one-letter vars, keep modules small.
+- Shell/PowerShell/BAT: always echo intent at start, fail fast (`set -e` for bash).
+- Scripts must declare: Purpose, Inputs (env vars/params), Side Effects, Exit Codes.
+- Architecture docs: consolidate into structured folders (pending task).
 
-**Instructions:**
-- Analyze test errors and failed selectors
-- Try alternatives: CSS fallback, XPath, text-based (/Trigger Analysis/i), role-based (getByRole)
-- Update test files with working selectors
-- Document all fixes
-- Max 3 retry attempts
+Pending High-Level Tasks (tracked separately in todo list):
+1. Consolidate architecture docs folder structure.
+2. Create `scripts/README.md` and `docs/scripts-index.md` with full script catalog.
+3. Classify untracked files (`docs/untracked-files-report.md`).
+4. Add Jenkins start/import helpers if still missing.
+5. Port normalization & service matrix finalization.
 
-**Usage:** `@workspace /playwright-test-healer Fix the failing test in manual_analyze.spec.ts`
+Playwright Testing (Reference Only):
+- All active specs + config live in `ddn-playwright-automation`.
+- Standard workflow template: checkout, setup-node, cache npm, install deps,
+  install browsers, run tests with `DASHBOARD_URL` & `DASHBOARD_API`, upload report.
+- Do NOT recreate that YAML here; keep file count minimal.
 
----
+Branch & Commit Guidance:
+- Feature branches: `feature/<short-purpose>` (e.g., `feature/jenkins-init`).
+- Commits: imperative mood, single focus area: `Add Jenkins start script`.
+- Large doc updates: prefix with `docs:`; infra changes: `infra:`; scripts: `scripts:`.
 
-## @workspace /playwright-test-planner
-Create test plans in Gherkin format.
+AI Assistant Interaction Rules:
+- When editing multiple files: batch related changes; keep patches minimal.
+- Never reintroduce Playwright assets here unless explicitly requested.
+- Before major doc restructures: summarize proposed new tree and wait for approval.
+- Prefer providing run commands for any new executable script.
 
-**Instructions:**
-- Analyze Dashboard UI structure
-- Create Gherkin plans (Given/When/Then)
-- Include: happy path, edge cases, error handling, accessibility
-- Save to tests/ui/plans/
-- Add priority and time estimates
+Sensitive Data & Secrets:
+- Do not commit secrets, API keys, tokens or credentials.
+- Use environment variables in workflows / local `.env` excluded by `.gitignore`.
 
-**Usage:** `@workspace /playwright-test-planner Create a test plan for manual analysis feature`
+Error Handling Expectations:
+- Service start scripts must exit non-zero on failure and avoid silent retries.
+- Recovery scripts should log actions with timestamps.
 
----
+Performance Considerations:
+- Avoid adding heavy dependencies to base image layers unless necessary.
+- Defer optimization tasks until functional correctness and documentation tasks done.
 
-## @workspace /qa-dashboard-tester
-Run specialized Dashboard E2E tests.
+Contact & Escalation:
+- Architecture uncertainties → update `ARCHITECTURE-REALITY-CHECK.md` pending section.
+- CI/test concerns → open issue in the Playwright repo, not here.
 
-**Instructions:**
-- Test Dashboard features: Manual Analysis button, Failure list, Service status, Analytics
-- Verify API health: http://localhost:5006/api/health
-- Check UI responsiveness and error handling
-- Use Playwright headed mode
-- Report issues with screenshots
+Revision History:
+- 2025-11-26: Restored project instructions after accidental overwrite with Playwright workflow YAML.
 
-**Usage:** `@workspace /qa-dashboard-tester Test the Trigger Analysis workflow end-to-end`
+Future Refinement Note:
+After architecture diagrams (C4 levels, data flows) and the finalized service/port matrix are stable, schedule an instructions refresh. Goals for that pass:
+- Integrate improved cross-repo testing guidance (backend vs Playwright automation coordination)
+- Clarify parallel development workflows (feature branches + nightly UI tests + targeted backend checks)
+- Add explicit AI assistant usage patterns for rapid test authoring and infra troubleshooting
+- Include a concise decision tree: when to add tests, when to refactor, when to escalate
+- Update CI examples (security scan workflow once added) without reintroducing UI test YAML here.
 
----
-
-## Quick Commands for Copilot Chat
-
-Copy and paste these into Copilot Chat:
-
-```
-@workspace I need to generate a Playwright test for the Dashboard. Act as a test generator: analyze the UI at http://localhost:5173, create test code with flexible selectors, include assertions and waits, save to tests/ui/generated/. The main button is 'Trigger Analysis'.
-```
-
-```
-@workspace I need to fix a failing Playwright test. Act as a test healer: analyze the error, try CSS/XPath/text/role-based selector alternatives, update the test file, document the fix. Max 3 attempts.
-```
-
-```
-@workspace I need a test plan. Act as a test planner: create a Gherkin format plan with happy path, edge cases, error handling, and accessibility scenarios. Save to tests/ui/plans/.
-```
-
-```
-@workspace I need to test the Dashboard. Act as a QA tester: test Manual Analysis (button: 'Trigger Analysis'), Failure list, Service status, Analytics. Verify API at http://localhost:5006/api/health. Use Playwright headed mode.
-```
+End of Instructions.
