@@ -180,6 +180,14 @@ def get_system_status():
             'dimension': failures_stats.dimension,
             'last_check': datetime.utcnow().isoformat()
         }
+
+        # Combined pinecone status for UI compatibility
+        status['components']['pinecone'] = {
+            'status': 'healthy',
+            'connected': True,
+            'total_vectors': knowledge_stats.total_vector_count + failures_stats.total_vector_count,
+            'last_check': datetime.utcnow().isoformat()
+        }
     except Exception as e:
         status['components']['pinecone'] = {
             'status': 'error',

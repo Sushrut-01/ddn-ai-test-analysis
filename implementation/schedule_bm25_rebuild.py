@@ -18,9 +18,14 @@ import subprocess
 import logging
 from datetime import datetime
 import os
+import requests
 from dotenv import load_dotenv
 
 load_dotenv()
+
+# Slack notification configuration
+SLACK_SERVICE_URL = os.getenv('SLACK_SERVICE_URL', 'http://localhost:5012')
+SLACK_ALERTS_ENABLED = os.getenv('SLACK_ALERTS_ENABLED', 'true').lower() == 'true'
 
 # Configure logging
 logging.basicConfig(
@@ -35,6 +40,42 @@ logger = logging.getLogger(__name__)
 
 SCRIPT_DIR = os.path.dirname(__file__)
 BUILD_SCRIPT = os.path.join(SCRIPT_DIR, 'build_bm25_index.py')
+
+
+def send_slack_alert(error_message: str, error_type: str = "BM25 Rebuild Failed"):
+    """Send alert to Slack when BM25 rebuild fails"""
+    if not SLACK_ALERTS_ENABLED:
+        logger.info("Slack alerts disabled, skipping notification")
+        return
+
+    try:
+        payload = {
+            'build_id': f'bm25-rebuild-{datetime.now().strftime("%Y%m%d-%H%M%S")}',
+            'job_name': 'BM25 Index Rebuild',
+            'error_category': 'INFRA_ERROR',
+            'root_cause': error_message,
+            'fix_recommendation': 'Check PostgreSQL connection and disk space. Review build_bm25_index.py logs for details.',
+            'confidence_score': 1.0,
+            'consecutive_failures': 1,
+            'build_url': ''
+        }
+
+        response = requests.post(
+            f'{SLACK_SERVICE_URL}/api/slack/send-notification',
+            json=payload,
+            timeout=10
+        )
+
+        if response.status_code == 200:
+            logger.info(f"Slack alert sent successfully: {error_type}")
+        else:
+            logger.warning(f"Failed to send Slack alert: {response.status_code} - {response.text}")
+
+    except requests.exceptions.ConnectionError:
+        logger.warning("Could not connect to Slack service - notification skipped")
+    except Exception as e:
+        logger.warning(f"Failed to send Slack notification: {e}")
+
 
 def rebuild_bm25_index():
     """Rebuild BM25 index"""
@@ -58,12 +99,23 @@ def rebuild_bm25_index():
         else:
             logger.error("FAILED: BM25 index rebuild failed")
             logger.error(result.stderr)
-            # TODO: Send notification (email/Slack) on failure
+            send_slack_alert(
+                error_message=f"BM25 index rebuild failed.\n\nError output:\n{result.stderr[:500]}",
+                error_type="BM25 Rebuild Failed"
+            )
 
     except subprocess.TimeoutExpired:
         logger.error("FAILED: BM25 rebuild timed out after 10 minutes")
+        send_slack_alert(
+            error_message="BM25 index rebuild timed out after 10 minutes. The process may be stuck or the database may be under heavy load.",
+            error_type="BM25 Rebuild Timeout"
+        )
     except Exception as e:
         logger.error(f"FAILED: Unexpected error: {e}")
+        send_slack_alert(
+            error_message=f"Unexpected error during BM25 rebuild: {str(e)}",
+            error_type="BM25 Rebuild Error"
+        )
 
     logger.info("=" * 80)
 

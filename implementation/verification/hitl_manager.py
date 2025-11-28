@@ -17,11 +17,19 @@ Date: 2025-11-02
 import logging
 import os
 import json
+import requests
 from typing import Dict, List, Any, Optional
 from datetime import datetime, timedelta
 from enum import Enum
 
 logger = logging.getLogger(__name__)
+
+# Notification service configuration
+SLACK_SERVICE_URL = os.getenv('SLACK_SERVICE_URL', 'http://localhost:5012')
+TEAMS_WEBHOOK_URL = os.getenv('TEAMS_WEBHOOK_URL', '')
+SLACK_NOTIFICATIONS_ENABLED = os.getenv('SLACK_NOTIFICATIONS_ENABLED', 'true').lower() == 'true'
+TEAMS_NOTIFICATIONS_ENABLED = os.getenv('TEAMS_NOTIFICATIONS_ENABLED', 'false').lower() == 'true'
+DASHBOARD_URL = os.getenv('DASHBOARD_URL', 'http://localhost:5173')
 
 # PostgreSQL connection
 try:
@@ -260,46 +268,114 @@ class HITLManager:
 
     def _send_notification(self, item: Dict):
         """
-        Send notification about new HITL item
+        Send notification about new HITL item via Slack and/or Teams
 
-        Currently a stub. In production, would integrate with:
-        - Microsoft Teams webhook
-        - Slack webhook
-        - Email (SMTP)
+        Integrates with:
+        - Slack Integration Service (via REST API)
+        - Microsoft Teams webhook (direct)
         """
         # Check if already notified
         if item.get('notification_sent'):
             return
 
+        notification_sent = False
         priority_emoji = {
             'high': '🔴',
             'medium': '🟡',
             'low': '🟢'
         }
 
-        message = (
-            f"{priority_emoji.get(item['priority'], '⚪')} **New HITL Review Request**\n"
-            f"Failure ID: {item['failure_id']}\n"
-            f"Category: {item['error_category']}\n"
-            f"Confidence: {item['confidence']:.2%}\n"
-            f"Priority: {item['priority'].upper()}\n"
-            f"Concerns: {', '.join(item['concerns']) if item['concerns'] else 'None'}\n"
-            f"SLA Deadline: {item['sla_deadline']}\n"
-            f"Review URL: /review/{item['failure_id']}"
-        )
+        # Send Slack notification via integration service
+        if SLACK_NOTIFICATIONS_ENABLED:
+            try:
+                slack_payload = {
+                    'build_id': item['failure_id'],
+                    'job_name': f"HITL Review Required - {item['error_category']}",
+                    'error_category': 'HITL_REVIEW',
+                    'root_cause': (
+                        f"A medium-confidence analysis requires human review.\n\n"
+                        f"Confidence: {item['confidence']:.2%}\n"
+                        f"Priority: {item['priority'].upper()}\n"
+                        f"Concerns: {', '.join(item['concerns']) if item['concerns'] else 'None'}\n"
+                        f"SLA Deadline: {item['sla_deadline']}"
+                    ),
+                    'fix_recommendation': (
+                        f"Please review the AI analysis and either approve or provide corrections.\n"
+                        f"Review URL: {DASHBOARD_URL}/review/{item['failure_id']}"
+                    ),
+                    'confidence_score': item['confidence'],
+                    'consecutive_failures': 1 if item['priority'] == 'low' else (3 if item['priority'] == 'medium' else 5),
+                    'build_url': f"{DASHBOARD_URL}/review/{item['failure_id']}"
+                }
 
-        # TODO Task 0-ARCH.16: Integrate with Teams/Slack
-        # Example Teams webhook:
-        # teams_webhook_url = os.getenv("TEAMS_WEBHOOK_URL")
-        # if teams_webhook_url:
-        #     requests.post(teams_webhook_url, json={'text': message})
+                response = requests.post(
+                    f'{SLACK_SERVICE_URL}/api/slack/send-notification',
+                    json=slack_payload,
+                    timeout=10
+                )
 
-        # Example Slack webhook:
-        # slack_webhook_url = os.getenv("SLACK_WEBHOOK_URL")
-        # if slack_webhook_url:
-        #     requests.post(slack_webhook_url, json={'text': message})
+                if response.status_code == 200:
+                    logger.info(f"[HITL] Slack notification sent for {item['failure_id']}")
+                    notification_sent = True
+                else:
+                    logger.warning(f"[HITL] Slack notification failed: {response.status_code}")
 
-        logger.info(f"[HITL] Notification (stub): {message.replace(chr(10), ' | ')}")
+            except requests.exceptions.ConnectionError:
+                logger.warning("[HITL] Could not connect to Slack service")
+            except Exception as e:
+                logger.warning(f"[HITL] Slack notification error: {e}")
+
+        # Send Teams notification via webhook
+        if TEAMS_NOTIFICATIONS_ENABLED and TEAMS_WEBHOOK_URL:
+            try:
+                teams_message = {
+                    "@type": "MessageCard",
+                    "@context": "http://schema.org/extensions",
+                    "themeColor": "FF0000" if item['priority'] == 'high' else ("FFA500" if item['priority'] == 'medium' else "00FF00"),
+                    "summary": f"HITL Review Required - {item['failure_id']}",
+                    "sections": [{
+                        "activityTitle": f"{priority_emoji.get(item['priority'], '⚪')} New HITL Review Request",
+                        "facts": [
+                            {"name": "Failure ID", "value": item['failure_id']},
+                            {"name": "Category", "value": item['error_category']},
+                            {"name": "Confidence", "value": f"{item['confidence']:.2%}"},
+                            {"name": "Priority", "value": item['priority'].upper()},
+                            {"name": "Concerns", "value": ', '.join(item['concerns']) if item['concerns'] else 'None'},
+                            {"name": "SLA Deadline", "value": item['sla_deadline']}
+                        ],
+                        "markdown": True
+                    }],
+                    "potentialAction": [{
+                        "@type": "OpenUri",
+                        "name": "Review Now",
+                        "targets": [{"os": "default", "uri": f"{DASHBOARD_URL}/review/{item['failure_id']}"}]
+                    }]
+                }
+
+                response = requests.post(TEAMS_WEBHOOK_URL, json=teams_message, timeout=10)
+
+                if response.status_code in [200, 202]:
+                    logger.info(f"[HITL] Teams notification sent for {item['failure_id']}")
+                    notification_sent = True
+                else:
+                    logger.warning(f"[HITL] Teams notification failed: {response.status_code}")
+
+            except requests.exceptions.ConnectionError:
+                logger.warning("[HITL] Could not connect to Teams webhook")
+            except Exception as e:
+                logger.warning(f"[HITL] Teams notification error: {e}")
+
+        if not notification_sent:
+            # Log message for debugging when no notifications are configured
+            message = (
+                f"{priority_emoji.get(item['priority'], '⚪')} **New HITL Review Request**\n"
+                f"Failure ID: {item['failure_id']}\n"
+                f"Category: {item['error_category']}\n"
+                f"Confidence: {item['confidence']:.2%}\n"
+                f"Priority: {item['priority'].upper()}\n"
+                f"SLA Deadline: {item['sla_deadline']}"
+            )
+            logger.info(f"[HITL] Notification (no service configured): {message.replace(chr(10), ' | ')}")
 
         # Mark as notified
         if self.postgres_conn:
