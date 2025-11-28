@@ -26,6 +26,7 @@ IS_DOCKER = os.path.exists('/.dockerenv') or os.environ.get('DOCKER_CONTAINER', 
 # These are the Docker Compose service names that can be resolved within the ddn-network
 DOCKER_SERVICE_MAP = {
     "postgresql": ("postgres", 5432),
+    "langfuse_db": ("langfuse-db", 5432),
     "ai_analysis": ("langgraph-service", 5000),
     "dashboard_api": ("dashboard-api", 5006),
     "dashboard_ui": ("dashboard-ui", 5173),
@@ -41,76 +42,108 @@ DOCKER_SERVICE_MAP = {
     "slack": ("slack-service", 5012),
     "self_healing": ("self-healing-service", 5008),
     "aging": ("aging-service", 5010),
+    "mcp_mongodb": ("mcp-mongodb", 5001),
+    "mcp_github": ("mcp-github", 5002),
 }
 
 print(f"[Service Manager] Running in {'Docker' if IS_DOCKER else 'Local'} mode")
 
-# Service configurations
+# Service configurations - ALL services in docker-compose
 SERVICES = {
     "postgresql": {
         "name": "PostgreSQL Database",
         "port": 5432,
-        "start_cmd": "net start postgresql-x64-18",
-        "stop_cmd": "net stop postgresql-x64-18",
-        "type": "windows_service"
+        "type": "docker"
+    },
+    "langfuse_db": {
+        "name": "Langfuse PostgreSQL",
+        "port": 5433,
+        "type": "docker"
     },
     "ai_analysis": {
-        "name": "AI Analysis Service",
+        "name": "AI Analysis Service (LangGraph)",
         "port": 5000,
-        "script": "ai_analysis_service.py",
-        "stop_cmd": None,
-        "type": "python",
-        "process": None
+        "type": "docker"
     },
     "dashboard_api": {
         "name": "Dashboard API",
         "port": 5006,
-        "script": "start_dashboard_api_port5006.py",
-        "stop_cmd": None,
-        "type": "python",
-        "process": None
+        "type": "docker"
     },
     "dashboard_ui": {
         "name": "Dashboard UI",
         "port": 5173,
-        "start_cmd": "cd dashboard-ui && npm run dev",
-        "stop_cmd": None,
-        "type": "node",
-        "process": None
+        "type": "docker"
     },
     "n8n": {
         "name": "n8n Workflows",
         "port": 5678,
-        "start_cmd": "n8n start",
-        "stop_cmd": None,
-        "type": "node",
-        "process": None
+        "type": "docker"
     },
     "jenkins": {
         "name": "Jenkins CI/CD",
         "port": 8081,
-        "start_cmd": "cd .. && java -jar jenkins.war --httpPort=8081 --enable-future-java",
-        "stop_cmd": None,
-        "type": "java",
-        "process": None
+        "type": "docker"
     },
     "reranking": {
         "name": "Re-Ranking Service",
         "port": 5011,
-        "script": "reranking_service.py",
-        "stop_cmd": None,
-        "type": "python",
-        "process": None,
-        "description": "Phase 2: CrossEncoder re-ranking for improved RAG accuracy (+15-20%)"
+        "type": "docker"
     },
     "knowledge_api": {
         "name": "Knowledge Management API",
         "port": 5015,
-        "script": "knowledge_management_api.py",
-        "stop_cmd": None,
-        "type": "python",
-        "process": None,
-        "description": "Phase 0-HITL-KM: Human-in-the-loop knowledge management system"
+        "type": "docker"
+    },
+    "langfuse": {
+        "name": "Langfuse Observability",
+        "port": 3000,
+        "type": "docker"
+    },
+    "redis": {
+        "name": "Redis Cache",
+        "port": 6379,
+        "type": "docker"
+    },
+    "flower": {
+        "name": "Flower (Celery Monitor)",
+        "port": 5555,
+        "type": "docker"
+    },
+    "manual_trigger": {
+        "name": "Manual Trigger API",
+        "port": 5004,
+        "type": "docker"
+    },
+    "jira": {
+        "name": "Jira Integration",
+        "port": 5009,
+        "type": "docker"
+    },
+    "slack": {
+        "name": "Slack Integration",
+        "port": 5012,
+        "type": "docker"
+    },
+    "self_healing": {
+        "name": "Self-Healing Service",
+        "port": 5008,
+        "type": "docker"
+    },
+    "aging": {
+        "name": "Aging Service",
+        "port": 5010,
+        "type": "docker"
+    },
+    "mcp_mongodb": {
+        "name": "MCP MongoDB Server",
+        "port": 5001,
+        "type": "docker"
+    },
+    "mcp_github": {
+        "name": "MCP GitHub Server",
+        "port": 5002,
+        "type": "docker"
     }
 }
 

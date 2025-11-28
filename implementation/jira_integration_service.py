@@ -1,6 +1,6 @@
 """
 Jira Integration Service
-Port: 5006
+Port: Configurable via JIRA_SERVICE_PORT env var (default: 5009)
 Purpose: Automatically create Jira tickets for test failures with AI-generated insights
 Features:
 - Auto-create issues for failures
@@ -28,6 +28,7 @@ JIRA_URL = os.getenv('JIRA_URL', 'https://your-company.atlassian.net')
 JIRA_EMAIL = os.getenv('JIRA_EMAIL', 'your-email@company.com')
 JIRA_API_TOKEN = os.getenv('JIRA_API_TOKEN', 'your-api-token')
 JIRA_PROJECT_KEY = os.getenv('JIRA_PROJECT_KEY', 'DDN')
+JIRA_SERVICE_PORT = int(os.getenv('JIRA_SERVICE_PORT', 5009))
 
 POSTGRES_CONFIG = {
     'host': os.getenv('POSTGRES_HOST', 'localhost'),
@@ -80,18 +81,6 @@ def get_labels_from_category(error_category):
 def create_jira_issue():
     """
     Create a Jira issue for a test failure
-    Request body:
-    {
-        "build_id": "12345",
-        "job_name": "Test Suite",
-        "error_category": "CODE_ERROR",
-        "root_cause": "...",
-        "fix_recommendation": "...",
-        "confidence_score": 0.95,
-        "consecutive_failures": 3,
-        "build_url": "http://jenkins/...",
-        "github_commit": "abc123"
-    }
     """
     try:
         data = request.get_json()
@@ -120,7 +109,6 @@ def create_jira_issue():
         existing = cursor.fetchone()
 
         if existing:
-            # Update existing issue
             jira_key = existing['jira_issue_key']
             update_result = update_jira_issue(jira_key, data)
 
@@ -138,7 +126,6 @@ def create_jira_issue():
         priority = get_priority_from_failures(consecutive_failures)
         labels = get_labels_from_category(error_category)
 
-        # Build description
         description = f"""
 h2. AI-Detected Test Failure
 
@@ -178,7 +165,6 @@ _This issue was automatically created by DDN AI Test Failure Analysis System_
 _Generated at: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}_
 """
 
-        # Jira issue payload
         issue_payload = {
             'fields': {
                 'project': {
@@ -193,11 +179,10 @@ _Generated at: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}_
                     'name': priority
                 },
                 'labels': labels,
-                'customfield_10000': build_id  # Custom field for build ID (adjust field ID)
+                'customfield_10000': build_id
             }
         }
 
-        # Create issue in Jira
         response = requests.post(
             f'{JIRA_URL}/rest/api/3/issue',
             headers=JIRA_HEADERS,
@@ -216,7 +201,6 @@ _Generated at: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}_
         jira_response = response.json()
         jira_key = jira_response['key']
 
-        # Update PostgreSQL with Jira key
         cursor.execute("""
             UPDATE failure_analysis
             SET jira_issue_key = %s, jira_issue_url = %s
@@ -242,9 +226,7 @@ _Generated at: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}_
 
 
 def update_jira_issue(jira_key, data):
-    """
-    Update existing Jira issue with new analysis
-    """
+    """Update existing Jira issue with new analysis"""
     try:
         comment = f"""
 *New AI Analysis - {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}*
@@ -282,22 +264,13 @@ h4. Updated Fix Recommendation
 
 @app.route('/api/jira/update-from-feedback', methods=['POST'])
 def update_jira_from_feedback():
-    """
-    Update Jira issue when feedback is received
-    Request body:
-    {
-        "build_id": "12345",
-        "feedback_type": "success" | "failed",
-        "feedback_text": "..."
-    }
-    """
+    """Update Jira issue when feedback is received"""
     try:
         data = request.get_json()
         build_id = data.get('build_id')
         feedback_type = data.get('feedback_type')
         feedback_text = data.get('feedback_text', '')
 
-        # Get Jira issue key from database
         conn = get_postgres_connection()
         cursor = conn.cursor(cursor_factory=RealDictCursor)
 
@@ -319,11 +292,9 @@ def update_jira_from_feedback():
 
         jira_key = result['jira_issue_key']
 
-        # Add comment to Jira
         if feedback_type == 'success':
-            comment = f"✅ *Fix Verified as Successful*\n\n{feedback_text}"
-            # Transition to resolved
-            transition_payload = {'transition': {'id': '31'}}  # Adjust transition ID
+            comment = f"*Fix Verified as Successful*\n\n{feedback_text}"
+            transition_payload = {'transition': {'id': '31'}}
             requests.post(
                 f'{JIRA_URL}/rest/api/3/issue/{jira_key}/transitions',
                 headers=JIRA_HEADERS,
@@ -331,7 +302,7 @@ def update_jira_from_feedback():
                 data=json.dumps(transition_payload)
             )
         else:
-            comment = f"❌ *Fix Did Not Work*\n\nAdditional investigation needed.\n\n{feedback_text}"
+            comment = f"*Fix Did Not Work*\n\nAdditional investigation needed.\n\n{feedback_text}"
 
         comment_payload = {'body': comment}
 
@@ -363,9 +334,7 @@ def update_jira_from_feedback():
 
 @app.route('/api/jira/get-issue/<build_id>', methods=['GET'])
 def get_jira_issue(build_id):
-    """
-    Get Jira issue details for a build
-    """
+    """Get Jira issue details for a build"""
     try:
         conn = get_postgres_connection()
         cursor = conn.cursor(cursor_factory=RealDictCursor)
@@ -403,7 +372,6 @@ def get_jira_issue(build_id):
 def health_check():
     """Health check endpoint"""
     try:
-        # Test Jira connection
         response = requests.get(
             f'{JIRA_URL}/rest/api/3/myself',
             headers=JIRA_HEADERS,
@@ -415,7 +383,7 @@ def health_check():
         return jsonify({
             'status': 'healthy',
             'service': 'jira-integration',
-            'port': 5006,
+            'port': JIRA_SERVICE_PORT,
             'jira_status': jira_status,
             'timestamp': datetime.now().isoformat()
         })
@@ -431,7 +399,7 @@ if __name__ == '__main__':
     print("=" * 60)
     print("Jira Integration Service")
     print("=" * 60)
-    print(f"Port: 5006")
+    print(f"Port: {JIRA_SERVICE_PORT}")
     print(f"Jira URL: {JIRA_URL}")
     print(f"Project Key: {JIRA_PROJECT_KEY}")
     print("=" * 60)
@@ -443,4 +411,4 @@ if __name__ == '__main__':
     print("=" * 60)
     print("\nStarting server...")
 
-    app.run(host='0.0.0.0', port=5006, debug=True)
+    app.run(host='0.0.0.0', port=JIRA_SERVICE_PORT, debug=True)

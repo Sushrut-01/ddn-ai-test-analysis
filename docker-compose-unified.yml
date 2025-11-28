@@ -316,6 +316,7 @@ services:
       - JIRA_EMAIL=${JIRA_EMAIL}
       - JIRA_API_TOKEN=${JIRA_API_TOKEN}
       - JIRA_PROJECT_KEY=${JIRA_PROJECT_KEY}
+      - JIRA_SERVICE_PORT=5009
     networks:
       - ddn-network
     depends_on:
@@ -341,6 +342,7 @@ services:
       - SLACK_BOT_TOKEN=${SLACK_BOT_TOKEN}
       - SLACK_SIGNING_SECRET=${SLACK_SIGNING_SECRET}
       - SLACK_DEFAULT_CHANNEL=${SLACK_DEFAULT_CHANNEL}
+      - SLACK_SERVICE_PORT=5012
       - DASHBOARD_URL=http://localhost:3000
     networks:
       - ddn-network
