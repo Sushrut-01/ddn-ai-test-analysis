@@ -60,8 +60,8 @@ PINECONE_API_KEY = os.getenv('PINECONE_API_KEY')
 PINECONE_KNOWLEDGE_INDEX = os.getenv('PINECONE_KNOWLEDGE_INDEX', 'ddn-knowledge-docs')
 PINECONE_FAILURES_INDEX = os.getenv('PINECONE_FAILURES_INDEX', 'ddn-error-library')
 
-# AI Service
-AI_SERVICE_URL = 'http://localhost:5000'
+# AI Service (use Docker service name in containerized environment)
+AI_SERVICE_URL = os.getenv('AI_SERVICE_URL', 'http://langgraph-service:5000')
 
 def init_mongodb():
     """Initialize MongoDB connection"""
