@@ -729,6 +729,285 @@ def health_check():
         }), 503
 
 
+# ==================== CODE FIX ENDPOINTS ====================
+
+@app.route('/api/fixes/history', methods=['GET'])
+def get_fix_history():
+    """
+    Get code fix application history
+    """
+    try:
+        limit = int(request.args.get('limit', 20))
+        status_filter = request.args.get('status')
+
+        conn = get_postgres_connection()
+        cursor = conn.cursor(cursor_factory=RealDictCursor)
+
+        query = """
+            SELECT
+                id, failure_id, build_id, job_name, fix_type, status,
+                pr_url, pr_number, branch_name, file_path,
+                applied_by, applied_at, merged_at, rollback_at, error_message
+            FROM code_fix_applications
+        """
+        params = []
+
+        if status_filter:
+            query += " WHERE status = %s"
+            params.append(status_filter)
+
+        query += " ORDER BY applied_at DESC LIMIT %s"
+        params.append(limit)
+
+        cursor.execute(query, params)
+        fixes = cursor.fetchall()
+
+        # Get stats
+        cursor.execute("""
+            SELECT
+                COUNT(*) as total,
+                COUNT(CASE WHEN status = 'merged' THEN 1 END) as merged,
+                COUNT(CASE WHEN status = 'pending' THEN 1 END) as pending,
+                COUNT(CASE WHEN status = 'rejected' THEN 1 END) as rejected,
+                COUNT(CASE WHEN status = 'rolled_back' THEN 1 END) as rolled_back
+            FROM code_fix_applications
+        """)
+        stats = cursor.fetchone()
+
+        cursor.close()
+        conn.close()
+
+        return jsonify({
+            'success': True,
+            'data': {
+                'fixes': [dict(f) for f in fixes],
+                'stats': dict(stats) if stats else {}
+            }
+        })
+
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+
+@app.route('/api/fixes/approve', methods=['POST'])
+def approve_fix():
+    """
+    Approve a code fix and create PR
+    """
+    try:
+        data = request.get_json()
+        failure_id = data.get('failure_id')
+        fix_code = data.get('fix_code')
+        file_path = data.get('file_path')
+
+        conn = get_postgres_connection()
+        cursor = conn.cursor(cursor_factory=RealDictCursor)
+
+        cursor.execute("""
+            INSERT INTO code_fix_applications
+            (failure_id, fix_type, status, file_path, fixed_code, applied_by)
+            VALUES (%s, 'code_change', 'approved', %s, %s, %s)
+            RETURNING id
+        """, (failure_id, file_path, fix_code, data.get('user', 'system')))
+
+        fix_id = cursor.fetchone()['id']
+        conn.commit()
+
+        cursor.close()
+        conn.close()
+
+        return jsonify({
+            'success': True,
+            'message': 'Fix approved',
+            'fix_id': fix_id
+        })
+
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+
+@app.route('/api/fixes/reject', methods=['POST'])
+def reject_fix():
+    """
+    Reject a code fix
+    """
+    try:
+        data = request.get_json()
+        failure_id = data.get('failure_id')
+        reason = data.get('reason', '')
+
+        conn = get_postgres_connection()
+        cursor = conn.cursor(cursor_factory=RealDictCursor)
+
+        cursor.execute("""
+            INSERT INTO code_fix_applications
+            (failure_id, fix_type, status, error_message, applied_by)
+            VALUES (%s, 'code_change', 'rejected', %s, %s)
+            RETURNING id
+        """, (failure_id, reason, data.get('user', 'system')))
+
+        fix_id = cursor.fetchone()['id']
+        conn.commit()
+
+        cursor.close()
+        conn.close()
+
+        return jsonify({
+            'success': True,
+            'message': 'Fix rejected',
+            'fix_id': fix_id
+        })
+
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+
+@app.route('/api/fixes/<int:fix_id>/status', methods=['GET'])
+def get_fix_status(fix_id):
+    """
+    Get status of a specific fix
+    """
+    try:
+        conn = get_postgres_connection()
+        cursor = conn.cursor(cursor_factory=RealDictCursor)
+
+        cursor.execute("""
+            SELECT * FROM code_fix_applications WHERE id = %s
+        """, (fix_id,))
+
+        fix = cursor.fetchone()
+
+        cursor.close()
+        conn.close()
+
+        if not fix:
+            return jsonify({
+                'success': False,
+                'error': 'Fix not found'
+            }), 404
+
+        return jsonify({
+            'success': True,
+            'data': dict(fix)
+        })
+
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+
+@app.route('/api/fixes/rollback', methods=['POST'])
+def rollback_fix():
+    """
+    Rollback a code fix
+    """
+    try:
+        data = request.get_json()
+        fix_id = data.get('fix_id')
+
+        conn = get_postgres_connection()
+        cursor = conn.cursor(cursor_factory=RealDictCursor)
+
+        cursor.execute("""
+            UPDATE code_fix_applications
+            SET status = 'rolled_back', rollback_at = CURRENT_TIMESTAMP
+            WHERE id = %s
+            RETURNING id
+        """, (fix_id,))
+
+        result = cursor.fetchone()
+        conn.commit()
+
+        cursor.close()
+        conn.close()
+
+        if not result:
+            return jsonify({
+                'success': False,
+                'error': 'Fix not found'
+            }), 404
+
+        return jsonify({
+            'success': True,
+            'message': 'Fix rolled back'
+        })
+
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+
+@app.route('/api/fixes/analytics', methods=['GET'])
+def get_fix_analytics():
+    """
+    Get code fix analytics
+    """
+    try:
+        conn = get_postgres_connection()
+        cursor = conn.cursor(cursor_factory=RealDictCursor)
+
+        cursor.execute("""
+            SELECT
+                COUNT(*) as total_fixes,
+                COUNT(CASE WHEN status = 'merged' THEN 1 END) as merged,
+                COUNT(CASE WHEN status = 'pending' THEN 1 END) as pending,
+                COUNT(CASE WHEN status = 'approved' THEN 1 END) as approved,
+                COUNT(CASE WHEN status = 'rejected' THEN 1 END) as rejected,
+                COUNT(CASE WHEN status = 'rolled_back' THEN 1 END) as rolled_back,
+                ROUND(
+                    COUNT(CASE WHEN status = 'merged' THEN 1 END) * 100.0 /
+                    NULLIF(COUNT(*), 0), 2
+                ) as success_rate
+            FROM code_fix_applications
+        """)
+
+        stats = cursor.fetchone()
+
+        # Get recent trend
+        cursor.execute("""
+            SELECT
+                DATE(applied_at) as date,
+                COUNT(*) as count,
+                COUNT(CASE WHEN status = 'merged' THEN 1 END) as merged
+            FROM code_fix_applications
+            WHERE applied_at >= CURRENT_DATE - INTERVAL '30 days'
+            GROUP BY DATE(applied_at)
+            ORDER BY date DESC
+        """)
+
+        trend = cursor.fetchall()
+
+        cursor.close()
+        conn.close()
+
+        return jsonify({
+            'success': True,
+            'data': {
+                'stats': dict(stats) if stats else {},
+                'trend': [dict(t) for t in trend]
+            }
+        })
+
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+
 if __name__ == '__main__':
     print("=" * 60)
     print("Dashboard Backend API Service")

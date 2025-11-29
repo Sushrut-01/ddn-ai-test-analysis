@@ -1,7 +1,11 @@
 import axios from 'axios'
 
+// API Endpoints - Match docker-compose-unified.yml ports
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5006'
-const KNOWLEDGE_API_URL = import.meta.env.VITE_KNOWLEDGE_API_URL || 'http://localhost:5008'
+const KNOWLEDGE_API_URL = import.meta.env.VITE_KNOWLEDGE_API_URL || 'http://localhost:5015'
+const JIRA_API_URL = import.meta.env.VITE_JIRA_API_URL || 'http://localhost:5009'
+const SLACK_API_URL = import.meta.env.VITE_SLACK_API_URL || 'http://localhost:5012'
+const SERVICE_MANAGER_URL = import.meta.env.VITE_SERVICE_MANAGER_URL || 'http://localhost:5007'
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -199,6 +203,72 @@ export const fixAPI = {
   // Get fix success analytics
   getAnalytics: () =>
     api.get('/api/fixes/analytics')
+}
+
+// Jira Bugs API
+export const jiraAPI = {
+  // Get list of Jira bugs
+  getBugs: (params = {}) => {
+    const queryString = new URLSearchParams(params).toString()
+    return api.get(`/api/jira/bugs?${queryString}`)
+  },
+
+  // Create a new Jira bug from analysis
+  createBug: (data) =>
+    api.post('/api/jira/bugs', data),
+
+  // Get approved analyses ready for bug creation
+  getApprovedAnalyses: (limit = 50) =>
+    api.get(`/api/jira/approved-analyses?limit=${limit}`)
+}
+
+// Pipeline Jobs API
+export const pipelineAPI = {
+  // Get active and recent pipeline jobs
+  getJobs: (params = {}) => {
+    const queryString = new URLSearchParams(params).toString()
+    return api.get(`/api/pipeline/jobs?${queryString}`)
+  },
+
+  // Get logs for a specific job
+  getJobLogs: (jobId) =>
+    api.get(`/api/pipeline/jobs/${jobId}/logs`),
+
+  // Get pipeline flow status
+  getFlow: () =>
+    api.get('/api/pipeline/flow')
+}
+
+// Notifications API
+export const notificationsAPI = {
+  // Get notifications
+  getNotifications: (params = {}) => {
+    const queryString = new URLSearchParams(params).toString()
+    return api.get(`/api/notifications?${queryString}`)
+  },
+
+  // Mark notification as read
+  markAsRead: (notificationId) =>
+    api.post(`/api/notifications/${notificationId}/read`),
+
+  // Mark all notifications as read
+  markAllAsRead: () =>
+    api.post('/api/notifications/read-all')
+}
+
+// Audit Log API
+export const auditLogAPI = {
+  // Get audit log entries
+  getEntries: (params = {}) => {
+    const queryString = new URLSearchParams(params).toString()
+    return api.get(`/api/audit-log?${queryString}`)
+  },
+
+  // Export audit log as CSV
+  exportCSV: (params = {}) => {
+    const queryString = new URLSearchParams(params).toString()
+    return `${API_BASE_URL}/api/audit-log/export?${queryString}`
+  }
 }
 
 export default api
