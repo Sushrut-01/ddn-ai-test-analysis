@@ -330,14 +330,38 @@ def get_failures():
         limit = int(request.args.get('limit', 50))
         skip = int(request.args.get('skip', 0))
         build_number = request.args.get('build_number')
+        build_id = request.args.get('build_id')
         feedback_status = request.args.get('feedback_status')  # Task 0-HITL.15: New filter
         category = request.args.get('category')
         search = request.args.get('search')
+        analyzed_only = request.args.get('analyzed', '').lower() == 'true'  # Filter for analyzed builds only
+
+        # If analyzed_only, get build_ids that have AI analysis from PostgreSQL first
+        analyzed_build_ids = []
+        if analyzed_only:
+            try:
+                conn = get_postgres_connection()
+                cursor = conn.cursor(cursor_factory=RealDictCursor)
+                cursor.execute("""
+                    SELECT DISTINCT build_id FROM failure_analysis
+                    ORDER BY build_id DESC
+                    LIMIT 100
+                """)
+                analyzed_build_ids = [row['build_id'] for row in cursor.fetchall()]
+                cursor.close()
+                conn.close()
+                logger.info(f"📊 Found {len(analyzed_build_ids)} builds with AI analysis")
+            except Exception as e:
+                logger.error(f"Error getting analyzed build_ids: {e}")
 
         # Build query
         query = {}
         if build_number:
             query['build_number'] = build_number
+        if build_id:
+            query['build_id'] = build_id
+        if analyzed_only and analyzed_build_ids:
+            query['build_id'] = {'$in': analyzed_build_ids}
 
         # Get failures from MongoDB
         failures = list(mongo_db['test_failures'].find(query)
@@ -361,13 +385,14 @@ def get_failures():
 
             for failure in failures:
                 # Task 0-HITL.15: Join with acceptance_tracking to get validation status
+                # Use build_id for matching (mongodb_failure_id is often not set)
                 cursor.execute("""
                     SELECT
                         fa.id as analysis_id,
                         fa.classification,
                         fa.root_cause,
                         fa.severity,
-                        fa.recommendation,
+                        fa.fix_recommendation as recommendation,
                         fa.confidence_score,
                         fa.analyzed_at,
                         fa.ai_model,
@@ -382,10 +407,10 @@ def get_failures():
                         at.validated_at as feedback_timestamp
                     FROM failure_analysis fa
                     LEFT JOIN acceptance_tracking at ON fa.id = at.analysis_id
-                    WHERE fa.mongodb_failure_id = %s
+                    WHERE fa.build_id = %s OR fa.mongodb_failure_id = %s
                     ORDER BY fa.analyzed_at DESC, at.created_at DESC
                     LIMIT 1
-                """, (failure['_id'],))
+                """, (failure.get('build_id'), failure['_id']))
 
                 analysis = cursor.fetchone()
                 if analysis:
@@ -461,9 +486,62 @@ def get_failure_details(failure_id):
     """Get detailed information for a single failure"""
     try:
         from bson.objectid import ObjectId
+        from bson.errors import InvalidId
 
-        # Get failure from MongoDB
-        failure = mongo_db['test_failures'].find_one({'_id': ObjectId(failure_id)})
+        failure = None
+
+        # First try as ObjectId
+        try:
+            failure = mongo_db['test_failures'].find_one({'_id': ObjectId(failure_id)})
+        except (InvalidId, Exception):
+            # If not a valid ObjectId, try as build_id
+            failure = mongo_db['test_failures'].find_one({'build_id': failure_id})
+
+            # If still not found, also check in PostgreSQL for analyzed failures
+            if not failure:
+                try:
+                    conn = get_postgres_connection()
+                    cursor = conn.cursor(cursor_factory=RealDictCursor)
+                    cursor.execute("""
+                        SELECT id, build_id, job_name, test_name, error_message, stack_trace,
+                               classification, root_cause, severity, fix_recommendation as recommendation,
+                               confidence_score, analyzed_at, ai_model, similar_cases,
+                               github_files, github_code_included, triggered_by, trigger_type
+                        FROM failure_analysis
+                        WHERE build_id = %s
+                        ORDER BY analyzed_at DESC
+                        LIMIT 1
+                    """, (failure_id,))
+                    pg_failure = cursor.fetchone()
+                    cursor.close()
+                    conn.close()
+
+                    if pg_failure:
+                        # Convert PostgreSQL result to failure format
+                        failure = {
+                            '_id': str(pg_failure['id']),
+                            'build_id': pg_failure['build_id'],
+                            'job_name': pg_failure['job_name'],
+                            'test_name': pg_failure['test_name'],
+                            'error_message': pg_failure['error_message'],
+                            'stack_trace': pg_failure['stack_trace'],
+                            'timestamp': pg_failure['analyzed_at'].isoformat() if pg_failure.get('analyzed_at') else None,
+                            'ai_analysis': {
+                                'classification': pg_failure['classification'],
+                                'root_cause': pg_failure['root_cause'],
+                                'severity': pg_failure['severity'],
+                                'recommendation': pg_failure['recommendation'],
+                                'confidence_score': float(pg_failure['confidence_score']) if pg_failure.get('confidence_score') else None,
+                                'analyzed_at': pg_failure['analyzed_at'].isoformat() if pg_failure.get('analyzed_at') else None,
+                                'ai_model': pg_failure['ai_model'],
+                                'similar_cases': pg_failure['similar_cases'],
+                                'github_files': pg_failure['github_files'],
+                                'github_code_included': pg_failure['github_code_included']
+                            }
+                        }
+                        return jsonify({'failure': failure})
+                except Exception as pg_err:
+                    logger.error(f"Error fetching from PostgreSQL: {pg_err}")
 
         if not failure:
             return jsonify({'error': 'Failure not found'}), 404
@@ -484,7 +562,7 @@ def get_failure_details(failure_id):
                     classification,
                     root_cause,
                     severity,
-                    recommendation,
+                    fix_recommendation as recommendation,
                     confidence_score,
                     analyzed_at,
                     ai_model,
@@ -632,6 +710,222 @@ def get_stats():
         return jsonify({'error': str(e)}), 500
 
 # ============================================================================
+# BUILD-LEVEL METRICS (Phase 6-7: Dual Metrics Support)
+# ============================================================================
+
+@app.route('/api/builds/summary', methods=['GET'])
+def get_builds_summary():
+    """
+    Phase 7: Get build-level summary with dual metrics.
+    Returns both failed_build_count (Jenkins pipeline failures) and
+    failed_test_count (test case failures within builds).
+
+    Query params:
+    - job_name: Filter by specific job (optional)
+    - days: Limit to last N days (default: 30)
+    """
+    try:
+        job_filter = request.args.get('job_name')
+        days = int(request.args.get('days', 30))
+
+        # Get build-level data from build_results collection
+        build_results = mongo_db['build_results']
+
+        # Build match stage
+        match_stage = {}
+        if job_filter:
+            match_stage['job_name'] = job_filter
+        if days > 0:
+            match_stage['timestamp'] = {'$gte': datetime.utcnow() - timedelta(days=days)}
+
+        # Aggregation pipeline
+        pipeline = [
+            {'$match': match_stage} if match_stage else {'$match': {}},
+            {
+                '$group': {
+                    '_id': '$job_name',
+                    'total_builds': {'$sum': 1},
+                    'failed_builds': {
+                        '$sum': {'$cond': [{'$eq': ['$build_result', 'FAILURE']}, 1, 0]}
+                    },
+                    'success_builds': {
+                        '$sum': {'$cond': [{'$eq': ['$build_result', 'SUCCESS']}, 1, 0]}
+                    },
+                    'unstable_builds': {
+                        '$sum': {'$cond': [{'$eq': ['$build_result', 'UNSTABLE']}, 1, 0]}
+                    },
+                    'total_test_failures': {'$sum': {'$ifNull': ['$test_fail_count', 0]}},
+                    'total_test_passes': {'$sum': {'$ifNull': ['$test_pass_count', 0]}},
+                    'latest_build': {'$max': '$build_number'},
+                    'latest_timestamp': {'$max': '$timestamp'},
+                    'avg_duration_ms': {'$avg': '$build_duration_ms'}
+                }
+            },
+            {
+                '$project': {
+                    'job_name': '$_id',
+                    'total_builds': 1,
+                    'failed_builds': 1,
+                    'success_builds': 1,
+                    'unstable_builds': 1,
+                    'total_test_failures': 1,
+                    'total_test_passes': 1,
+                    'latest_build': 1,
+                    'latest_timestamp': 1,
+                    'avg_duration_ms': 1,
+                    'build_success_rate': {
+                        '$cond': [
+                            {'$eq': ['$total_builds', 0]},
+                            0,
+                            {'$multiply': [{'$divide': ['$success_builds', '$total_builds']}, 100]}
+                        ]
+                    }
+                }
+            },
+            {'$sort': {'total_builds': -1}}
+        ]
+
+        results = list(build_results.aggregate(pipeline))
+
+        # Build response
+        by_job = {}
+        totals = {
+            'total_builds': 0,
+            'failed_build_count': 0,
+            'success_build_count': 0,
+            'unstable_build_count': 0,
+            'failed_test_count': 0,
+            'passed_test_count': 0
+        }
+
+        for r in results:
+            job_name = r.get('job_name') or r.get('_id')
+            job_data = {
+                'total_builds': r.get('total_builds', 0),
+                'failed_builds': r.get('failed_builds', 0),
+                'success_builds': r.get('success_builds', 0),
+                'unstable_builds': r.get('unstable_builds', 0),
+                'total_test_failures': r.get('total_test_failures', 0),
+                'total_test_passes': r.get('total_test_passes', 0),
+                'latest_build': r.get('latest_build', 0),
+                'latest_timestamp': r.get('latest_timestamp').isoformat() if r.get('latest_timestamp') else None,
+                'avg_duration_ms': round(r.get('avg_duration_ms', 0) or 0),
+                'build_success_rate': round(r.get('build_success_rate', 0) or 0, 1)
+            }
+            by_job[job_name] = job_data
+
+            # Accumulate totals
+            totals['total_builds'] += job_data['total_builds']
+            totals['failed_build_count'] += job_data['failed_builds']
+            totals['success_build_count'] += job_data['success_builds']
+            totals['unstable_build_count'] += job_data['unstable_builds']
+            totals['failed_test_count'] += job_data['total_test_failures']
+            totals['passed_test_count'] += job_data['total_test_passes']
+
+        # Calculate overall success rate
+        totals['build_success_rate'] = round(
+            (totals['success_build_count'] / totals['total_builds'] * 100)
+            if totals['total_builds'] > 0 else 0, 1
+        )
+
+        return jsonify({
+            'success': True,
+            'totals': totals,
+            'by_job': by_job,
+            'days': days,
+            'generated_at': datetime.utcnow().isoformat()
+        })
+
+    except Exception as e:
+        logger.error(f"Error getting builds summary: {str(e)}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/builds/recent', methods=['GET'])
+def get_recent_builds():
+    """
+    Get recent builds with their results.
+
+    Query params:
+    - limit: Max results (default: 20)
+    - job_name: Filter by job (optional)
+    - result: Filter by build_result (SUCCESS, FAILURE, UNSTABLE)
+    """
+    try:
+        limit = int(request.args.get('limit', 20))
+        job_filter = request.args.get('job_name')
+        result_filter = request.args.get('result')
+
+        build_results = mongo_db['build_results']
+
+        query = {}
+        if job_filter:
+            query['job_name'] = job_filter
+        if result_filter:
+            query['build_result'] = result_filter
+
+        builds = list(build_results.find(query)
+                     .sort('timestamp', -1)
+                     .limit(limit))
+
+        # Convert ObjectId and datetime
+        for build in builds:
+            build['_id'] = str(build['_id'])
+            if isinstance(build.get('timestamp'), datetime):
+                build['timestamp'] = build['timestamp'].isoformat()
+
+        return jsonify({
+            'success': True,
+            'count': len(builds),
+            'builds': builds
+        })
+
+    except Exception as e:
+        logger.error(f"Error getting recent builds: {str(e)}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/builds/<build_id>', methods=['GET'])
+def get_build_details(build_id):
+    """
+    Get detailed information for a specific build including test failures.
+    """
+    try:
+        build_results = mongo_db['build_results']
+        test_failures = mongo_db['test_failures']
+
+        # Get build info
+        build = build_results.find_one({'build_id': build_id})
+
+        if not build:
+            return jsonify({'success': False, 'error': 'Build not found'}), 404
+
+        build['_id'] = str(build['_id'])
+        if isinstance(build.get('timestamp'), datetime):
+            build['timestamp'] = build['timestamp'].isoformat()
+
+        # Get test failures for this build
+        failures = list(test_failures.find({'build_id': build_id})
+                       .sort('timestamp', -1))
+
+        for f in failures:
+            f['_id'] = str(f['_id'])
+            if isinstance(f.get('timestamp'), datetime):
+                f['timestamp'] = f['timestamp'].isoformat()
+
+        return jsonify({
+            'success': True,
+            'build': build,
+            'test_failures': failures,
+            'test_failure_count': len(failures)
+        })
+
+    except Exception as e:
+        logger.error(f"Error getting build details: {str(e)}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+# ============================================================================
 # ACTIVITY LOG
 # ============================================================================
 
@@ -709,6 +1003,147 @@ def get_activity_log():
 # ============================================================================
 # ANALYTICS & FEEDBACK
 # ============================================================================
+
+@app.route('/api/analytics/trends', methods=['GET'])
+def get_analytics_trends():
+    """
+    Get failure trends over time for charts
+
+    Query params:
+    - time_range: '7d', '30d', '90d' (default: '30d')
+    - aggregation: 'daily', 'weekly' (default: 'daily')
+    """
+    try:
+        time_range = request.args.get('time_range', '30d')
+        aggregation = request.args.get('aggregation', 'daily')
+
+        days_map = {'7d': 7, '30d': 30, '90d': 90}
+        days = days_map.get(time_range, 30)
+
+        conn = get_postgres_connection()
+        if not conn:
+            return jsonify({'error': 'Database connection failed'}), 500
+
+        try:
+            cursor = conn.cursor(cursor_factory=RealDictCursor)
+
+            # Get failure trends by category over time
+            cursor.execute("""
+                SELECT
+                    DATE(created_at) as date,
+                    classification,
+                    COUNT(*) as count
+                FROM failure_analysis
+                WHERE created_at >= NOW() - INTERVAL '%s days'
+                GROUP BY DATE(created_at), classification
+                ORDER BY date
+            """, (days,))
+
+            rows = cursor.fetchall()
+
+            # Process into chart format
+            date_data = {}
+            for row in rows:
+                date_str = row['date'].strftime('%Y-%m-%d') if row['date'] else 'Unknown'
+                if date_str not in date_data:
+                    date_data[date_str] = {
+                        'name': date_str,
+                        'codeError': 0,
+                        'testFailure': 0,
+                        'infraError': 0,
+                        'depError': 0,
+                        'configError': 0,
+                        'unknown': 0
+                    }
+
+                classification = (row['classification'] or 'unknown').lower()
+                count = row['count'] or 0
+
+                if 'code' in classification:
+                    date_data[date_str]['codeError'] += count
+                elif 'test' in classification:
+                    date_data[date_str]['testFailure'] += count
+                elif 'infra' in classification:
+                    date_data[date_str]['infraError'] += count
+                elif 'dep' in classification:
+                    date_data[date_str]['depError'] += count
+                elif 'config' in classification:
+                    date_data[date_str]['configError'] += count
+                else:
+                    date_data[date_str]['unknown'] += count
+
+            trends = list(date_data.values())
+
+            cursor.close()
+            conn.close()
+
+            return jsonify({
+                'data': trends,
+                'time_range': time_range,
+                'aggregation': aggregation
+            })
+
+        except Exception as e:
+            conn.close()
+            logger.error(f"Error querying trends: {e}")
+            return jsonify({'data': [], 'error': str(e)})
+
+    except Exception as e:
+        logger.error(f"Error getting analytics trends: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/analytics/patterns', methods=['GET'])
+def get_analytics_patterns():
+    """
+    Get top failure patterns identified by AI
+    """
+    try:
+        conn = get_postgres_connection()
+        if not conn:
+            return jsonify({'error': 'Database connection failed'}), 500
+
+        try:
+            cursor = conn.cursor(cursor_factory=RealDictCursor)
+
+            # Get most common error patterns from root cause analysis
+            cursor.execute("""
+                SELECT
+                    COALESCE(classification, 'Unknown') as pattern,
+                    COUNT(*) as count,
+                    AVG(CASE WHEN confidence_score IS NOT NULL THEN confidence_score ELSE 0 END) * 100 as success_rate
+                FROM failure_analysis
+                WHERE created_at >= NOW() - INTERVAL '30 days'
+                GROUP BY classification
+                ORDER BY count DESC
+                LIMIT 10
+            """)
+
+            patterns = []
+            for row in cursor.fetchall():
+                patterns.append({
+                    'pattern': row['pattern'] or 'Unknown',
+                    'count': row['count'] or 0,
+                    'successRate': round(float(row['success_rate'] or 0), 1),
+                    'trend': 'stable'  # Could calculate actual trend with more data
+                })
+
+            cursor.close()
+            conn.close()
+
+            return jsonify({
+                'data': patterns
+            })
+
+        except Exception as e:
+            conn.close()
+            logger.error(f"Error querying patterns: {e}")
+            return jsonify({'data': [], 'error': str(e)})
+
+    except Exception as e:
+        logger.error(f"Error getting analytics patterns: {e}")
+        return jsonify({'error': str(e)}), 500
+
 
 @app.route('/api/analytics/acceptance-rate', methods=['GET'])
 def get_acceptance_rate():
@@ -930,6 +1365,272 @@ def get_refinement_stats():
     except Exception as e:
         logger.error(f"Refinement stats error: {str(e)}")
         return jsonify({'error': str(e)}), 500
+
+# ============================================================================
+# AI ANALYSIS STORAGE ENDPOINT (Best Practice: Centralized Data Entry)
+# ============================================================================
+
+@app.route('/api/analysis/store', methods=['POST'])
+def store_analysis():
+    """
+    Store AI analysis result from n8n workflows (Workflows 1, 2, 3).
+
+    This endpoint follows the architecture best practice of using Dashboard API
+    as the single entry point for data storage (like Workflow 4 does with /api/fixes).
+
+    Request body:
+    {
+        "build_id": "123",
+        "mongodb_failure_id": "optional_mongo_id",
+        "error_category": "CODE_ERROR",
+        "root_cause": "...",
+        "fix_recommendation": "...",
+        "confidence_score": 0.85,
+        "analysis_type": "RAG_BASED|CLAUDE_DEEP_ANALYSIS|REFINED_ANALYSIS",
+        "trigger_type": "AUTO|MANUAL|REFINEMENT",
+        "job_name": "DDN-Nightly-Tests",
+        "test_suite": "...",
+        "github_files": [...],
+        "estimated_cost_usd": 0.05,
+        "token_usage": 1000,
+        "triggered_by": "user@email.com"
+    }
+    """
+    try:
+        data = request.get_json()
+
+        if not data:
+            return jsonify({'success': False, 'error': 'No data provided'}), 400
+
+        # Required fields
+        build_id = data.get('build_id')
+        if not build_id:
+            return jsonify({'success': False, 'error': 'build_id required'}), 400
+
+        # Extract all fields
+        error_category = data.get('error_category', 'UNKNOWN')
+        root_cause = data.get('root_cause', '')
+        fix_recommendation = data.get('fix_recommendation', data.get('recommendation', ''))
+        confidence_score = float(data.get('confidence_score', 0))
+        analysis_type = data.get('analysis_type', 'RAG_BASED')
+        trigger_type = data.get('trigger_type', 'AUTO')
+        job_name = data.get('job_name', '')
+        test_suite = data.get('test_suite', '')
+        github_files = data.get('github_files', data.get('links', {}).get('github_files', []))
+        estimated_cost = float(data.get('estimated_cost_usd', 0))
+        token_usage = int(data.get('token_usage', 0))
+        mongodb_failure_id = data.get('mongodb_failure_id', '')
+        triggered_by = data.get('triggered_by', 'system')
+        code_fix = data.get('code_fix', '')
+        prevention_strategy = data.get('prevention_strategy', '')
+        severity = data.get('severity', data.get('priority', 'MEDIUM'))
+
+        # Determine AI model based on analysis type
+        ai_model = 'gemini-1.5-pro' if analysis_type == 'RAG_BASED' else 'claude-3.5-sonnet'
+
+        conn = get_postgres_connection()
+        if not conn:
+            return jsonify({'success': False, 'error': 'Database connection failed'}), 500
+
+        try:
+            cursor = conn.cursor()
+
+            # Insert into failure_analysis (main analysis table)
+            cursor.execute("""
+                INSERT INTO failure_analysis (
+                    build_id,
+                    job_name,
+                    test_suite,
+                    mongodb_failure_id,
+                    classification,
+                    root_cause,
+                    severity,
+                    fix_recommendation,
+                    confidence_score,
+                    analyzed_at,
+                    ai_model,
+                    github_files,
+                    github_code_included,
+                    token_usage,
+                    cost_usd,
+                    trigger_type,
+                    triggered_by,
+                    code_fix,
+                    prevention_strategy
+                ) VALUES (
+                    %s, %s, %s, %s, %s, %s, %s, %s, %s,
+                    CURRENT_TIMESTAMP, %s, %s, %s, %s, %s, %s, %s, %s, %s
+                )
+                RETURNING id, analyzed_at
+            """, (
+                build_id,
+                job_name or 'Unknown',
+                test_suite or None,
+                mongodb_failure_id or None,
+                error_category,
+                root_cause,
+                severity,
+                fix_recommendation,
+                confidence_score,
+                ai_model,
+                str(github_files) if github_files else None,
+                bool(github_files),
+                token_usage,
+                estimated_cost,
+                trigger_type,
+                triggered_by,
+                code_fix,
+                prevention_strategy
+            ))
+
+            result = cursor.fetchone()
+            analysis_id = result[0]
+            analyzed_at = result[1]
+
+            conn.commit()
+            cursor.close()
+            conn.close()
+
+            logger.info(f"✓ Analysis stored for build {build_id}, analysis_id={analysis_id}")
+
+            return jsonify({
+                'success': True,
+                'analysis_id': analysis_id,
+                'build_id': build_id,
+                'analyzed_at': analyzed_at.isoformat() if analyzed_at else None,
+                'message': 'Analysis stored successfully'
+            }), 201
+
+        except Exception as e:
+            conn.rollback()
+            logger.error(f"Database error storing analysis: {str(e)}")
+            return jsonify({'success': False, 'error': str(e)}), 500
+
+    except Exception as e:
+        logger.error(f"Error storing analysis: {str(e)}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/analysis/update', methods=['PUT'])
+def update_analysis():
+    """
+    Update existing AI analysis (for refinement workflow).
+
+    Request body:
+    {
+        "build_id": "123",
+        "refinement_version": 1,
+        "user_feedback": "The issue is actually...",
+        "error_category": "CONFIG_ERROR",  (may change from original)
+        "root_cause": "Updated root cause...",
+        "fix_recommendation": "Updated fix...",
+        "confidence_score": 0.92
+    }
+    """
+    try:
+        data = request.get_json()
+
+        if not data:
+            return jsonify({'success': False, 'error': 'No data provided'}), 400
+
+        build_id = data.get('build_id')
+        if not build_id:
+            return jsonify({'success': False, 'error': 'build_id required'}), 400
+
+        conn = get_postgres_connection()
+        if not conn:
+            return jsonify({'success': False, 'error': 'Database connection failed'}), 500
+
+        try:
+            cursor = conn.cursor()
+
+            # Update the latest analysis for this build_id
+            cursor.execute("""
+                UPDATE failure_analysis
+                SET
+                    classification = COALESCE(%s, classification),
+                    root_cause = COALESCE(%s, root_cause),
+                    fix_recommendation = COALESCE(%s, fix_recommendation),
+                    confidence_score = COALESCE(%s, confidence_score),
+                    code_fix = COALESCE(%s, code_fix),
+                    prevention_strategy = COALESCE(%s, prevention_strategy),
+                    refinement_count = COALESCE(refinement_count, 0) + 1,
+                    updated_at = CURRENT_TIMESTAMP
+                WHERE build_id = %s
+                AND id = (SELECT id FROM failure_analysis WHERE build_id = %s ORDER BY analyzed_at DESC LIMIT 1)
+                RETURNING id, refinement_count
+            """, (
+                data.get('error_category'),
+                data.get('root_cause'),
+                data.get('fix_recommendation'),
+                data.get('confidence_score'),
+                data.get('code_fix'),
+                data.get('prevention_strategy'),
+                build_id,
+                build_id
+            ))
+
+            result = cursor.fetchone()
+
+            if not result:
+                conn.rollback()
+                return jsonify({'success': False, 'error': 'No analysis found to update'}), 404
+
+            analysis_id = result[0]
+            refinement_count = result[1]
+
+            # Log refinement history
+            if data.get('user_feedback'):
+                cursor.execute("""
+                    INSERT INTO refinement_history (
+                        failure_id,
+                        analysis_id,
+                        refinement_version,
+                        user_feedback,
+                        category_before,
+                        category_after,
+                        original_confidence_score,
+                        refined_confidence_score,
+                        refinement_timestamp,
+                        refined_by
+                    ) VALUES (
+                        %s, %s, %s, %s, %s, %s, %s, %s, CURRENT_TIMESTAMP, %s
+                    )
+                """, (
+                    build_id,
+                    analysis_id,
+                    refinement_count,
+                    data.get('user_feedback'),
+                    data.get('original_category'),
+                    data.get('error_category'),
+                    data.get('original_confidence'),
+                    data.get('confidence_score'),
+                    data.get('triggered_by', 'system')
+                ))
+
+            conn.commit()
+            cursor.close()
+            conn.close()
+
+            logger.info(f"✓ Analysis updated for build {build_id}, refinement #{refinement_count}")
+
+            return jsonify({
+                'success': True,
+                'analysis_id': analysis_id,
+                'build_id': build_id,
+                'refinement_count': refinement_count,
+                'message': 'Analysis updated successfully'
+            }), 200
+
+        except Exception as e:
+            conn.rollback()
+            logger.error(f"Database error updating analysis: {str(e)}")
+            return jsonify({'success': False, 'error': str(e)}), 500
+
+    except Exception as e:
+        logger.error(f"Error updating analysis: {str(e)}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
 
 # ============================================================================
 # PHASE B: AUTOMATED CODE FIXING ENDPOINTS
@@ -1393,6 +2094,62 @@ def get_fix_analytics():
 
 
 # ============================================================================
+# MANUAL TRIGGER PROXY (proxies to manual-trigger-api on port 5004)
+# ============================================================================
+
+MANUAL_TRIGGER_API_URL = os.getenv('MANUAL_TRIGGER_API_URL', 'http://ddn-manual-trigger:5004')
+
+@app.route('/api/trigger/manual', methods=['POST', 'OPTIONS'])
+def proxy_manual_trigger():
+    """
+    Proxy manual trigger requests to the manual-trigger-api service
+
+    Request body:
+    {
+        "build_id": "12345",
+        "failure_id": "abc123",
+        "triggered_by_user": "user@example.com"
+    }
+    """
+    # Handle CORS preflight
+    if request.method == 'OPTIONS':
+        response = jsonify({'status': 'ok'})
+        response.headers.add('Access-Control-Allow-Origin', '*')
+        response.headers.add('Access-Control-Allow-Headers', 'Content-Type')
+        response.headers.add('Access-Control-Allow-Methods', 'POST, OPTIONS')
+        return response, 200
+
+    try:
+        data = request.get_json() or {}
+        logger.info(f"Proxying manual trigger request: {data}")
+
+        # Forward to manual-trigger-api
+        response = requests.post(
+            f"{MANUAL_TRIGGER_API_URL}/api/trigger-analysis",
+            json=data,
+            timeout=120  # Longer timeout for AI analysis
+        )
+
+        return jsonify(response.json()), response.status_code
+
+    except requests.exceptions.ConnectionError:
+        logger.error("Failed to connect to manual-trigger-api service")
+        return jsonify({
+            'success': False,
+            'error': 'Manual trigger service unavailable. Please ensure ddn-manual-trigger is running.'
+        }), 503
+    except requests.exceptions.Timeout:
+        logger.error("Manual trigger request timed out")
+        return jsonify({
+            'success': False,
+            'error': 'Analysis request timed out. The AI analysis may take longer than expected.'
+        }), 504
+    except Exception as e:
+        logger.error(f"Error proxying manual trigger: {str(e)}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+# ============================================================================
 # TRIGGER HISTORY
 # ============================================================================
 
@@ -1719,7 +2476,7 @@ def create_jira_bug():
 
         # Get analysis details
         cursor.execute("""
-            SELECT classification, root_cause, recommendation, build_id
+            SELECT classification, root_cause, fix_recommendation as recommendation, build_id
             FROM failure_analysis
             WHERE id = %s
         """, (analysis_id,))
@@ -1802,7 +2559,7 @@ def get_approved_analyses():
                 fa.build_id,
                 fa.classification,
                 fa.root_cause,
-                fa.recommendation,
+                fa.fix_recommendation as recommendation,
                 fa.confidence_score,
                 fa.severity,
                 fa.analyzed_at,
@@ -2394,6 +3151,954 @@ def health_check():
         'service': 'dashboard-api-full',
         'timestamp': datetime.utcnow().isoformat()
     })
+
+# ============================================================================
+# RAG APPROVAL HITL ENDPOINTS (Human-in-the-Loop for Non-Code Errors)
+# ============================================================================
+
+# Database schema for RAG approval queue
+RAG_APPROVAL_SCHEMA = """
+CREATE TABLE IF NOT EXISTS rag_approval_queue (
+    id SERIAL PRIMARY KEY,
+    build_id VARCHAR(255) NOT NULL,
+    job_name VARCHAR(255),
+    error_category VARCHAR(100) NOT NULL,
+    original_category VARCHAR(100),
+    rag_suggestion TEXT,
+    rag_confidence DECIMAL(3,2),
+    similar_cases_count INTEGER DEFAULT 0,
+    similar_case_ids TEXT,
+    review_status VARCHAR(20) DEFAULT 'pending',
+    reviewed_by VARCHAR(100),
+    reviewed_at TIMESTAMP,
+    review_feedback TEXT,
+    escalated_to_ai BOOLEAN DEFAULT FALSE,
+    ai_analysis_id INTEGER,
+    trigger_type VARCHAR(50) DEFAULT 'MANUAL',
+    triggered_by VARCHAR(100),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+CREATE INDEX IF NOT EXISTS idx_rag_approval_status ON rag_approval_queue(review_status);
+CREATE INDEX IF NOT EXISTS idx_rag_approval_build ON rag_approval_queue(build_id);
+-- Add columns if table exists (for migration)
+ALTER TABLE rag_approval_queue ADD COLUMN IF NOT EXISTS original_category VARCHAR(100);
+ALTER TABLE rag_approval_queue ADD COLUMN IF NOT EXISTS trigger_type VARCHAR(50) DEFAULT 'MANUAL';
+ALTER TABLE rag_approval_queue ADD COLUMN IF NOT EXISTS triggered_by VARCHAR(100);
+"""
+
+
+@app.route('/api/rag/pending', methods=['GET'])
+def get_rag_pending():
+    """Get pending RAG approvals for human review"""
+    try:
+        limit = int(request.args.get('limit', 50))
+        category = request.args.get('category')
+
+        conn = get_postgres_connection()
+        if not conn:
+            return jsonify({'success': False, 'error': 'Database connection failed'}), 500
+
+        cursor = conn.cursor(cursor_factory=RealDictCursor)
+
+        query = """
+            SELECT id, build_id, job_name, error_category, rag_suggestion,
+                   rag_confidence, similar_cases_count, review_status, created_at,
+                   trigger_type, triggered_by,
+                   EXTRACT(EPOCH FROM (NOW() - created_at))/3600 as hours_waiting
+            FROM rag_approval_queue
+            WHERE review_status = 'pending'
+        """
+        params = []
+
+        if category:
+            query += " AND error_category = %s"
+            params.append(category)
+
+        query += " ORDER BY created_at ASC LIMIT %s"
+        params.append(limit)
+
+        cursor.execute(query, params)
+        pending = cursor.fetchall()
+
+        # Get stats
+        cursor.execute("""
+            SELECT
+                COUNT(*) FILTER (WHERE review_status = 'pending') as pending,
+                COUNT(*) FILTER (WHERE review_status = 'approved') as approved,
+                COUNT(*) FILTER (WHERE review_status = 'rejected') as rejected,
+                COUNT(*) FILTER (WHERE review_status = 'escalated') as escalated
+            FROM rag_approval_queue
+        """)
+        stats = cursor.fetchone()
+
+        cursor.close()
+        conn.close()
+
+        for item in pending:
+            if item.get('created_at'):
+                item['created_at'] = item['created_at'].isoformat()
+            if item.get('hours_waiting'):
+                item['hours_waiting'] = round(float(item['hours_waiting']), 1)
+
+        return jsonify({
+            'success': True,
+            'count': len(pending),
+            'stats': dict(stats) if stats else {},
+            'pending': [dict(p) for p in pending]
+        }), 200
+
+    except Exception as e:
+        logger.error(f"Error getting pending approvals: {str(e)}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/rag/approve', methods=['POST'])
+def approve_rag():
+    """
+    Approve a RAG suggestion - CATEGORY-BASED flow:
+
+    - CODE_ERROR: Human approves → AI Deep Analysis starts
+      (Claude analyzes XML reports, debug logs, console output to find exact error line in code)
+    - Non-code errors (ENV_CONFIG, NETWORK_ERROR, INFRA_ERROR):
+      Just mark resolved - RAG already provided the fix, no AI analysis needed
+
+    Supports category change: If new_category is provided, use that for flow decision
+    """
+    try:
+        data = request.get_json()
+        approval_id = data.get('approval_id')
+        reviewed_by = data.get('reviewed_by', 'anonymous')
+        feedback = data.get('feedback', '')
+        new_category = data.get('new_category')  # Optional: allows human to change category
+
+        if not approval_id:
+            return jsonify({'success': False, 'error': 'approval_id required'}), 400
+
+        conn = get_postgres_connection()
+        cursor = conn.cursor(cursor_factory=RealDictCursor)
+
+        # Get the approval record first
+        cursor.execute("""
+            SELECT id, build_id, error_category, rag_suggestion
+            FROM rag_approval_queue
+            WHERE id = %s AND review_status = 'pending'
+        """, (approval_id,))
+        approval = cursor.fetchone()
+
+        if not approval:
+            cursor.close()
+            conn.close()
+            return jsonify({'success': False, 'error': 'Approval not found or already processed'}), 404
+
+        build_id = approval['build_id']
+        original_category = approval['error_category']
+
+        # Use new_category if provided (human override), otherwise use original
+        category_changed = new_category and new_category != original_category
+        effective_category = new_category if category_changed else original_category
+
+        if category_changed:
+            logger.info(f"📝 Category changed by human: {original_category} → {effective_category} (build: {build_id})")
+
+        # CATEGORY-BASED FLOW DECISION (uses effective_category)
+        ai_analysis_id = None
+        ai_triggered = False
+
+        # Only trigger AI analysis for CODE_ERROR category
+        # (needs to analyze XML reports, debug logs, console to find exact code line)
+        if effective_category == 'CODE_ERROR':
+            try:
+                trigger_url = os.getenv('MANUAL_TRIGGER_URL', 'http://ddn-manual-trigger:5004')
+                trigger_response = requests.post(
+                    f"{trigger_url}/api/trigger-analysis",
+                    json={
+                        "build_id": build_id,
+                        "triggered_by_user": reviewed_by,
+                        "reason": f"CODE_ERROR approved - AI to analyze XML reports, console logs, find exact error line: {feedback}",
+                        "trigger_source": "rag_code_error_approval"
+                    },
+                    timeout=120
+                )
+                trigger_response.raise_for_status()
+                trigger_result = trigger_response.json()
+                ai_analysis_id = trigger_result.get('analysis_result', {}).get('storage_id')
+                ai_triggered = True
+                logger.info(f"🤖 AI DEEP ANALYSIS triggered for CODE_ERROR (build: {build_id}, analysis_id: {ai_analysis_id})")
+            except Exception as e:
+                logger.error(f"AI trigger failed for CODE_ERROR: {e}")
+        else:
+            # Non-code errors: RAG already provided the solution, just mark resolved
+            logger.info(f"✅ Non-code error ({effective_category}) approved - RAG solution accepted, NO AI analysis needed")
+
+        # Update approval status (including category if changed)
+        if category_changed:
+            cursor.execute("""
+                UPDATE rag_approval_queue
+                SET review_status = 'approved', reviewed_by = %s,
+                    reviewed_at = NOW(), review_feedback = %s,
+                    ai_analysis_id = %s, error_category = %s,
+                    original_category = %s, updated_at = NOW()
+                WHERE id = %s
+                RETURNING id, build_id, error_category
+            """, (reviewed_by, feedback, ai_analysis_id, effective_category, original_category, approval_id))
+        else:
+            cursor.execute("""
+                UPDATE rag_approval_queue
+                SET review_status = 'approved', reviewed_by = %s,
+                    reviewed_at = NOW(), review_feedback = %s,
+                    ai_analysis_id = %s, updated_at = NOW()
+                WHERE id = %s
+                RETURNING id, build_id, error_category
+            """, (reviewed_by, feedback, ai_analysis_id, approval_id))
+
+        result = cursor.fetchone()
+        conn.commit()
+        cursor.close()
+        conn.close()
+
+        # Response message based on category
+        if effective_category == 'CODE_ERROR':
+            message = 'CODE_ERROR approved → AI deep analysis triggered (analyzing XML, console, code)'
+        else:
+            message = f'{effective_category} approved → RAG solution accepted (no AI analysis needed)'
+
+        if category_changed:
+            message = f'Category changed ({original_category} → {effective_category}). ' + message
+
+        logger.info(f"✅ RAG approved: {result['build_id']} by {reviewed_by} | Category: {effective_category} | Changed: {category_changed} | AI: {ai_triggered}")
+        return jsonify({
+            'success': True,
+            'message': message,
+            'approval_id': result['id'],
+            'build_id': result['build_id'],
+            'error_category': effective_category,
+            'original_category': original_category if category_changed else None,
+            'category_changed': category_changed,
+            'ai_analysis_id': ai_analysis_id,
+            'ai_triggered': ai_triggered
+        }), 200
+
+    except Exception as e:
+        logger.error(f"Error approving RAG: {str(e)}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/rag/reject', methods=['POST'])
+def reject_rag():
+    """Reject a RAG suggestion with feedback"""
+    try:
+        data = request.get_json()
+        approval_id = data.get('approval_id')
+        reviewed_by = data.get('reviewed_by', 'anonymous')
+        feedback = data.get('feedback', '')
+        correct_category = data.get('correct_category')
+
+        if not approval_id:
+            return jsonify({'success': False, 'error': 'approval_id required'}), 400
+
+        full_feedback = f"{feedback} [Correct: {correct_category}]" if correct_category else feedback
+
+        conn = get_postgres_connection()
+        cursor = conn.cursor(cursor_factory=RealDictCursor)
+
+        cursor.execute("""
+            UPDATE rag_approval_queue
+            SET review_status = 'rejected', reviewed_by = %s,
+                reviewed_at = NOW(), review_feedback = %s, updated_at = NOW()
+            WHERE id = %s AND review_status = 'pending'
+            RETURNING id, build_id
+        """, (reviewed_by, full_feedback, approval_id))
+
+        result = cursor.fetchone()
+        if not result:
+            cursor.close()
+            conn.close()
+            return jsonify({'success': False, 'error': 'Approval not found or already processed'}), 404
+
+        conn.commit()
+        cursor.close()
+        conn.close()
+
+        logger.info(f"❌ RAG rejected for build {result['build_id']} by {reviewed_by}")
+        return jsonify({
+            'success': True,
+            'message': 'RAG suggestion rejected',
+            'approval_id': result['id'],
+            'build_id': result['build_id']
+        }), 200
+
+    except Exception as e:
+        logger.error(f"Error rejecting RAG: {str(e)}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/rag/escalate', methods=['POST'])
+def escalate_rag():
+    """Escalate to AI for deeper analysis"""
+    try:
+        data = request.get_json()
+        approval_id = data.get('approval_id')
+        reviewed_by = data.get('reviewed_by', 'anonymous')
+        reason = data.get('reason', 'Escalated for deeper AI analysis')
+
+        if not approval_id:
+            return jsonify({'success': False, 'error': 'approval_id required'}), 400
+
+        conn = get_postgres_connection()
+        cursor = conn.cursor(cursor_factory=RealDictCursor)
+
+        cursor.execute("""
+            SELECT id, build_id FROM rag_approval_queue
+            WHERE id = %s AND review_status = 'pending'
+        """, (approval_id,))
+        approval = cursor.fetchone()
+
+        if not approval:
+            cursor.close()
+            conn.close()
+            return jsonify({'success': False, 'error': 'Approval not found or already processed'}), 404
+
+        build_id = approval['build_id']
+
+        # Trigger AI analysis
+        try:
+            trigger_url = os.getenv('MANUAL_TRIGGER_URL', 'http://ddn-manual-trigger:5004')
+            trigger_response = requests.post(
+                f"{trigger_url}/api/trigger-analysis",
+                json={
+                    "build_id": build_id,
+                    "triggered_by_user": reviewed_by,
+                    "reason": f"Escalated from RAG: {reason}",
+                    "trigger_source": "rag_escalation"
+                },
+                timeout=120
+            )
+            trigger_response.raise_for_status()
+            trigger_result = trigger_response.json()
+            ai_analysis_id = trigger_result.get('analysis_result', {}).get('storage_id')
+        except Exception as e:
+            logger.error(f"AI trigger failed: {e}")
+            cursor.close()
+            conn.close()
+            return jsonify({'success': False, 'error': f'AI analysis failed: {str(e)}'}), 500
+
+        cursor.execute("""
+            UPDATE rag_approval_queue
+            SET review_status = 'escalated', reviewed_by = %s, reviewed_at = NOW(),
+                review_feedback = %s, escalated_to_ai = TRUE, ai_analysis_id = %s, updated_at = NOW()
+            WHERE id = %s
+        """, (reviewed_by, reason, ai_analysis_id, approval_id))
+
+        conn.commit()
+        cursor.close()
+        conn.close()
+
+        logger.info(f"🔄 RAG escalated to AI for build {build_id}")
+        return jsonify({
+            'success': True,
+            'message': 'Escalated to AI analysis',
+            'approval_id': approval_id,
+            'build_id': build_id,
+            'ai_analysis_id': ai_analysis_id
+        }), 200
+
+    except Exception as e:
+        logger.error(f"Error escalating: {str(e)}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/rag/stats', methods=['GET'])
+def get_rag_stats():
+    """Get RAG approval statistics"""
+    try:
+        conn = get_postgres_connection()
+        cursor = conn.cursor(cursor_factory=RealDictCursor)
+
+        cursor.execute("""
+            SELECT
+                COUNT(*) as total,
+                COUNT(*) FILTER (WHERE review_status = 'pending') as pending,
+                COUNT(*) FILTER (WHERE review_status = 'approved') as approved,
+                COUNT(*) FILTER (WHERE review_status = 'rejected') as rejected,
+                COUNT(*) FILTER (WHERE review_status = 'escalated') as escalated,
+                ROUND(AVG(rag_confidence)::numeric, 2) as avg_confidence
+            FROM rag_approval_queue
+        """)
+        overall = cursor.fetchone()
+
+        cursor.execute("""
+            SELECT error_category, COUNT(*) as total,
+                   COUNT(*) FILTER (WHERE review_status = 'approved') as approved,
+                   ROUND(100.0 * COUNT(*) FILTER (WHERE review_status = 'approved') / NULLIF(COUNT(*), 0), 1) as approval_rate
+            FROM rag_approval_queue GROUP BY error_category ORDER BY total DESC
+        """)
+        by_category = cursor.fetchall()
+
+        cursor.close()
+        conn.close()
+
+        return jsonify({
+            'success': True,
+            'overall': dict(overall) if overall else {},
+            'by_category': [dict(c) for c in by_category]
+        }), 200
+
+    except Exception as e:
+        logger.error(f"Error getting stats: {str(e)}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/rag/history', methods=['GET'])
+def get_rag_history():
+    """Get RAG approval history (approved, rejected, escalated items)"""
+    try:
+        limit = int(request.args.get('limit', 50))
+        status_filter = request.args.get('status')  # approved, rejected, escalated
+        category = request.args.get('category')
+
+        conn = get_postgres_connection()
+        cursor = conn.cursor(cursor_factory=RealDictCursor)
+
+        query = """
+            SELECT id, build_id, job_name, error_category, original_category,
+                   rag_suggestion, rag_confidence, review_status, reviewed_by,
+                   reviewed_at, review_feedback, ai_analysis_id, trigger_type,
+                   triggered_by, created_at
+            FROM rag_approval_queue
+            WHERE review_status != 'pending'
+        """
+        params = []
+
+        if status_filter:
+            query += " AND review_status = %s"
+            params.append(status_filter)
+
+        if category:
+            query += " AND error_category = %s"
+            params.append(category)
+
+        query += " ORDER BY reviewed_at DESC NULLS LAST, created_at DESC LIMIT %s"
+        params.append(limit)
+
+        cursor.execute(query, params)
+        history = cursor.fetchall()
+
+        cursor.close()
+        conn.close()
+
+        # Format dates
+        for item in history:
+            if item.get('created_at'):
+                item['created_at'] = item['created_at'].isoformat()
+            if item.get('reviewed_at'):
+                item['reviewed_at'] = item['reviewed_at'].isoformat()
+            # Determine if category was changed
+            item['category_changed'] = bool(item.get('original_category') and item['original_category'] != item['error_category'])
+
+        return jsonify({
+            'success': True,
+            'count': len(history),
+            'history': history
+        }), 200
+
+    except Exception as e:
+        logger.error(f"Error getting history: {str(e)}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/rag/add', methods=['POST'])
+def add_to_rag_queue():
+    """Add a RAG result to approval queue (called when non-code error detected)"""
+    try:
+        data = request.get_json()
+        build_id = data.get('build_id')
+        if not build_id:
+            return jsonify({'success': False, 'error': 'build_id required'}), 400
+
+        conn = get_postgres_connection()
+        cursor = conn.cursor(cursor_factory=RealDictCursor)
+
+        cursor.execute("""
+            INSERT INTO rag_approval_queue (
+                build_id, job_name, error_category, rag_suggestion,
+                rag_confidence, similar_cases_count, similar_case_ids,
+                trigger_type, triggered_by, review_status
+            ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, 'pending')
+            RETURNING id
+        """, (
+            build_id,
+            data.get('job_name', ''),
+            data.get('error_category', 'UNKNOWN'),
+            data.get('rag_suggestion', ''),
+            float(data.get('rag_confidence', 0)),
+            int(data.get('similar_cases_count', 0)),
+            str(data.get('similar_case_ids', [])),
+            data.get('trigger_type', 'MANUAL'),
+            data.get('triggered_by', 'system')
+        ))
+
+        result = cursor.fetchone()
+        conn.commit()
+        cursor.close()
+        conn.close()
+
+        logger.info(f"📋 Added build {build_id} to RAG queue (ID: {result['id']}, type: {data.get('trigger_type', 'MANUAL')})")
+        return jsonify({
+            'success': True,
+            'approval_id': result['id'],
+            'build_id': build_id,
+            'trigger_type': data.get('trigger_type', 'MANUAL')
+        }), 201
+
+    except Exception as e:
+        logger.error(f"Error adding to queue: {str(e)}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+# ============================================================================
+# AI CHATBOT API
+# ============================================================================
+
+# OpenAI client for chat
+try:
+    from openai import OpenAI
+    openai_client = OpenAI(api_key=os.getenv('OPENAI_API_KEY'))
+    logger.info("✓ OpenAI client initialized")
+except Exception as e:
+    openai_client = None
+    logger.warning(f"⚠ OpenAI client not available: {e}")
+
+
+def get_system_context():
+    """Get current system stats for AI context"""
+    try:
+        conn = get_postgres_connection()
+        if not conn:
+            return {}
+
+        cursor = conn.cursor(cursor_factory=RealDictCursor)
+
+        # Get failure stats
+        cursor.execute("""
+            SELECT
+                COUNT(*) as total_failures,
+                COUNT(CASE WHEN analyzed_at IS NOT NULL THEN 1 END) as analyzed,
+                COUNT(CASE WHEN DATE(created_at) = CURRENT_DATE THEN 1 END) as today_failures,
+                AVG(confidence_score) as avg_confidence
+            FROM failure_analysis
+            WHERE created_at > NOW() - INTERVAL '7 days'
+        """)
+        stats = cursor.fetchone()
+
+        # Get recent failures
+        cursor.execute("""
+            SELECT build_id, classification, confidence_score, created_at
+            FROM failure_analysis
+            WHERE created_at > NOW() - INTERVAL '24 hours'
+            ORDER BY created_at DESC
+            LIMIT 5
+        """)
+        recent = cursor.fetchall()
+
+        # Get acceptance stats
+        cursor.execute("""
+            SELECT
+                COUNT(CASE WHEN validation_status = 'accepted' THEN 1 END) as accepted,
+                COUNT(CASE WHEN validation_status = 'rejected' THEN 1 END) as rejected,
+                COUNT(*) as total
+            FROM acceptance_tracking
+            WHERE validated_at > NOW() - INTERVAL '7 days'
+        """)
+        acceptance = cursor.fetchone()
+
+        cursor.close()
+        conn.close()
+
+        acceptance_rate = 0
+        if acceptance and acceptance['total'] > 0:
+            acceptance_rate = round((acceptance['accepted'] / acceptance['total']) * 100, 1)
+
+        return {
+            'total_failures_7d': stats['total_failures'] if stats else 0,
+            'analyzed_count': stats['analyzed'] if stats else 0,
+            'today_failures': stats['today_failures'] if stats else 0,
+            'avg_confidence': round(float(stats['avg_confidence'] or 0) * 100, 1) if stats else 0,
+            'acceptance_rate': acceptance_rate,
+            'recent_failures': [dict(r) for r in recent] if recent else []
+        }
+    except Exception as e:
+        logger.error(f"Error getting system context: {e}")
+        return {}
+
+
+@app.route('/api/chat', methods=['POST'])
+def chat_endpoint():
+    """
+    AI Chatbot endpoint for natural language queries
+
+    Request body:
+    {
+        "message": "Show me recent failures",
+        "conversation_history": [...]  // Optional
+    }
+
+    Response:
+    {
+        "success": true,
+        "response": "Here are the recent failures...",
+        "data": {...}  // Optional structured data
+    }
+    """
+    try:
+        data = request.get_json()
+
+        if not data or 'message' not in data:
+            return jsonify({'success': False, 'error': 'Message required'}), 400
+
+        user_message = data['message']
+        conversation_history = data.get('conversation_history', [])
+
+        # Get current system context
+        context = get_system_context()
+
+        # Build system prompt with real data
+        system_prompt = f"""You are an AI Analysis Assistant for the DDN Test Failure Analysis Dashboard.
+You help users understand test failures, generate reports, and get insights.
+
+CURRENT SYSTEM STATUS:
+- Failures in last 7 days: {context.get('total_failures_7d', 0)}
+- Failures today: {context.get('today_failures', 0)}
+- AI analyzed: {context.get('analyzed_count', 0)}
+- Average AI confidence: {context.get('avg_confidence', 0)}%
+- AI acceptance rate: {context.get('acceptance_rate', 0)}%
+
+RECENT FAILURES (last 24h):
+{chr(10).join([f"- Build {f.get('build_id')}: {f.get('classification')} ({round(float(f.get('confidence_score', 0)) * 100)}% confidence)" for f in context.get('recent_failures', [])[:5]])}
+
+CAPABILITIES:
+- Show failure statistics and trends
+- Explain AI analysis results
+- Provide recommendations for fixing errors
+- Generate reports (mention this is available)
+- Create Jira bugs from failures (mention this is available)
+- Search for similar past errors
+
+When answering:
+1. Use the real data provided above
+2. Format responses with markdown for readability
+3. Be concise but informative
+4. Suggest relevant follow-up actions
+5. If asked for reports, mention PDF/Excel export is available in the UI"""
+
+        if not openai_client:
+            # Fallback response if OpenAI not available
+            return jsonify({
+                'success': True,
+                'response': f"""Based on current system data:
+
+**System Status:**
+- Failures (7 days): {context.get('total_failures_7d', 0)}
+- Today's failures: {context.get('today_failures', 0)}
+- AI Acceptance Rate: {context.get('acceptance_rate', 0)}%
+
+I can help you with failure analysis, reports, and recommendations.
+Note: Full AI chat requires OpenAI API configuration.""",
+                'data': context
+            }), 200
+
+        # Build messages for OpenAI
+        messages = [{"role": "system", "content": system_prompt}]
+
+        # Add conversation history (last 10 messages)
+        for msg in conversation_history[-10:]:
+            messages.append({
+                "role": msg.get('role', 'user'),
+                "content": msg.get('content', '')
+            })
+
+        # Add current message
+        messages.append({"role": "user", "content": user_message})
+
+        # Call OpenAI
+        response = openai_client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=messages,
+            max_tokens=1000,
+            temperature=0.7
+        )
+
+        ai_response = response.choices[0].message.content
+
+        return jsonify({
+            'success': True,
+            'response': ai_response,
+            'data': context,
+            'model': 'gpt-4o-mini'
+        }), 200
+
+    except Exception as e:
+        logger.error(f"Chat error: {str(e)}")
+        return jsonify({
+            'success': False,
+            'error': str(e),
+            'response': "I'm having trouble processing your request. Please try again."
+        }), 500
+
+
+@app.route('/api/chat/query', methods=['POST'])
+def chat_query_endpoint():
+    """
+    Execute specific data queries from chat
+
+    Request body:
+    {
+        "query_type": "failures" | "stats" | "patterns" | "acceptance",
+        "params": {...}
+    }
+    """
+    try:
+        data = request.get_json()
+        query_type = data.get('query_type', 'stats')
+        params = data.get('params', {})
+
+        conn = get_postgres_connection()
+        if not conn:
+            return jsonify({'success': False, 'error': 'Database connection failed'}), 500
+
+        cursor = conn.cursor(cursor_factory=RealDictCursor)
+        result = {}
+
+        if query_type == 'failures':
+            limit = params.get('limit', 10)
+            cursor.execute("""
+                SELECT build_id, job_name, classification, root_cause,
+                       confidence_score, severity, created_at
+                FROM failure_analysis
+                ORDER BY created_at DESC
+                LIMIT %s
+            """, (limit,))
+            result['failures'] = [dict(r) for r in cursor.fetchall()]
+
+        elif query_type == 'patterns':
+            cursor.execute("""
+                SELECT classification, COUNT(*) as count,
+                       AVG(confidence_score) as avg_confidence
+                FROM failure_analysis
+                WHERE created_at > NOW() - INTERVAL '30 days'
+                GROUP BY classification
+                ORDER BY count DESC
+                LIMIT 10
+            """)
+            result['patterns'] = [dict(r) for r in cursor.fetchall()]
+
+        elif query_type == 'acceptance':
+            cursor.execute("""
+                SELECT
+                    DATE(validated_at) as date,
+                    COUNT(CASE WHEN validation_status = 'accepted' THEN 1 END) as accepted,
+                    COUNT(CASE WHEN validation_status = 'rejected' THEN 1 END) as rejected
+                FROM acceptance_tracking
+                WHERE validated_at > NOW() - INTERVAL '30 days'
+                GROUP BY DATE(validated_at)
+                ORDER BY date DESC
+            """)
+            result['acceptance_trend'] = [dict(r) for r in cursor.fetchall()]
+
+        else:  # stats
+            result = get_system_context()
+
+        cursor.close()
+        conn.close()
+
+        return jsonify({'success': True, 'data': result}), 200
+
+    except Exception as e:
+        logger.error(f"Chat query error: {str(e)}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+# ============================================================================
+# AGENTIC WORKFLOWS API (Python-based Workflows)
+# ============================================================================
+
+import json
+import glob as glob_module
+
+WORKFLOWS_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'workflows')
+
+@app.route('/api/workflows', methods=['GET'])
+def get_workflows():
+    """
+    Get all Python-based agentic workflows
+
+    Returns workflow definitions from JSON files with execution status
+    """
+    try:
+        workflows = []
+        workflow_files = glob_module.glob(os.path.join(WORKFLOWS_DIR, '*.json'))
+
+        # Also try Docker path
+        if not workflow_files:
+            workflow_files = glob_module.glob('/app/workflows/*.json')
+
+        for file_path in workflow_files:
+            try:
+                with open(file_path, 'r') as f:
+                    workflow_data = json.load(f)
+
+                # Extract key info from workflow
+                name = workflow_data.get('name', os.path.basename(file_path))
+                version = workflow_data.get('version', '1.0.0')
+                description = workflow_data.get('description', '')
+                nodes = workflow_data.get('nodes', [])
+
+                # Count node types
+                node_count = len(nodes)
+
+                # Determine workflow type from name
+                workflow_type = 'complete'
+                if 'manual' in name.lower():
+                    workflow_type = 'manual_trigger'
+                elif 'refinement' in name.lower():
+                    workflow_type = 'refinement'
+                elif 'auto_fix' in name.lower():
+                    workflow_type = 'auto_fix'
+
+                workflows.append({
+                    'id': os.path.basename(file_path).replace('.json', ''),
+                    'name': name,
+                    'version': version,
+                    'description': description[:200] + '...' if len(description) > 200 else description,
+                    'node_count': node_count,
+                    'type': workflow_type,
+                    'status': 'active',  # All defined workflows are active
+                    'file_path': os.path.basename(file_path),
+                    'updated_at': workflow_data.get('updatedAt', datetime.utcnow().isoformat()),
+                    'tags': [t.get('name', '') for t in workflow_data.get('tags', [])]
+                })
+            except Exception as e:
+                logger.warning(f"Error reading workflow {file_path}: {e}")
+                continue
+
+        # Get execution stats from database
+        conn = get_postgres_connection()
+        execution_stats = {'total': 0, 'successful': 0, 'failed': 0}
+
+        if conn:
+            try:
+                cursor = conn.cursor(cursor_factory=RealDictCursor)
+
+                # Get manual trigger stats as proxy for workflow executions
+                cursor.execute("""
+                    SELECT
+                        COUNT(*) as total,
+                        COUNT(CASE WHEN trigger_successful = true THEN 1 END) as successful,
+                        COUNT(CASE WHEN trigger_successful = false THEN 1 END) as failed
+                    FROM manual_trigger_log
+                    WHERE triggered_at > NOW() - INTERVAL '30 days'
+                """)
+                stats = cursor.fetchone()
+                if stats:
+                    execution_stats = dict(stats)
+
+                cursor.close()
+                conn.close()
+            except Exception as e:
+                logger.warning(f"Error getting workflow stats: {e}")
+
+        return jsonify({
+            'success': True,
+            'count': len(workflows),
+            'workflows': workflows,
+            'execution_stats': execution_stats
+        }), 200
+
+    except Exception as e:
+        logger.error(f"Error getting workflows: {str(e)}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/workflows/<workflow_id>', methods=['GET'])
+def get_workflow_details(workflow_id):
+    """Get detailed workflow definition"""
+    try:
+        # Try local path first
+        file_path = os.path.join(WORKFLOWS_DIR, f'{workflow_id}.json')
+
+        # Try Docker path
+        if not os.path.exists(file_path):
+            file_path = f'/app/workflows/{workflow_id}.json'
+
+        if not os.path.exists(file_path):
+            return jsonify({'success': False, 'error': 'Workflow not found'}), 404
+
+        with open(file_path, 'r') as f:
+            workflow_data = json.load(f)
+
+        return jsonify({
+            'success': True,
+            'workflow': workflow_data
+        }), 200
+
+    except Exception as e:
+        logger.error(f"Error getting workflow details: {str(e)}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/workflows/executions', methods=['GET'])
+def get_workflow_executions():
+    """Get recent workflow executions (from manual trigger log)"""
+    try:
+        limit = int(request.args.get('limit', 20))
+
+        conn = get_postgres_connection()
+        if not conn:
+            return jsonify({'success': False, 'error': 'Database connection failed'}), 500
+
+        cursor = conn.cursor(cursor_factory=RealDictCursor)
+
+        cursor.execute("""
+            SELECT
+                mtl.id,
+                mtl.build_id,
+                mtl.triggered_by_user,
+                mtl.trigger_source,
+                mtl.trigger_successful,
+                mtl.triggered_at,
+                fa.classification as error_category,
+                fa.confidence_score,
+                CASE
+                    WHEN fa.analyzed_at IS NOT NULL THEN 'completed'
+                    WHEN mtl.trigger_successful = false THEN 'failed'
+                    ELSE 'running'
+                END as status
+            FROM manual_trigger_log mtl
+            LEFT JOIN failure_analysis fa ON mtl.analysis_id = fa.id
+            ORDER BY mtl.triggered_at DESC
+            LIMIT %s
+        """, (limit,))
+
+        executions = cursor.fetchall()
+
+        cursor.close()
+        conn.close()
+
+        # Convert datetimes
+        for ex in executions:
+            if ex.get('triggered_at'):
+                ex['triggered_at'] = ex['triggered_at'].isoformat()
+
+        return jsonify({
+            'success': True,
+            'count': len(executions),
+            'executions': [dict(e) for e in executions]
+        }), 200
+
+    except Exception as e:
+        logger.error(f"Error getting workflow executions: {str(e)}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
 
 # ============================================================================
 # INITIALIZATION & STARTUP

@@ -14,9 +14,13 @@ import ErrorIcon from '@mui/icons-material/Error';
 import WarningIcon from '@mui/icons-material/Warning';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import DownloadIcon from '@mui/icons-material/Download';
+import ThumbUpIcon from '@mui/icons-material/ThumbUp';
+import HowToVoteIcon from '@mui/icons-material/HowToVote';
+import Alert from '@mui/material/Alert';
+import Tooltip from '@mui/material/Tooltip';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useColorTheme } from '../theme/ThemeContext';
-import { failuresAPI, monitoringAPI } from '../services/api';
+import { failuresAPI, monitoringAPI, ragApprovalAPI } from '../services/api';
 
 const ERROR_CATEGORIES = [
     { value: '', label: 'All Categories' },
@@ -61,6 +65,21 @@ const FailuresPreview = () => {
     const [category, setCategory] = useState('');
     const [validationStatus, setValidationStatus] = useState('');
 
+    // Determine page mode based on route
+    const isApprovalFlow = location.pathname === '/approval-flow';
+    const isAIRootCause = location.pathname === '/ai-root-cause';
+
+    // Page configuration based on route
+    const pageConfig = {
+        title: isApprovalFlow ? 'AI Analysis Approval' : isAIRootCause ? 'AI Root Cause Analysis' : 'Test Failures',
+        subtitle: isApprovalFlow
+            ? 'CODE_ERROR items from RAG Review - Click eye button to approve AI analysis'
+            : isAIRootCause
+                ? 'All AI analyses with root cause details and fix suggestions'
+                : 'Browse and analyze test failure history with AI insights',
+        icon: isApprovalFlow ? <HowToVoteIcon /> : isAIRootCause ? <SmartToyIcon /> : <ErrorIcon />
+    };
+
     // Real data state
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
@@ -71,24 +90,64 @@ const FailuresPreview = () => {
 
     const fetchFailures = useCallback(async () => {
         try {
-            const params = {
-                limit: rowsPerPage,
-                skip: page * rowsPerPage
-            };
-            if (searchTerm) params.search = searchTerm;
-            if (category) params.category = category;
-            if (validationStatus) params.validation_status = validationStatus;
+            if (isApprovalFlow) {
+                // For Approval Flow, fetch CODE_ERROR items approved in RAG Review
+                const [historyRes, statsRes] = await Promise.all([
+                    ragApprovalAPI.getHistory({ limit: 100 }),
+                    monitoringAPI.getStats()
+                ]);
 
-            const [failuresRes, statsRes] = await Promise.all([
-                failuresAPI.getList(params),
-                monitoringAPI.getStats()
-            ]);
+                // Filter to only CODE_ERROR approved items
+                const approvedCodeErrors = (historyRes?.history || []).filter(item =>
+                    item.error_category === 'CODE_ERROR' &&
+                    item.review_status === 'approved'
+                );
 
-            const failuresData = failuresRes?.data?.failures || failuresRes?.failures || [];
-            setFailures(failuresData);
-            setTotalCount(failuresRes?.data?.total || failuresRes?.total || failuresData.length);
-            setStats(statsRes);
-            setError(null);
+                // Transform to match failures format
+                const transformedData = approvedCodeErrors.map(item => ({
+                    _id: item.id,
+                    id: item.id,
+                    build_id: item.build_id,
+                    job_name: item.job_name,
+                    test_name: item.job_name,
+                    error_category: item.error_category,
+                    classification: item.error_category,
+                    error_message: item.rag_suggestion,
+                    timestamp: item.reviewed_at || item.created_at,
+                    analysis: {
+                        confidence: parseFloat(item.rag_confidence) || 0.85,
+                        classification: item.error_category
+                    },
+                    validation_status: item.ai_analysis_id ? 'analyzed' : 'pending',
+                    ai_analysis_id: item.ai_analysis_id
+                }));
+
+                setFailures(transformedData);
+                setTotalCount(transformedData.length);
+                setStats(statsRes);
+                setError(null);
+            } else {
+                // For other pages, use the regular failures API
+                const params = {
+                    limit: rowsPerPage,
+                    skip: page * rowsPerPage,
+                    analyzed: 'true'
+                };
+                if (searchTerm) params.search = searchTerm;
+                if (category) params.category = category;
+                if (validationStatus) params.validation_status = validationStatus;
+
+                const [failuresRes, statsRes] = await Promise.all([
+                    failuresAPI.getList(params),
+                    monitoringAPI.getStats()
+                ]);
+
+                const failuresData = failuresRes?.data?.failures || failuresRes?.failures || [];
+                setFailures(failuresData);
+                setTotalCount(failuresRes?.data?.total || failuresRes?.total || failuresData.length);
+                setStats(statsRes);
+                setError(null);
+            }
         } catch (err) {
             console.error('Error fetching failures:', err);
             setError(err.message);
@@ -96,7 +155,7 @@ const FailuresPreview = () => {
             setLoading(false);
             setRefreshing(false);
         }
-    }, [page, rowsPerPage, searchTerm, category, validationStatus]);
+    }, [page, rowsPerPage, searchTerm, category, validationStatus, isApprovalFlow]);
 
     useEffect(() => {
         setLoading(true);
@@ -136,10 +195,10 @@ const FailuresPreview = () => {
                     <Box display="flex" justifyContent="space-between" alignItems="center">
                         <Box>
                             <Typography variant="h4" fontWeight="bold" gutterBottom>
-                                Test Failures
+                                {pageConfig.title}
                             </Typography>
                             <Typography variant="subtitle1" sx={{ opacity: 0.9 }}>
-                                Browse and analyze test failure history with AI insights
+                                {pageConfig.subtitle}
                             </Typography>
                         </Box>
                         <Box display="flex" gap={2}>
@@ -165,6 +224,21 @@ const FailuresPreview = () => {
             </Box>
 
             <Container maxWidth="xl">
+                {/* Info Alert for Approval Flow */}
+                {isApprovalFlow && (
+                    <Alert
+                        severity="info"
+                        icon={<HowToVoteIcon />}
+                        sx={{ mb: 3, borderRadius: 3 }}
+                    >
+                        <Typography variant="body2">
+                            <strong>Workflow:</strong> These CODE_ERROR items were approved in RAG Review for AI deep analysis.
+                            Click the <VisibilityIcon sx={{ fontSize: 16, verticalAlign: 'middle', mx: 0.5 }} /> button to view
+                            AI analysis details and approve for PR creation.
+                        </Typography>
+                    </Alert>
+                )}
+
                 {/* Stats Cards */}
                 <Grid container spacing={3} mb={4}>
                     {[
@@ -366,13 +440,30 @@ const FailuresPreview = () => {
                                                     </Typography>
                                                 </TableCell>
                                                 <TableCell align="center">
-                                                    <IconButton
-                                                        size="small"
-                                                        sx={{ color: '#3b82f6' }}
-                                                        onClick={() => navigate(`/failures/${failure._id || failure.id}`)}
-                                                    >
-                                                        <VisibilityIcon fontSize="small" />
-                                                    </IconButton>
+                                                    <Tooltip title={isApprovalFlow ? "View AI Analysis & Approve for PR" : "View Details"}>
+                                                        <IconButton
+                                                            size="small"
+                                                            sx={{
+                                                                color: isApprovalFlow ? '#10b981' : '#3b82f6',
+                                                                bgcolor: isApprovalFlow ? alpha('#10b981', 0.1) : 'transparent',
+                                                                '&:hover': {
+                                                                    bgcolor: isApprovalFlow ? alpha('#10b981', 0.2) : alpha('#3b82f6', 0.1)
+                                                                }
+                                                            }}
+                                                            onClick={() => {
+                                                                if (isApprovalFlow) {
+                                                                    // For approval flow, navigate to Code Healing Pipeline page
+                                                                    navigate('/code-healing');
+                                                                } else {
+                                                                    // Use build_id for navigation
+                                                                    const navId = failure.build_id || failure.buildId || failure._id || failure.id;
+                                                                    navigate(`/failures/${navId}`);
+                                                                }
+                                                            }}
+                                                        >
+                                                            {isApprovalFlow ? <ThumbUpIcon fontSize="small" /> : <VisibilityIcon fontSize="small" />}
+                                                        </IconButton>
+                                                    </Tooltip>
                                                 </TableCell>
                                             </TableRow>
                                         );

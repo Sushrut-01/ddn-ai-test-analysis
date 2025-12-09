@@ -23,6 +23,9 @@ import Users from './pages/UserManagementPreview'
 import Configuration from './pages/ConfigurationPreview'
 import Notifications from './pages/NotificationsCenterPreview'
 import AuditLog from './pages/AuditLogPreview'
+import RAGApproval from './pages/RAGApprovalPreview'
+import AIRootCause from './pages/AIRootCausePreview'
+import CodeHealing from './pages/FailuresPendingPreview'
 
 // Auth Pages
 import LoginPage from './pages/LoginPage'
@@ -78,11 +81,15 @@ function App() {
                   <Route path="/services" element={<Services />} />
 
                   {/* Analysis & Failures */}
-                  <Route path="/failures" element={<Failures />} />
-                  <Route path="/failures/:id" element={<FailureDetails />} />
+                  <Route path="/failures" element={<Dashboard />} /> {/* Redirect to Overview */}
+                  <Route path="/failures/:id" element={<FailureDetails />} /> {/* AI Analysis detail page */}
+                  <Route path="/bulk-trigger" element={<BulkTrigger />} /> {/* Manual Trigger Flow */}
+                  <Route path="/rag-approval" element={<RAGApproval />} /> {/* RAG HITL Review Queue */}
+                  <Route path="/approval-flow" element={<Failures />} /> {/* Approval Flow - CODE_ERROR items approved for AI */}
+                  <Route path="/ai-root-cause" element={<AIRootCause />} /> {/* AI Root Cause Analysis - dedicated page */}
+                  <Route path="/code-healing" element={<CodeHealing />} /> {/* Code Healing Pipeline - PR, Build, Jira flow */}
+                  <Route path="/manual-trigger" element={<ManualTrigger />} /> {/* Trigger Records */}
                   <Route path="/analytics" element={<Analytics />} />
-                  <Route path="/manual-trigger" element={<ManualTrigger />} />
-                  <Route path="/bulk-trigger" element={<BulkTrigger />} />
 
                   {/* Integrations */}
                   <Route path="/jira-bugs" element={<JiraBugs />} />

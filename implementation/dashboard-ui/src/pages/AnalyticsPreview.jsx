@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import {
     Box, Container, Paper, Typography, Grid, ToggleButtonGroup, ToggleButton,
     Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Chip, Avatar,
@@ -17,6 +17,10 @@ import CancelIcon from '@mui/icons-material/Cancel';
 import AutorenewIcon from '@mui/icons-material/Autorenew';
 import InsightsIcon from '@mui/icons-material/Insights';
 import RefreshIcon from '@mui/icons-material/Refresh';
+import ErrorIcon from '@mui/icons-material/Error';
+import PlayArrowIcon from '@mui/icons-material/PlayArrow';
+import BoltIcon from '@mui/icons-material/Bolt';
+import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 import { analyticsAPI, monitoringAPI } from '../services/api';
 
 const MetricCard = ({ title, value, subtitle, icon, color, trend, trendValue }) => (
@@ -54,6 +58,7 @@ const MetricCard = ({ title, value, subtitle, icon, color, trend, trendValue }) 
 
 const AnalyticsPreview = () => {
     const location = useLocation();
+    const navigate = useNavigate();
     const [timeRange, setTimeRange] = useState('30d');
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
@@ -198,6 +203,56 @@ const AnalyticsPreview = () => {
             </Box>
 
             <Container maxWidth="xl">
+                {/* Quick Actions - Navigation to related pages */}
+                <Paper
+                    elevation={0}
+                    sx={{
+                        p: 2,
+                        mb: 3,
+                        borderRadius: 3,
+                        bgcolor: 'white',
+                        boxShadow: '0 2px 12px rgba(0,0,0,0.04)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 2,
+                        flexWrap: 'wrap'
+                    }}
+                >
+                    <Typography variant="subtitle2" color="textSecondary" sx={{ mr: 1 }}>
+                        Quick Actions:
+                    </Typography>
+                    <Button
+                        variant="outlined"
+                        size="small"
+                        startIcon={<ErrorIcon />}
+                        endIcon={<ArrowForwardIcon />}
+                        onClick={() => navigate('/failures')}
+                        sx={{ borderRadius: 2, textTransform: 'none' }}
+                    >
+                        View All Failures
+                    </Button>
+                    <Button
+                        variant="outlined"
+                        size="small"
+                        startIcon={<PlayArrowIcon />}
+                        endIcon={<ArrowForwardIcon />}
+                        onClick={() => navigate('/manual-trigger')}
+                        sx={{ borderRadius: 2, textTransform: 'none' }}
+                    >
+                        Manual Trigger
+                    </Button>
+                    <Button
+                        variant="outlined"
+                        size="small"
+                        startIcon={<BoltIcon />}
+                        endIcon={<ArrowForwardIcon />}
+                        onClick={() => navigate('/bulk-trigger')}
+                        sx={{ borderRadius: 2, textTransform: 'none' }}
+                    >
+                        Bulk Trigger
+                    </Button>
+                </Paper>
+
                 {/* Key Metrics */}
                 <Grid container spacing={3} mb={4}>
                     <Grid item xs={6} md={3}>

@@ -163,6 +163,7 @@ const DashboardPreviewNew = () => {
     const [stats, setStats] = useState(null);
     const [systemStatus, setSystemStatus] = useState(null);
     const [recentFailures, setRecentFailures] = useState([]);
+    const [buildsSummary, setBuildsSummary] = useState(null);
     const [error, setError] = useState(null);
 
     // Fetch data from API
@@ -170,15 +171,20 @@ const DashboardPreviewNew = () => {
         setLoading(true);
         setError(null);
         try {
-            const [statsRes, statusRes, failuresRes] = await Promise.all([
+            const [statsRes, statusRes, failuresRes, buildsRes] = await Promise.all([
                 monitoringAPI.getStats(),
                 monitoringAPI.getSystemStatus(),
-                failuresAPI.getList({ limit: 10 })
+                failuresAPI.getList({ limit: 20, analyzed: true }), // Only get AI analyzed failures
+                monitoringAPI.getBuildsSummary().catch(() => null) // Graceful fallback if not available
             ]);
 
             setStats(statsRes);
             setSystemStatus(statusRes);
-            setRecentFailures(failuresRes?.data?.failures || []);
+            setBuildsSummary(buildsRes);
+            // Filter to only show failures that have AI analysis completed
+            const allFailures = failuresRes?.data?.failures || failuresRes?.failures || [];
+            const analyzedFailures = allFailures.filter(f => f.analysis || f.analyzed === true);
+            setRecentFailures(analyzedFailures.slice(0, 10));
         } catch (err) {
             console.error('Dashboard fetch error:', err);
             setError(err.message);
@@ -246,11 +252,16 @@ const DashboardPreviewNew = () => {
         return `${Math.floor(diff / 86400)} days ago`;
     };
 
-    // Calculate pass rate
+    // Calculate pass rate (test-level metrics)
     const totalFailures = stats?.total_failures || 0;
     const failures24h = stats?.failures_last_24h || 0;
     const analyzed = stats?.total_analyzed || 0;
     const avgConfidence = stats?.avg_confidence ? parseFloat(stats.avg_confidence) * 100 : 0;
+
+    // Build-level metrics (from builds summary API)
+    const totalBuilds = buildsSummary?.totals?.total_builds || 0;
+    const failedBuilds = buildsSummary?.totals?.failed_build_count || 0;
+    const buildSuccessRate = buildsSummary?.totals?.build_success_rate || 0;
 
     return (
         <Box sx={{ minHeight: '100vh', bgcolor: theme.background, pb: 4 }}>
@@ -352,7 +363,65 @@ const DashboardPreviewNew = () => {
                     <ServiceControlModern />
                 </Paper>
 
-                {/* Stats Grid */}
+                {/* Build-Level Metrics Row */}
+                <Typography variant="subtitle2" fontWeight="bold" sx={{ mb: 1.5, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                    Build Metrics (Jenkins Pipeline)
+                </Typography>
+                <Grid container spacing={3} mb={3}>
+                    <Grid item xs={12} sm={6} md={3}>
+                        <StatCard
+                            title="Total Builds"
+                            value={totalBuilds.toLocaleString()}
+                            trend="up"
+                            trendValue="All time"
+                            icon={<StorageIcon sx={{ fontSize: 28 }} />}
+                            color="#3b82f6"
+                            subtitle="Jenkins builds tracked"
+                            loading={loading}
+                        />
+                    </Grid>
+                    <Grid item xs={12} sm={6} md={3}>
+                        <StatCard
+                            title="Failed Builds"
+                            value={failedBuilds.toLocaleString()}
+                            trend={failedBuilds > 0 ? "down" : "up"}
+                            trendValue={`${buildSuccessRate.toFixed(0)}% success`}
+                            icon={<WarningIcon sx={{ fontSize: 28 }} />}
+                            color="#f59e0b"
+                            subtitle="Pipeline failures"
+                            loading={loading}
+                        />
+                    </Grid>
+                    <Grid item xs={12} sm={6} md={3}>
+                        <StatCard
+                            title="Build Success Rate"
+                            value={`${buildSuccessRate.toFixed(1)}%`}
+                            trend={buildSuccessRate >= 80 ? "up" : "down"}
+                            trendValue={buildSuccessRate >= 80 ? "Healthy" : "Needs attention"}
+                            icon={<CheckCircleIcon sx={{ fontSize: 28 }} />}
+                            color="#10b981"
+                            subtitle="Pipeline success"
+                            loading={loading}
+                        />
+                    </Grid>
+                    <Grid item xs={12} sm={6} md={3}>
+                        <StatCard
+                            title="Avg Confidence"
+                            value={`${avgConfidence.toFixed(0)}%`}
+                            trend="up"
+                            trendValue="+3.5%"
+                            icon={<SpeedIcon sx={{ fontSize: 28 }} />}
+                            color="#8b5cf6"
+                            subtitle="AI confidence score"
+                            loading={loading}
+                        />
+                    </Grid>
+                </Grid>
+
+                {/* Test-Level Metrics Row */}
+                <Typography variant="subtitle2" fontWeight="bold" sx={{ mb: 1.5, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                    Test Metrics (Individual Test Cases)
+                </Typography>
                 <Grid container spacing={3} mb={4}>
                     <Grid item xs={12} sm={6} md={3}>
                         <StatCard
@@ -362,7 +431,7 @@ const DashboardPreviewNew = () => {
                             trendValue={`${failures24h} today`}
                             icon={<ErrorIcon sx={{ fontSize: 28 }} />}
                             color="#ef4444"
-                            subtitle="Across all builds"
+                            subtitle="Test case failures"
                             loading={loading}
                         />
                     </Grid>
@@ -380,25 +449,25 @@ const DashboardPreviewNew = () => {
                     </Grid>
                     <Grid item xs={12} sm={6} md={3}>
                         <StatCard
-                            title="7-Day Failures"
+                            title="7-Day Test Failures"
                             value={(stats?.failures_last_7d || 0).toLocaleString()}
                             trend="down"
                             trendValue="-12%"
-                            icon={<CheckCircleIcon sx={{ fontSize: 28 }} />}
+                            icon={<TrendingDownIcon sx={{ fontSize: 28 }} />}
                             color="#10b981"
-                            subtitle="Last 7 days"
+                            subtitle="Test failures (7d)"
                             loading={loading}
                         />
                     </Grid>
                     <Grid item xs={12} sm={6} md={3}>
                         <StatCard
-                            title="Avg Confidence"
-                            value={`${avgConfidence.toFixed(0)}%`}
-                            trend="up"
-                            trendValue="+3.5%"
-                            icon={<SpeedIcon sx={{ fontSize: 28 }} />}
-                            color="#8b5cf6"
-                            subtitle="AI confidence score"
+                            title="24h Test Failures"
+                            value={failures24h.toLocaleString()}
+                            trend={failures24h > 10 ? "down" : "up"}
+                            trendValue={failures24h > 10 ? "High volume" : "Normal"}
+                            icon={<AccessTimeIcon sx={{ fontSize: 28 }} />}
+                            color="#f97316"
+                            subtitle="Last 24 hours"
                             loading={loading}
                         />
                     </Grid>
@@ -436,17 +505,25 @@ const DashboardPreviewNew = () => {
                 >
                     <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
                         <Box>
-                            <Typography variant="h6" fontWeight="bold" color="#1e293b">Recent Test Failures</Typography>
-                            <Typography variant="caption" color="textSecondary">Latest test failures from MongoDB ({recentFailures.length} shown)</Typography>
+                            <Typography variant="h6" fontWeight="bold" color="#1e293b">
+                                <CheckCircleIcon sx={{ color: '#10b981', mr: 1, verticalAlign: 'middle' }} />
+                                AI Analysis Completed
+                            </Typography>
+                            <Typography variant="caption" color="textSecondary">
+                                Failures with completed AI analysis - click View to approve ({recentFailures.length} shown)
+                            </Typography>
                         </Box>
-                        <Button
-                            variant="outlined"
-                            endIcon={<ArrowForwardIcon />}
-                            onClick={() => navigate('/failures')}
-                            sx={{ borderRadius: 2 }}
-                        >
-                            View All
-                        </Button>
+                        <Box display="flex" gap={2}>
+                            <Button
+                                variant="outlined"
+                                color="warning"
+                                endIcon={<ArrowForwardIcon />}
+                                onClick={() => navigate('/bulk-trigger')}
+                                sx={{ borderRadius: 2 }}
+                            >
+                                View Pending
+                            </Button>
+                        </Box>
                     </Box>
 
                     <TableContainer>
@@ -455,10 +532,10 @@ const DashboardPreviewNew = () => {
                                 <TableRow sx={{ '& th': { fontWeight: 600, color: '#64748b', borderBottom: '2px solid #f1f5f9' } }}>
                                     <TableCell>Build ID</TableCell>
                                     <TableCell>Test Name</TableCell>
-                                    <TableCell>Suite</TableCell>
-                                    <TableCell align="center">Status</TableCell>
-                                    <TableCell>Error</TableCell>
-                                    <TableCell>Time</TableCell>
+                                    <TableCell align="center">Classification</TableCell>
+                                    <TableCell align="center">Confidence</TableCell>
+                                    <TableCell align="center">Validation</TableCell>
+                                    <TableCell>Analyzed</TableCell>
                                     <TableCell align="center">Actions</TableCell>
                                 </TableRow>
                             </TableHead>
@@ -477,69 +554,137 @@ const DashboardPreviewNew = () => {
                                     ))
                                 ) : recentFailures.length === 0 ? (
                                     <TableRow>
-                                        <TableCell colSpan={7} align="center">
-                                            <Typography color="textSecondary">No recent failures found</Typography>
+                                        <TableCell colSpan={7} align="center" sx={{ py: 6 }}>
+                                            <SmartToyIcon sx={{ fontSize: 48, color: '#94a3b8', mb: 1 }} />
+                                            <Typography variant="h6" color="textSecondary" gutterBottom>
+                                                No AI Analyses Completed Yet
+                                            </Typography>
+                                            <Typography variant="body2" color="textSecondary" mb={2}>
+                                                Trigger analysis from Manual Trigger or Bulk Trigger page
+                                            </Typography>
+                                            <Button
+                                                variant="contained"
+                                                color="warning"
+                                                onClick={() => navigate('/bulk-trigger')}
+                                                endIcon={<ArrowForwardIcon />}
+                                            >
+                                                View Pending Failures
+                                            </Button>
                                         </TableCell>
                                     </TableRow>
                                 ) : (
-                                    recentFailures.map((failure, index) => (
-                                        <TableRow
-                                            key={failure._id || index}
-                                            sx={{
-                                                '&:hover': { bgcolor: '#f8fafc' },
-                                                '& td': { borderBottom: '1px solid #f1f5f9' }
-                                            }}
-                                        >
-                                            <TableCell>
-                                                <Typography variant="body2" fontFamily="monospace" fontWeight={600} color="#3b82f6">
-                                                    {failure.build_id}
-                                                </Typography>
-                                            </TableCell>
-                                            <TableCell>
-                                                <Typography variant="body2" fontWeight={500} sx={{ maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                                                    {failure.test_name}
-                                                </Typography>
-                                            </TableCell>
-                                            <TableCell>
-                                                <Typography variant="caption" color="textSecondary">
-                                                    {failure.suite_name || failure.test_suite}
-                                                </Typography>
-                                            </TableCell>
-                                            <TableCell align="center">
-                                                <Chip
-                                                    label={failure.status?.toUpperCase() || 'FAILED'}
-                                                    size="small"
-                                                    sx={{
-                                                        fontWeight: 600,
-                                                        fontSize: '0.7rem',
-                                                        bgcolor: '#fee2e2',
-                                                        color: '#991b1b'
-                                                    }}
-                                                />
-                                            </TableCell>
-                                            <TableCell>
-                                                <Typography variant="caption" color="textSecondary" sx={{ maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', display: 'block' }}>
-                                                    {failure.error_message?.substring(0, 50)}...
-                                                </Typography>
-                                            </TableCell>
-                                            <TableCell>
-                                                <Typography variant="caption" color="textSecondary">
-                                                    {formatTimeAgo(failure.timestamp)}
-                                                </Typography>
-                                            </TableCell>
-                                            <TableCell align="center">
-                                                <Button
-                                                    size="small"
-                                                    variant="outlined"
-                                                    startIcon={<VisibilityIcon />}
-                                                    onClick={() => navigate(`/failures/${failure._id}`)}
-                                                    sx={{ borderRadius: 2, textTransform: 'none' }}
-                                                >
-                                                    View
-                                                </Button>
-                                            </TableCell>
-                                        </TableRow>
-                                    ))
+                                    recentFailures.map((failure, index) => {
+                                        const analysis = failure.analysis || {};
+                                        const confidence = analysis.confidence_score ? Math.round(analysis.confidence_score * 100) : 0;
+                                        const classification = analysis.classification || 'PENDING';
+                                        const validationStatus = analysis.feedback_result || failure.validation_status || 'pending';
+
+                                        // Classification color mapping
+                                        const classificationColors = {
+                                            'CODE_ERROR': { bg: '#fee2e2', color: '#991b1b' },
+                                            'TEST_FAILURE': { bg: '#fef3c7', color: '#92400e' },
+                                            'INFRA_ERROR': { bg: '#dbeafe', color: '#1e40af' },
+                                            'DEPENDENCY_ERROR': { bg: '#f3e8ff', color: '#6b21a8' },
+                                            'CONFIG_ERROR': { bg: '#dcfce7', color: '#166534' }
+                                        };
+                                        const classColor = classificationColors[classification] || { bg: '#f1f5f9', color: '#64748b' };
+
+                                        // Validation status colors
+                                        const validationColors = {
+                                            'accepted': { bg: '#dcfce7', color: '#166534' },
+                                            'rejected': { bg: '#fee2e2', color: '#991b1b' },
+                                            'refined': { bg: '#dbeafe', color: '#1e40af' },
+                                            'pending': { bg: '#fef3c7', color: '#92400e' }
+                                        };
+                                        const valColor = validationColors[validationStatus] || validationColors['pending'];
+
+                                        return (
+                                            <TableRow
+                                                key={failure._id || index}
+                                                sx={{
+                                                    '&:hover': { bgcolor: '#f0fdf4' },
+                                                    '& td': { borderBottom: '1px solid #f1f5f9' }
+                                                }}
+                                            >
+                                                <TableCell>
+                                                    <Typography variant="body2" fontFamily="monospace" fontWeight={600} color="#10b981">
+                                                        #{failure.build_id || '-'}
+                                                    </Typography>
+                                                </TableCell>
+                                                <TableCell>
+                                                    <Typography variant="body2" fontWeight={500} sx={{ maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                                        {failure.test_name || '-'}
+                                                    </Typography>
+                                                </TableCell>
+                                                <TableCell align="center">
+                                                    <Chip
+                                                        label={classification.replace('_', ' ')}
+                                                        size="small"
+                                                        sx={{
+                                                            fontWeight: 600,
+                                                            fontSize: '0.65rem',
+                                                            bgcolor: classColor.bg,
+                                                            color: classColor.color
+                                                        }}
+                                                    />
+                                                </TableCell>
+                                                <TableCell align="center">
+                                                    <Box display="flex" alignItems="center" justifyContent="center" gap={1}>
+                                                        <LinearProgress
+                                                            variant="determinate"
+                                                            value={confidence}
+                                                            sx={{
+                                                                width: 50,
+                                                                height: 6,
+                                                                borderRadius: 3,
+                                                                bgcolor: '#e2e8f0',
+                                                                '& .MuiLinearProgress-bar': {
+                                                                    bgcolor: confidence >= 80 ? '#10b981' : confidence >= 60 ? '#f59e0b' : '#ef4444',
+                                                                    borderRadius: 3
+                                                                }
+                                                            }}
+                                                        />
+                                                        <Typography variant="caption" fontWeight={600}>
+                                                            {confidence}%
+                                                        </Typography>
+                                                    </Box>
+                                                </TableCell>
+                                                <TableCell align="center">
+                                                    <Chip
+                                                        label={validationStatus.toUpperCase()}
+                                                        size="small"
+                                                        sx={{
+                                                            fontWeight: 600,
+                                                            fontSize: '0.65rem',
+                                                            bgcolor: valColor.bg,
+                                                            color: valColor.color
+                                                        }}
+                                                    />
+                                                </TableCell>
+                                                <TableCell>
+                                                    <Typography variant="caption" color="textSecondary">
+                                                        {formatTimeAgo(analysis.analyzed_at || failure.timestamp)}
+                                                    </Typography>
+                                                </TableCell>
+                                                <TableCell align="center">
+                                                    <Button
+                                                        size="small"
+                                                        variant="contained"
+                                                        startIcon={<CheckCircleIcon />}
+                                                        onClick={() => navigate(`/failures/${failure._id}`)}
+                                                        sx={{
+                                                            borderRadius: 2,
+                                                            textTransform: 'none',
+                                                            bgcolor: '#3b82f6',
+                                                            '&:hover': { bgcolor: '#2563eb' }
+                                                        }}
+                                                    >
+                                                        Approve
+                                                    </Button>
+                                                </TableCell>
+                                            </TableRow>
+                                        );
+                                    })
                                 )}
                             </TableBody>
                         </Table>

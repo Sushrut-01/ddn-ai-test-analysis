@@ -31,7 +31,8 @@ import {
   Fab,
   Collapse,
   Alert,
-  LinearProgress
+  LinearProgress,
+  Snackbar
 } from '@mui/material'
 import SendIcon from '@mui/icons-material/Send'
 import SmartToyIcon from '@mui/icons-material/SmartToy'
@@ -59,8 +60,20 @@ import TimelineIcon from '@mui/icons-material/Timeline'
 import AssessmentIcon from '@mui/icons-material/Assessment'
 import SearchIcon from '@mui/icons-material/Search'
 import BuildIcon from '@mui/icons-material/Build'
+import { chatAPI, failuresAPI } from '../services/api'
 
-// Mock chat history
+// Copy to clipboard helper
+const copyToClipboard = async (text) => {
+  try {
+    await navigator.clipboard.writeText(text)
+    return true
+  } catch (err) {
+    console.error('Failed to copy:', err)
+    return false
+  }
+}
+
+// Initial chat history
 const initialChatHistory = [
   {
     id: 1,
@@ -80,104 +93,6 @@ const quickActions = [
   { icon: <BuildIcon />, label: 'Build health summary', query: 'Give me a build health summary for this week' }
 ]
 
-// Sample conversation responses (mock AI responses)
-const mockResponses = {
-  'failures': `Based on my analysis, here are the **recent test failures**:
-
-| Build ID | Test Name | Category | AI Confidence |
-|----------|-----------|----------|---------------|
-| DDN-1247 | LoginTest.testAuth | Authentication | 92% |
-| DDN-1246 | PaymentTest.checkout | Integration | 87% |
-| DDN-1245 | APITest.timeout | Network | 78% |
-
-**Key Insights:**
-• 3 failures in the last 24 hours
-• Most common category: Integration (45%)
-• Average AI confidence: 85.7%
-
-Would you like me to generate a detailed PDF report or create bugs for these failures?`,
-
-  'report': `I'll generate a **Weekly Failure Analysis Report** for you.
-
-**Report Preview:**
-📊 **Period:** Nov 22 - Nov 29, 2024
-📈 **Total Failures:** 24
-✅ **AI Analyzed:** 22 (91.7%)
-🎯 **Acceptance Rate:** 78%
-
-**Top Categories:**
-1. Integration Errors (8)
-2. Timeout Issues (6)
-3. Authentication Failures (5)
-4. Data Validation (5)
-
-**Recommendations:**
-• Review integration test environment stability
-• Consider increasing timeout thresholds for API tests
-• Update authentication test data
-
-Would you like me to:
-1. 📄 **Download as PDF**
-2. 📧 **Send via Email**
-3. 📊 **Export as Excel**`,
-
-  'patterns': `Here are the **Top Failure Patterns** this week:
-
-### 1. NullPointerException (8 occurrences)
-- **Root Cause:** Missing null checks in service layer
-- **Affected Tests:** UserService, PaymentService
-- **AI Suggestion:** Add Optional<> wrapper
-
-### 2. Connection Timeout (6 occurrences)
-- **Root Cause:** Database connection pool exhaustion
-- **Affected Tests:** Integration tests
-- **AI Suggestion:** Increase pool size, add retry logic
-
-### 3. Assertion Failures (5 occurrences)
-- **Root Cause:** Test data mismatch
-- **Affected Tests:** Data validation tests
-- **AI Suggestion:** Refresh test fixtures
-
-Would you like me to create Jira bugs for these patterns?`,
-
-  'acceptance': `**AI Analysis Acceptance Rate Summary:**
-
-📊 **Overall Rate:** 78.5%
-
-**Breakdown by Category:**
-| Category | Accepted | Rejected | Refined |
-|----------|----------|----------|---------|
-| Code Errors | 85% | 10% | 5% |
-| Integration | 75% | 15% | 10% |
-| Timeout | 72% | 18% | 10% |
-| Data Issues | 80% | 12% | 8% |
-
-**Trend:** ↑ 5% improvement from last week
-
-**Insights:**
-• Code error analysis has highest accuracy
-• Integration errors need more context for better analysis
-• User refinements are helping improve the model
-
-Would you like to see detailed refinement feedback?`,
-
-  'default': `I understand you're asking about that. Let me analyze the data...
-
-Based on my analysis of your test data:
-
-• **Total Tests:** 1,247 in the last 7 days
-• **Pass Rate:** 94.2%
-• **AI Analyzed Failures:** 73 out of 78
-
-I can help you with:
-1. Generate detailed reports (PDF/Excel)
-2. Create Jira bugs from failures
-3. Find similar past errors
-4. Get AI recommendations
-
-What would you like to explore further?`
-}
-
 function AIChatbotPreview() {
   const [messages, setMessages] = useState(initialChatHistory)
   const [inputValue, setInputValue] = useState('')
@@ -189,7 +104,61 @@ function AIChatbotPreview() {
   const [reportType, setReportType] = useState('weekly')
   const [generating, setGenerating] = useState(false)
   const [showHistory, setShowHistory] = useState(false)
+  const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' })
+  const [bugDialogOpen, setBugDialogOpen] = useState(false)
+  const [selectedFailure, setSelectedFailure] = useState(null)
   const messagesEndRef = useRef(null)
+
+  const showSnackbar = (message, severity = 'success') => {
+    setSnackbar({ open: true, message, severity })
+  }
+
+  const handleCopyMessage = async (content) => {
+    const success = await copyToClipboard(content)
+    showSnackbar(success ? 'Copied to clipboard!' : 'Failed to copy', success ? 'success' : 'error')
+  }
+
+  const handleExportExcel = async () => {
+    try {
+      showSnackbar('Generating Excel report...', 'info')
+      // Call the stats API and format as CSV
+      const response = await fetch('http://localhost:5006/api/stats')
+      const data = await response.json()
+
+      // Create CSV content
+      const csvContent = `DDN Test Failure Report\nGenerated: ${new Date().toISOString()}\n\n` +
+        `Metric,Value\n` +
+        `Total Failures,${data.data?.total_failures || 0}\n` +
+        `AI Analyzed,${data.data?.ai_analyzed || 0}\n` +
+        `Avg Confidence,${data.data?.avg_confidence || 0}%\n` +
+        `Accepted,${data.data?.accepted || 0}\n` +
+        `Rejected,${data.data?.rejected || 0}\n`
+
+      // Download as CSV
+      const blob = new Blob([csvContent], { type: 'text/csv' })
+      const url = window.URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `failure_report_${new Date().toISOString().split('T')[0]}.csv`
+      a.click()
+      window.URL.revokeObjectURL(url)
+
+      showSnackbar('Excel report downloaded!', 'success')
+    } catch (error) {
+      showSnackbar('Failed to generate report: ' + error.message, 'error')
+    }
+  }
+
+  const handleCreateBug = () => {
+    // Add a message asking for failure details
+    const bugMessage = {
+      id: messages.length + 1,
+      role: 'assistant',
+      content: `🐛 **Create Jira Bug**\n\nTo create a bug ticket, please provide:\n1. The build ID or failure you want to report\n2. Any additional context\n\nOr say "Create bug for latest failure" and I'll help you create a ticket.\n\n*Jira is configured for: ${window.location.hostname.includes('localhost') ? 'sushrutnistane2001.atlassian.net' : 'your Jira instance'}*`,
+      timestamp: new Date()
+    }
+    setMessages(prev => [...prev, bugMessage])
+  }
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -199,21 +168,7 @@ function AIChatbotPreview() {
     scrollToBottom()
   }, [messages])
 
-  const getAIResponse = (query) => {
-    const lowerQuery = query.toLowerCase()
-    if (lowerQuery.includes('failure') || lowerQuery.includes('error')) {
-      return mockResponses.failures
-    } else if (lowerQuery.includes('report') || lowerQuery.includes('generate')) {
-      return mockResponses.report
-    } else if (lowerQuery.includes('pattern') || lowerQuery.includes('common')) {
-      return mockResponses.patterns
-    } else if (lowerQuery.includes('acceptance') || lowerQuery.includes('rate')) {
-      return mockResponses.acceptance
-    }
-    return mockResponses.default
-  }
-
-  const handleSendMessage = () => {
+  const handleSendMessage = async () => {
     if (!inputValue.trim()) return
 
     const userMessage = {
@@ -224,26 +179,88 @@ function AIChatbotPreview() {
     }
 
     setMessages(prev => [...prev, userMessage])
+    const messageToSend = inputValue
     setInputValue('')
     setIsTyping(true)
     setShowQuickActions(false)
 
-    // Simulate AI response delay
-    setTimeout(() => {
+    try {
+      // Build conversation history for context
+      const conversationHistory = messages.slice(-10).map(m => ({
+        role: m.role,
+        content: m.content
+      }))
+
+      // Call the real API
+      const response = await chatAPI.sendMessage(messageToSend, conversationHistory)
+      const data = response?.data || response
+
       const aiResponse = {
         id: messages.length + 2,
         role: 'assistant',
-        content: getAIResponse(inputValue),
-        timestamp: new Date()
+        content: data.response || 'I apologize, but I could not process your request. Please try again.',
+        timestamp: new Date(),
+        data: data.data // Include any structured data
       }
       setMessages(prev => [...prev, aiResponse])
+    } catch (error) {
+      console.error('Chat API error:', error)
+      const errorResponse = {
+        id: messages.length + 2,
+        role: 'assistant',
+        content: `I'm having trouble connecting to the AI service. Please check that the dashboard API is running.\n\n**Error:** ${error.message || 'Connection failed'}`,
+        timestamp: new Date(),
+        isError: true
+      }
+      setMessages(prev => [...prev, errorResponse])
+    } finally {
       setIsTyping(false)
-    }, 1500)
+    }
   }
 
-  const handleQuickAction = (query) => {
-    setInputValue(query)
-    setTimeout(() => handleSendMessage(), 100)
+  const handleQuickAction = async (query) => {
+    // Directly send the query instead of setting input
+    const userMessage = {
+      id: messages.length + 1,
+      role: 'user',
+      content: query,
+      timestamp: new Date()
+    }
+
+    setMessages(prev => [...prev, userMessage])
+    setIsTyping(true)
+    setShowQuickActions(false)
+
+    try {
+      const conversationHistory = messages.slice(-10).map(m => ({
+        role: m.role,
+        content: m.content
+      }))
+
+      const response = await chatAPI.sendMessage(query, conversationHistory)
+      const data = response?.data || response
+
+      const aiResponse = {
+        id: messages.length + 2,
+        role: 'assistant',
+        content: data.response || 'I could not process your request.',
+        timestamp: new Date(),
+        data: data.data
+      }
+      setMessages(prev => [...prev, aiResponse])
+    } catch (error) {
+      console.error('Chat API error:', error)
+      const errorResponse = {
+        id: messages.length + 2,
+        role: 'assistant',
+        content: `Connection error: ${error.message || 'Failed to reach AI service'}`,
+        timestamp: new Date(),
+        isError: true
+      }
+      setMessages(prev => [...prev, errorResponse])
+    } finally {
+      setIsTyping(false)
+    }
   }
 
   const handleKeyPress = (e) => {
@@ -486,7 +503,7 @@ function AIChatbotPreview() {
                   {message.role === 'assistant' && (
                     <Box sx={{ display: 'flex', gap: 0.5, mt: 1.5, pt: 1, borderTop: '1px solid', borderColor: 'divider' }}>
                       <Tooltip title="Copy">
-                        <IconButton size="small">
+                        <IconButton size="small" onClick={() => handleCopyMessage(message.content)}>
                           <ContentCopyIcon fontSize="small" />
                         </IconButton>
                       </Tooltip>
@@ -501,7 +518,7 @@ function AIChatbotPreview() {
                         </IconButton>
                       </Tooltip>
                       <Tooltip title="Export Data">
-                        <IconButton size="small">
+                        <IconButton size="small" onClick={handleExportExcel}>
                           <TableChartIcon fontSize="small" />
                         </IconButton>
                       </Tooltip>
@@ -606,13 +623,17 @@ function AIChatbotPreview() {
               size="small"
               icon={<TableChartIcon />}
               label="Export Excel"
+              onClick={handleExportExcel}
               variant="outlined"
+              sx={{ cursor: 'pointer' }}
             />
             <Chip
               size="small"
               icon={<BugReportIcon />}
               label="Create Bug"
+              onClick={handleCreateBug}
               variant="outlined"
+              sx={{ cursor: 'pointer' }}
             />
           </Box>
         </Paper>
@@ -797,6 +818,22 @@ function AIChatbotPreview() {
           </Button>
         </DialogActions>
       </Dialog>
+
+      {/* Snackbar for notifications */}
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={4000}
+        onClose={() => setSnackbar({ ...snackbar, open: false })}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+      >
+        <Alert
+          onClose={() => setSnackbar({ ...snackbar, open: false })}
+          severity={snackbar.severity}
+          sx={{ width: '100%' }}
+        >
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
     </Box>
   )
 }

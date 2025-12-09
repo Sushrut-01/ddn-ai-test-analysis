@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import {
     Box, Container, Paper, Typography, Grid, Button, Chip, Avatar,
     Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
@@ -17,11 +17,15 @@ import BoltIcon from '@mui/icons-material/Bolt';
 import PendingIcon from '@mui/icons-material/Pending';
 import SmartToyIcon from '@mui/icons-material/SmartToy';
 import WarningIcon from '@mui/icons-material/Warning';
+import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
+import VisibilityIcon from '@mui/icons-material/Visibility';
 import { failuresAPI, triggerAPI } from '../services/api';
 
 const TriggerAnalysisPreview = () => {
     const location = useLocation();
+    const navigate = useNavigate();
     const [selectedBuilds, setSelectedBuilds] = useState(new Set());
+    const [analysisComplete, setAnalysisComplete] = useState(false);
     const [analyzing, setAnalyzing] = useState(false);
     const [progress, setProgress] = useState(0);
 
@@ -41,15 +45,36 @@ const TriggerAnalysisPreview = () => {
             const data = response?.data || response;
             const failures = data?.failures || [];
 
-            // Map to the format expected by the component
-            const mappedFailures = failures.map((f, idx) => ({
-                id: f._id || f.id || String(idx),
-                buildId: `#${f.build_id || f.buildId || '-'}`,
-                testName: f.test_name || f.testName || 'Unknown Test',
-                jobName: f.job_name || f.jobName || '-',
-                timestamp: f.timestamp ? new Date(f.timestamp).toLocaleString() : '-',
-                errorMessage: f.error_message || f.stack_trace || 'No error message',
-                status: f.analysis ? 'completed' : f.analyzing ? 'analyzing' : 'pending'
+            // Group failures by build_id to avoid duplicates
+            const buildGroups = {};
+            failures.forEach((f) => {
+                const buildId = f.build_id || f.buildId || '-';
+                if (!buildGroups[buildId]) {
+                    buildGroups[buildId] = {
+                        id: f._id || f.id,
+                        buildId: `#${buildId}`,
+                        jobName: f.job_name || f.jobName || '-',
+                        rawTimestamp: f.timestamp,
+                        timestamp: f.timestamp ? new Date(f.timestamp).toLocaleString() : '-',
+                        failCount: f.fail_count || 1,
+                        testNames: [],
+                        errorMessage: f.error_message || f.stack_trace || 'No error message',
+                        status: f.analysis ? 'completed' : f.analyzing ? 'analyzing' : 'pending'
+                    };
+                }
+                buildGroups[buildId].testNames.push(f.test_name || f.testName || 'Unknown Test');
+                // Use max fail_count if available
+                if (f.fail_count && f.fail_count > buildGroups[buildId].failCount) {
+                    buildGroups[buildId].failCount = f.fail_count;
+                }
+            });
+
+            // Convert to array and add summary test name
+            const mappedFailures = Object.values(buildGroups).map((group) => ({
+                ...group,
+                testName: group.testNames.length > 1
+                    ? `${group.testNames[0]} (+${group.testNames.length - 1} more)`
+                    : group.testNames[0] || 'Unknown Test'
             }));
 
             setUnanalyzedFailures(mappedFailures);
@@ -118,6 +143,7 @@ const TriggerAnalysisPreview = () => {
             // Refresh the list after all triggers
             await fetchUnanalyzedFailures();
             setSelectedBuilds(new Set());
+            setAnalysisComplete(true);
         } catch (err) {
             console.error('Error during bulk trigger:', err);
         } finally {
@@ -128,6 +154,22 @@ const TriggerAnalysisPreview = () => {
     const pendingCount = unanalyzedFailures.filter(f => f.status === 'pending').length;
     const analyzingCount = unanalyzedFailures.filter(f => f.status === 'analyzing').length;
     const completedCount = unanalyzedFailures.filter(f => f.status === 'completed').length;
+
+    // Calculate aging days from timestamp
+    const getAgingDays = (timestamp) => {
+        if (!timestamp) return 0;
+        const date = new Date(timestamp);
+        const now = new Date();
+        const diffTime = Math.abs(now - date);
+        return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    };
+
+    // Get aging color based on days
+    const getAgingColor = (days) => {
+        if (days >= 7) return { bg: '#fee2e2', color: '#991b1b' }; // Red - critical
+        if (days >= 3) return { bg: '#fef3c7', color: '#92400e' }; // Orange - warning
+        return { bg: '#dcfce7', color: '#166534' }; // Green - ok
+    };
 
     return (
         <Box sx={{ minHeight: '100vh', bgcolor: '#f8fafc', pb: 4 }}>
@@ -148,13 +190,21 @@ const TriggerAnalysisPreview = () => {
                     <Box display="flex" justifyContent="space-between" alignItems="center">
                         <Box>
                             <Typography variant="h4" fontWeight="bold" gutterBottom>
-                                Bulk Analysis Trigger
+                                Manual Trigger Flow
                             </Typography>
                             <Typography variant="subtitle1" sx={{ opacity: 0.9 }}>
-                                Select and trigger AI analysis for multiple unanalyzed failures
+                                Select builds and trigger analysis → goes to RAG Review for approval
                             </Typography>
                         </Box>
                         <Box display="flex" gap={2}>
+                            <Button
+                                variant="contained"
+                                startIcon={<CheckCircleIcon />}
+                                onClick={() => navigate('/')}
+                                sx={{ bgcolor: 'rgba(255,255,255,0.2)', '&:hover': { bgcolor: 'rgba(255,255,255,0.3)' } }}
+                            >
+                                View Completed
+                            </Button>
                             <Button
                                 variant="contained"
                                 startIcon={refreshing ? <CircularProgress size={20} color="inherit" /> : <RefreshIcon />}
@@ -170,6 +220,50 @@ const TriggerAnalysisPreview = () => {
             </Box>
 
             <Container maxWidth="xl">
+                {/* Navigation Flow */}
+                <Paper elevation={0} sx={{ p: 2, mb: 3, borderRadius: 3, bgcolor: 'white', boxShadow: '0 4px 20px rgba(0,0,0,0.04)', display: 'flex', alignItems: 'center', gap: 2, flexWrap: 'wrap' }}>
+                    <Typography variant="subtitle2" color="textSecondary" sx={{ mr: 1 }}>
+                        Flow:
+                    </Typography>
+                    <Chip label="1. Select & Trigger" color="warning" size="small" sx={{ fontWeight: 600, bgcolor: '#ea580c', color: 'white' }} />
+                    <ArrowForwardIcon sx={{ color: '#94a3b8', fontSize: 18 }} />
+                    <Chip
+                        label="2. View Results"
+                        size="small"
+                        variant="outlined"
+                        onClick={() => navigate('/failures')}
+                        icon={<VisibilityIcon sx={{ fontSize: 16 }} />}
+                        sx={{ cursor: 'pointer', '&:hover': { bgcolor: 'rgba(234, 88, 12, 0.1)' } }}
+                    />
+                    <ArrowForwardIcon sx={{ color: '#94a3b8', fontSize: 18 }} />
+                    <Chip label="3. Review & Approve" size="small" variant="outlined" />
+                    <ArrowForwardIcon sx={{ color: '#94a3b8', fontSize: 18 }} />
+                    <Chip label="4. Create Jira Bug" size="small" variant="outlined" />
+                </Paper>
+
+                {/* Analysis Complete Alert */}
+                {analysisComplete && (
+                    <Alert
+                        severity="success"
+                        sx={{ mb: 3, borderRadius: 3 }}
+                        icon={<CheckCircleIcon />}
+                        onClose={() => setAnalysisComplete(false)}
+                        action={
+                            <Button
+                                color="inherit"
+                                size="small"
+                                endIcon={<ArrowForwardIcon />}
+                                onClick={() => navigate('/failures')}
+                                sx={{ fontWeight: 600 }}
+                            >
+                                View Results
+                            </Button>
+                        }
+                    >
+                        Bulk analysis completed! View the results in the Failures page.
+                    </Alert>
+                )}
+
                 {/* Stats Cards */}
                 <Grid container spacing={3} mb={4}>
                     {[
@@ -254,6 +348,8 @@ const TriggerAnalysisPreview = () => {
                                     <TableCell sx={{ fontWeight: 600, color: '#64748b' }}>Build ID</TableCell>
                                     <TableCell sx={{ fontWeight: 600, color: '#64748b' }}>Test Name</TableCell>
                                     <TableCell sx={{ fontWeight: 600, color: '#64748b' }}>Job</TableCell>
+                                    <TableCell align="center" sx={{ fontWeight: 600, color: '#64748b' }}>Fails</TableCell>
+                                    <TableCell align="center" sx={{ fontWeight: 600, color: '#64748b' }}>Age</TableCell>
                                     <TableCell sx={{ fontWeight: 600, color: '#64748b' }}>Error Message</TableCell>
                                     <TableCell align="center" sx={{ fontWeight: 600, color: '#64748b' }}>Status</TableCell>
                                     <TableCell sx={{ fontWeight: 600, color: '#64748b' }}>Timestamp</TableCell>
@@ -268,6 +364,8 @@ const TriggerAnalysisPreview = () => {
                                             <TableCell><Skeleton width={60} /></TableCell>
                                             <TableCell><Skeleton width={200} /></TableCell>
                                             <TableCell><Skeleton width={100} /></TableCell>
+                                            <TableCell><Skeleton width={30} /></TableCell>
+                                            <TableCell><Skeleton width={40} /></TableCell>
                                             <TableCell><Skeleton width={250} /></TableCell>
                                             <TableCell><Skeleton width={80} /></TableCell>
                                             <TableCell><Skeleton width={120} /></TableCell>
@@ -275,7 +373,7 @@ const TriggerAnalysisPreview = () => {
                                     ))
                                 ) : unanalyzedFailures.length === 0 ? (
                                     <TableRow>
-                                        <TableCell colSpan={7} align="center" sx={{ py: 6 }}>
+                                        <TableCell colSpan={9} align="center" sx={{ py: 6 }}>
                                             {error ? (
                                                 <Box>
                                                     <WarningIcon sx={{ fontSize: 48, color: '#ef4444', mb: 1 }} />
@@ -330,6 +428,37 @@ const TriggerAnalysisPreview = () => {
                                             </TableCell>
                                             <TableCell>
                                                 <Typography variant="body2" color="textSecondary">{failure.jobName}</Typography>
+                                            </TableCell>
+                                            <TableCell align="center">
+                                                <Chip
+                                                    label={failure.failCount || 1}
+                                                    size="small"
+                                                    sx={{
+                                                        bgcolor: '#fee2e2',
+                                                        color: '#991b1b',
+                                                        fontWeight: 600,
+                                                        fontSize: '0.75rem',
+                                                        minWidth: 28
+                                                    }}
+                                                />
+                                            </TableCell>
+                                            <TableCell align="center">
+                                                {(() => {
+                                                    const days = getAgingDays(failure.rawTimestamp);
+                                                    const agingStyle = getAgingColor(days);
+                                                    return (
+                                                        <Chip
+                                                            label={`${days}d`}
+                                                            size="small"
+                                                            sx={{
+                                                                bgcolor: agingStyle.bg,
+                                                                color: agingStyle.color,
+                                                                fontWeight: 600,
+                                                                fontSize: '0.7rem'
+                                                            }}
+                                                        />
+                                                    );
+                                                })()}
                                             </TableCell>
                                             <TableCell>
                                                 <Typography variant="body2" sx={{ maxWidth: 300 }} noWrap>{failure.errorMessage}</Typography>

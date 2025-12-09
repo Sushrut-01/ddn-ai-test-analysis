@@ -31,7 +31,7 @@ import DataObjectIcon from '@mui/icons-material/DataObject';
 import WorkIcon from '@mui/icons-material/Work';
 import BoltIcon from '@mui/icons-material/Bolt';
 import { LineChart, Line, AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
-import { monitoringAPI } from '../services/api';
+import { monitoringAPI, serviceManagerAPI, langfuseAPI, flowerAPI, n8nAPI, workflowsAPI } from '../services/api';
 
 const TabPanel = ({ children, value, index }) => (
     <div role="tabpanel" hidden={value !== index}>
@@ -70,16 +70,37 @@ const ServicesMonitoringPreview = () => {
     const [loading, setLoading] = useState(true);
     const [systemStatus, setSystemStatus] = useState(null);
     const [stats, setStats] = useState(null);
+    const [dockerServices, setDockerServices] = useState({});
     const [error, setError] = useState(null);
+
+    // External services state
+    const [langfuseStats, setLangfuseStats] = useState(null);
+    const [celeryWorkers, setCeleryWorkers] = useState({});
+    const [celeryTasks, setCeleryTasks] = useState({});
+    const [n8nWorkflows, setN8nWorkflows] = useState([]);
+    const [n8nExecutions, setN8nExecutions] = useState([]);
 
     const fetchServiceStatus = useCallback(async () => {
         try {
-            const [statusRes, statsRes] = await Promise.all([
+            // Fetch all data in parallel
+            const [statusRes, statsRes, servicesRes, langfuseRes, workersRes, tasksRes, workflowsRes, executionsRes] = await Promise.all([
                 monitoringAPI.getSystemStatus(),
-                monitoringAPI.getStats()
+                monitoringAPI.getStats(),
+                serviceManagerAPI.getAllServices(),
+                langfuseAPI.getStats().catch(() => null),
+                flowerAPI.getWorkers().catch(() => ({})),
+                flowerAPI.getTasks().catch(() => ({})),
+                workflowsAPI.getWorkflows().catch(() => []),
+                workflowsAPI.getExecutions().catch(() => [])
             ]);
             setSystemStatus(statusRes);
             setStats(statsRes);
+            setDockerServices(servicesRes || {});
+            setLangfuseStats(langfuseRes);
+            setCeleryWorkers(workersRes);
+            setCeleryTasks(tasksRes);
+            setN8nWorkflows(workflowsRes);
+            setN8nExecutions(executionsRes);
             setError(null);
         } catch (err) {
             console.error('Error fetching service status:', err);
@@ -101,81 +122,158 @@ const ServicesMonitoringPreview = () => {
         fetchServiceStatus();
     };
 
-    // Build services list from real API data
+    // Build services list from real API data (Docker services + Database components)
     const buildServicesList = () => {
-        if (!systemStatus?.components) return [];
+        const services = [];
 
-        const componentIcons = {
+        // Service icons mapping
+        const serviceIcons = {
             mongodb: <StorageIcon />,
             postgresql: <StorageIcon />,
             pinecone: <MemoryIcon />,
             pinecone_knowledge: <MemoryIcon />,
             pinecone_failures: <MemoryIcon />,
             ai_service: <SmartToyIcon />,
+            ai_analysis: <SmartToyIcon />,
             redis: <MemoryIcon />,
+            dashboard_api: <SettingsIcon />,
+            dashboard_ui: <SettingsIcon />,
+            manual_trigger: <BoltIcon />,
+            aging: <HourglassEmptyIcon />,
+            jira: <WorkIcon />,
+            slack: <WorkIcon />,
+            knowledge_api: <StorageIcon />,
+            langfuse: <TimelineIcon />,
+            langfuse_db: <StorageIcon />,
+            flower: <WorkIcon />,
+            n8n: <AccountTreeIcon />,
+            mcp_github: <SettingsIcon />,
+            mcp_mongodb: <StorageIcon />,
+            reranking: <SmartToyIcon />,
+            self_healing: <CachedIcon />,
+            jenkins: <WorkIcon />,
         };
 
-        const componentUrls = {
-            mongodb: null,
-            postgresql: null,
-            pinecone: null,
-            ai_service: 'http://localhost:5000',
+        // Service URLs mapping
+        const serviceUrls = {
+            dashboard_ui: 'http://localhost:5173',
+            dashboard_api: 'http://localhost:5006',
+            ai_analysis: 'http://localhost:5000',
+            langfuse: 'http://localhost:3000',
+            flower: 'http://localhost:5555',
+            n8n: 'http://localhost:5678',
+            jenkins: 'http://localhost:8081',
+            jira: 'http://localhost:5009',
+            slack: 'http://localhost:5012',
         };
 
-        const componentPorts = {
-            mongodb: 'Cloud',
-            postgresql: '5432',
-            pinecone: 'Cloud',
-            pinecone_knowledge: 'Cloud',
-            pinecone_failures: 'Cloud',
-            ai_service: '5000',
-        };
+        // Add Docker services from service manager API
+        if (dockerServices && Object.keys(dockerServices).length > 0) {
+            Object.entries(dockerServices).forEach(([key, data]) => {
+                services.push({
+                    name: data.name || key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
+                    port: data.port || '-',
+                    status: data.running ? 'running' : 'stopped',
+                    type: key.includes('db') || key.includes('postgres') || key.includes('mongo') ? 'database' :
+                          key.includes('api') ? 'api' :
+                          key.includes('ui') ? 'frontend' : 'service',
+                    icon: serviceIcons[key] || <SettingsIcon />,
+                    url: serviceUrls[key] || (data.port ? `http://localhost:${data.port}` : null),
+                    memory: '-',
+                    source: 'docker',
+                    details: data
+                });
+            });
+        }
 
-        return Object.entries(systemStatus.components).map(([name, data]) => ({
-            name: name.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
-            port: componentPorts[name] || '-',
-            status: data.status === 'healthy' ? 'running' : data.connected ? 'running' : 'stopped',
-            type: name.includes('pinecone') ? 'vector' : name.includes('mongo') || name.includes('postgres') ? 'database' : 'service',
-            icon: componentIcons[name] || <SettingsIcon />,
-            url: componentUrls[name] || null,
-            memory: '-',
-            details: data
-        }));
+        // Add database components from system status API (if not already added from docker services)
+        if (systemStatus?.components) {
+            const existingNames = services.map(s => s.name.toLowerCase());
+
+            Object.entries(systemStatus.components).forEach(([name, data]) => {
+                const displayName = name.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+
+                // Skip if already exists from docker services
+                if (existingNames.some(n => n.includes(name.split('_')[0]))) return;
+
+                const componentPorts = {
+                    mongodb: 'Cloud',
+                    pinecone: 'Cloud',
+                    pinecone_knowledge: 'Cloud',
+                    pinecone_failures: 'Cloud',
+                };
+
+                services.push({
+                    name: displayName,
+                    port: componentPorts[name] || '-',
+                    status: data.status === 'healthy' || data.connected ? 'running' : 'stopped',
+                    type: name.includes('pinecone') ? 'vector' :
+                          name.includes('mongo') || name.includes('postgres') ? 'database' : 'service',
+                    icon: serviceIcons[name] || <SettingsIcon />,
+                    url: null,
+                    memory: '-',
+                    source: 'component',
+                    details: data
+                });
+            });
+        }
+
+        // Sort: running first, then by name
+        return services.sort((a, b) => {
+            if (a.status === 'running' && b.status !== 'running') return -1;
+            if (a.status !== 'running' && b.status === 'running') return 1;
+            return a.name.localeCompare(b.name);
+        });
     };
 
     const allServices = buildServicesList();
     const runningServices = allServices.filter(s => s.status === 'running').length;
     const stoppedServices = allServices.filter(s => s.status === 'stopped').length;
 
-    // Placeholder data for tabs that don't have real API endpoints yet
+    // Build real data from API responses
+    const workerCount = Object.keys(celeryWorkers).length;
+    const taskList = Object.values(celeryTasks);
+    const succeededTasks = taskList.filter(t => t.state === 'SUCCESS').length;
+    const failedTasks = taskList.filter(t => t.state === 'FAILURE').length;
+
     const langfuseData = {
-        totalTraces: stats?.total_analyzed || 0,
-        totalGenerations: stats?.total_analyzed || 0,
-        avgLatency: 0,
-        totalTokens: 0,
-        totalCost: 0,
-        successRate: stats?.avg_confidence ? Math.round(parseFloat(stats.avg_confidence) * 100) : 0,
-        models: [],
-        recentTraces: [],
-        latencyTrend: []
+        totalTraces: langfuseStats?.traces || stats?.total_analyzed || 0,
+        totalGenerations: langfuseStats?.generations || stats?.total_analyzed || 0,
+        avgLatency: langfuseStats?.avgLatency || 0,
+        totalTokens: langfuseStats?.totalTokens || 0,
+        totalCost: langfuseStats?.totalCost || 0,
+        successRate: langfuseStats?.successRate || (stats?.avg_confidence ? Math.round(parseFloat(stats.avg_confidence) * 100) : 0),
+        models: langfuseStats?.models || [],
+        recentTraces: langfuseStats?.recentTraces || [],
+        latencyTrend: langfuseStats?.latencyTrend || []
     };
 
     const celeryData = {
-        activeWorkers: 0,
-        tasksProcessed: stats?.total_analyzed || 0,
-        tasksQueued: 0,
-        tasksSucceeded: stats?.total_analyzed || 0,
-        tasksFailed: 0,
-        successRate: 100,
+        activeWorkers: workerCount,
+        tasksProcessed: taskList.length || stats?.total_analyzed || 0,
+        tasksQueued: taskList.filter(t => t.state === 'PENDING').length,
+        tasksSucceeded: succeededTasks || stats?.total_analyzed || 0,
+        tasksFailed: failedTasks,
+        successRate: taskList.length > 0 ? Math.round((succeededTasks / taskList.length) * 100) : 100,
         avgProcessingTime: 0,
-        workers: [],
-        recentTasks: [],
+        workers: Object.entries(celeryWorkers).map(([name, data]) => ({
+            name,
+            status: data.status || 'active',
+            processed: data.stats?.total || 0,
+            active: data.active || 0
+        })),
+        recentTasks: taskList.slice(0, 10).map(t => ({
+            name: t.name || 'Unknown Task',
+            status: t.state,
+            duration: t.runtime ? `${t.runtime.toFixed(2)}s` : '-',
+            timestamp: t.received ? new Date(t.received * 1000).toLocaleString() : '-'
+        })),
         taskTrend: []
     };
 
     const redisData = {
-        connected: true,
-        usedMemory: '-',
+        connected: dockerServices?.redis?.running || true,
+        usedMemory: dockerServices?.redis?.memory || '-',
         peakMemory: '-',
         totalKeys: 0,
         hitRate: 0,
@@ -187,14 +285,30 @@ const ServicesMonitoringPreview = () => {
         keyDistribution: []
     };
 
+    // Build workflow data from Python workflows API
+    const activeWorkflows = n8nWorkflows.filter(w => w.status === 'active').length;
+    const successfulExecs = n8nExecutions.filter(e => e.status === 'completed').length;
+    const failedExecs = n8nExecutions.filter(e => e.status === 'failed').length;
+
     const n8nData = {
-        totalWorkflows: 0,
-        activeWorkflows: 0,
-        totalExecutions: 0,
-        successfulExecutions: 0,
-        failedExecutions: 0,
-        successRate: 0,
-        workflows: []
+        totalWorkflows: n8nWorkflows.length,
+        activeWorkflows: activeWorkflows,
+        totalExecutions: n8nExecutions.length,
+        successfulExecutions: successfulExecs,
+        failedExecutions: failedExecs,
+        successRate: n8nExecutions.length > 0 ? Math.round((successfulExecs / n8nExecutions.length) * 100) : 100,
+        workflows: n8nWorkflows.map(w => ({
+            name: w.name || 'Unnamed Workflow',
+            version: w.version || '1.0.0',
+            type: w.type || 'complete',
+            nodeCount: w.node_count || 0,
+            status: w.status || 'active',
+            executions: n8nExecutions.filter(e => e.workflow_id === w.id).length || 0,
+            lastRun: w.updated_at ? new Date(w.updated_at).toLocaleString() : '-',
+            lastStatus: w.status === 'active' ? 'success' : 'inactive',
+            tags: w.tags || [],
+            description: w.description || ''
+        }))
     };
 
     return (
@@ -219,7 +333,7 @@ const ServicesMonitoringPreview = () => {
                                 Services Monitoring
                             </Typography>
                             <Typography variant="subtitle1" sx={{ opacity: 0.9 }}>
-                                Monitor Langfuse, Celery, Redis, n8n and all backend services
+                                Monitor Langfuse, Celery, Redis, Agentic Workflows and all backend services
                             </Typography>
                         </Box>
                         <Box display="flex" gap={2}>
@@ -285,7 +399,7 @@ const ServicesMonitoringPreview = () => {
                         <Tab icon={<TimelineIcon />} iconPosition="start" label="Langfuse (LLM)" />
                         <Tab icon={<WorkIcon />} iconPosition="start" label="Celery Tasks" />
                         <Tab icon={<MemoryIcon />} iconPosition="start" label="Redis Cache" />
-                        <Tab icon={<AccountTreeIcon />} iconPosition="start" label="n8n Workflows" />
+                        <Tab icon={<AccountTreeIcon />} iconPosition="start" label="Agentic Workflows" />
                     </Tabs>
 
                     {/* Tab 0: All Services */}
@@ -668,7 +782,7 @@ const ServicesMonitoringPreview = () => {
                         </Box>
                     </TabPanel>
 
-                    {/* Tab 4: n8n */}
+                    {/* Tab 4: Python Agentic Workflows */}
                     <TabPanel value={tabValue} index={4}>
                         <Box sx={{ p: 3 }}>
                             <Grid container spacing={3}>
@@ -678,7 +792,7 @@ const ServicesMonitoringPreview = () => {
                                         {[
                                             { label: 'Total Workflows', value: n8nData.totalWorkflows, icon: <AccountTreeIcon />, color: '#3b82f6' },
                                             { label: 'Active', value: n8nData.activeWorkflows, icon: <PlayCircleIcon />, color: '#10b981' },
-                                            { label: 'Executions', value: n8nData.totalExecutions, icon: <TaskAltIcon />, color: '#8b5cf6' },
+                                            { label: 'Executions (30d)', value: n8nData.totalExecutions, icon: <TaskAltIcon />, color: '#8b5cf6' },
                                             { label: 'Success Rate', value: `${n8nData.successRate}%`, icon: <CheckCircleIcon />, color: '#059669' },
                                         ].map((stat, idx) => (
                                             <Grid item xs={6} md={3} key={idx}>
@@ -695,43 +809,70 @@ const ServicesMonitoringPreview = () => {
                                 <Grid item xs={12}>
                                     <Paper sx={{ p: 3, borderRadius: 3 }}>
                                         <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
-                                            <Typography variant="h6" fontWeight="bold">Workflows</Typography>
-                                            <Button startIcon={<OpenInNewIcon />} onClick={() => window.open('http://localhost:5678', '_blank')}>
-                                                Open n8n
-                                            </Button>
+                                            <Typography variant="h6" fontWeight="bold">Python Agentic Workflows</Typography>
+                                            <Chip label="DDN AI Analysis System" size="small" color="primary" />
                                         </Box>
                                         <TableContainer>
                                             <Table>
                                                 <TableHead>
                                                     <TableRow>
                                                         <TableCell sx={{ fontWeight: 600 }}>Workflow Name</TableCell>
+                                                        <TableCell sx={{ fontWeight: 600 }}>Type</TableCell>
+                                                        <TableCell sx={{ fontWeight: 600 }}>Version</TableCell>
+                                                        <TableCell align="center" sx={{ fontWeight: 600 }}>Nodes</TableCell>
                                                         <TableCell sx={{ fontWeight: 600 }}>Status</TableCell>
-                                                        <TableCell align="right" sx={{ fontWeight: 600 }}>Executions</TableCell>
-                                                        <TableCell sx={{ fontWeight: 600 }}>Last Run</TableCell>
-                                                        <TableCell sx={{ fontWeight: 600 }}>Last Status</TableCell>
+                                                        <TableCell sx={{ fontWeight: 600 }}>Last Updated</TableCell>
                                                     </TableRow>
                                                 </TableHead>
                                                 <TableBody>
-                                                    {n8nData.workflows.map((wf, idx) => (
-                                                        <TableRow key={idx}>
+                                                    {n8nData.workflows.length > 0 ? n8nData.workflows.map((wf, idx) => (
+                                                        <TableRow key={idx} sx={{ '&:hover': { bgcolor: '#f8fafc' } }}>
                                                             <TableCell>
                                                                 <Box display="flex" alignItems="center" gap={1}>
                                                                     <AccountTreeIcon sx={{ color: '#6366f1', fontSize: 20 }} />
-                                                                    <Typography variant="body2" fontWeight={600}>{wf.name}</Typography>
+                                                                    <Box>
+                                                                        <Typography variant="body2" fontWeight={600}>{wf.name}</Typography>
+                                                                        {wf.description && (
+                                                                            <Typography variant="caption" color="textSecondary" sx={{ display: 'block', maxWidth: 300 }}>
+                                                                                {wf.description.substring(0, 80)}...
+                                                                            </Typography>
+                                                                        )}
+                                                                    </Box>
                                                                 </Box>
                                                             </TableCell>
-                                                            <TableCell><StatusChip status={wf.status} /></TableCell>
-                                                            <TableCell align="right">{wf.executions}</TableCell>
-                                                            <TableCell>{wf.lastRun}</TableCell>
                                                             <TableCell>
-                                                                {wf.success ? (
-                                                                    <CheckCircleIcon sx={{ color: '#10b981' }} />
-                                                                ) : (
-                                                                    <ErrorIcon sx={{ color: '#ef4444' }} />
-                                                                )}
+                                                                <Chip
+                                                                    label={wf.type?.replace('_', ' ').toUpperCase() || 'COMPLETE'}
+                                                                    size="small"
+                                                                    sx={{
+                                                                        bgcolor: wf.type === 'manual_trigger' ? '#dbeafe' :
+                                                                                 wf.type === 'refinement' ? '#fef3c7' :
+                                                                                 wf.type === 'auto_fix' ? '#dcfce7' : '#f1f5f9',
+                                                                        color: wf.type === 'manual_trigger' ? '#1e40af' :
+                                                                               wf.type === 'refinement' ? '#92400e' :
+                                                                               wf.type === 'auto_fix' ? '#166534' : '#475569',
+                                                                        fontSize: '0.7rem'
+                                                                    }}
+                                                                />
+                                                            </TableCell>
+                                                            <TableCell>
+                                                                <Typography variant="body2" fontFamily="monospace">{wf.version}</Typography>
+                                                            </TableCell>
+                                                            <TableCell align="center">
+                                                                <Chip label={wf.nodeCount} size="small" color="default" />
+                                                            </TableCell>
+                                                            <TableCell><StatusChip status={wf.status} /></TableCell>
+                                                            <TableCell>
+                                                                <Typography variant="body2">{wf.lastRun}</Typography>
                                                             </TableCell>
                                                         </TableRow>
-                                                    ))}
+                                                    )) : (
+                                                        <TableRow>
+                                                            <TableCell colSpan={6} align="center">
+                                                                <Typography color="textSecondary">No workflows found. Check /implementation/workflows/ directory.</Typography>
+                                                            </TableCell>
+                                                        </TableRow>
+                                                    )}
                                                 </TableBody>
                                             </Table>
                                         </TableContainer>
@@ -745,10 +886,10 @@ const ServicesMonitoringPreview = () => {
                 {/* Info Alert */}
                 <Alert severity="info" sx={{ borderRadius: 3 }}>
                     <Typography variant="body2">
-                        <strong>Note:</strong> This preview uses mock data. For real-time monitoring, connect to actual service endpoints:
+                        <strong>Note:</strong> Real-time monitoring dashboards:
                         Langfuse (<a href="http://localhost:3000" target="_blank" rel="noreferrer">:3000</a>),
-                        Flower (<a href="http://localhost:5555" target="_blank" rel="noreferrer">:5555</a>),
-                        n8n (<a href="http://localhost:5678" target="_blank" rel="noreferrer">:5678</a>)
+                        Flower (<a href="http://localhost:5555" target="_blank" rel="noreferrer">:5555</a>).
+                        Agentic Workflows are Python-based and defined in <code>/implementation/workflows/</code>.
                     </Typography>
                 </Alert>
             </Container>

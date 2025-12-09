@@ -39,16 +39,21 @@ import CloudDownloadIcon from '@mui/icons-material/CloudDownload';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import FilterListIcon from '@mui/icons-material/FilterList';
 import DataObjectIcon from '@mui/icons-material/DataObject';
-import { pipelineAPI, monitoringAPI } from '../services/api';
+import { pipelineAPI, monitoringAPI, triggerAPI, ragApprovalAPI } from '../services/api';
+import ReplayIcon from '@mui/icons-material/Replay';
+import FormControl from '@mui/material/FormControl';
+import Select from '@mui/material/Select';
+import MenuItem from '@mui/material/MenuItem';
+import InputLabel from '@mui/material/InputLabel';
 
-// Pipeline Stages Definition
+// Pipeline Stages Definition - Updated for RAG Approval Flow
 const pipelineStages = [
-    { id: 'trigger', label: 'Trigger Received', icon: <TriggerIcon />, description: 'Analysis request received from manual trigger or cron job' },
-    { id: 'queue', label: 'Queued in Celery', icon: <HourglassEmptyIcon />, description: 'Task queued in Celery worker for processing' },
-    { id: 'react', label: 'ReAct Agent Analysis', icon: <SmartToyIcon />, description: 'Multi-step reasoning with ReAct agent for error classification' },
-    { id: 'crag', label: 'CRAG Verification', icon: <FactCheckIcon />, description: 'Corrective RAG verification and knowledge base lookup' },
-    { id: 'gemini', label: 'Gemini Formatting', icon: <AutoFixHighIcon />, description: 'Final formatting and recommendation generation with Gemini' },
-    { id: 'complete', label: 'Analysis Complete', icon: <DoneAllIcon />, description: 'Analysis saved and ready for validation' },
+    { id: 'trigger', label: 'Trigger Received', icon: <TriggerIcon />, description: 'Analysis request from manual trigger, cron job, or aging service' },
+    { id: 'classify', label: 'Error Classification', icon: <SmartToyIcon />, description: 'LangGraph classifies error type (CODE_ERROR, ENV_CONFIG, NETWORK, INFRA)' },
+    { id: 'rag_queue', label: 'RAG Queue', icon: <HourglassEmptyIcon />, description: 'Added to RAG approval queue with preliminary suggestion' },
+    { id: 'human_review', label: 'Human Review (HITL)', icon: <FactCheckIcon />, description: 'Human approves/rejects RAG suggestion on approval page' },
+    { id: 'ai_analysis', label: 'AI Deep Analysis', icon: <AutoFixHighIcon />, description: 'CODE_ERROR only: Claude analyzes XML, logs to find exact error line' },
+    { id: 'complete', label: 'Complete', icon: <DoneAllIcon />, description: 'Analysis complete - ready for fix application or marked resolved' },
 ];
 
 const getStageIndex = (stageId) => pipelineStages.findIndex(s => s.id === stageId);
@@ -99,42 +104,75 @@ const PipelineStatusPreview = () => {
     const [pipelineData, setPipelineData] = useState(null);
     const [error, setError] = useState(null);
     const [jobLogs, setJobLogs] = useState({});
+    const [statusFilter, setStatusFilter] = useState('all');
+    const [restartDialogOpen, setRestartDialogOpen] = useState(false);
+    const [jobToRestart, setJobToRestart] = useState(null);
+    const [restarting, setRestarting] = useState(false);
+    const [ragStats, setRagStats] = useState({ pending: 0, approved: 0, rejected: 0, escalated: 0 });
+    const [approvalHistory, setApprovalHistory] = useState([]);
+    const [historyLoading, setHistoryLoading] = useState(false);
+    const [historyFilter, setHistoryFilter] = useState('all');
     const location = useLocation();
 
-    // Fetch pipeline jobs from API
+    // Fetch pipeline jobs and RAG stats from API
     const fetchPipelineData = useCallback(async () => {
         try {
-            const response = await pipelineAPI.getJobs({ limit: 20 });
-            const data = response?.data || response;
+            // Fetch pipeline jobs, RAG stats, and approval history in parallel
+            const [jobsResponse, ragStatsResponse, historyResponse] = await Promise.all([
+                pipelineAPI.getJobs({ limit: 20 }),
+                ragApprovalAPI.getStats().catch(() => ({ overall: {} })),
+                ragApprovalAPI.getHistory({ limit: 30 }).catch(() => ({ history: [] }))
+            ]);
+
+            const data = jobsResponse?.data || jobsResponse;
+
+            // Update RAG stats
+            if (ragStatsResponse?.overall) {
+                setRagStats(ragStatsResponse.overall);
+            }
+
+            // Update approval history
+            if (historyResponse?.history) {
+                setApprovalHistory(historyResponse.history);
+            }
 
             // Separate active and completed jobs
             const jobs = data?.jobs || [];
             const active = jobs.filter(j => j.status === 'active' || j.status === 'pending');
             const completed = jobs.filter(j => j.status === 'completed' || j.status === 'failed');
 
-            // Transform jobs to expected format
-            const transformedActive = active.map(job => ({
-                id: `job-${job.job_id}`,
-                buildId: `#${job.build_id}`,
-                testName: job.test_name || 'Unknown Test',
-                triggerType: job.trigger_source || 'manual',
-                triggeredBy: job.triggered_by_user || 'system',
-                startedAt: new Date(job.triggered_at),
-                currentStage: job.current_stage || 'queue',
-                stageProgress: 50,
-                estimatedTime: '~30 sec remaining',
-                logId: `log_${job.job_id}`,
-                logSize: '24 KB',
-                logStoredInDB: true,
-                stages: {
-                    trigger: { status: 'completed', duration: 100 },
-                    queue: { status: job.current_stage === 'queue' ? 'in_progress' : 'completed', duration: 500, progress: 50 },
-                    react: { status: ['react', 'crag', 'gemini', 'complete'].includes(job.current_stage) ? (job.current_stage === 'react' ? 'in_progress' : 'completed') : 'pending', duration: null, progress: 50 },
-                    crag: { status: ['crag', 'gemini', 'complete'].includes(job.current_stage) ? (job.current_stage === 'crag' ? 'in_progress' : 'completed') : 'pending', duration: null },
-                    gemini: { status: ['gemini', 'complete'].includes(job.current_stage) ? (job.current_stage === 'gemini' ? 'in_progress' : 'completed') : 'pending', duration: null },
-                    complete: { status: job.current_stage === 'complete' ? 'completed' : 'pending', duration: null },
-                }
-            }));
+            // Transform jobs to expected format - Updated for RAG Approval Flow
+            const transformedActive = active.map(job => {
+                // Determine current stage based on job status
+                const currentStage = job.current_stage || 'rag_queue';
+                const isInRagQueue = job.status === 'pending_approval' || currentStage === 'rag_queue';
+                const isInHumanReview = currentStage === 'human_review';
+                const isInAiAnalysis = currentStage === 'ai_analysis';
+
+                return {
+                    id: `job-${job.job_id}`,
+                    buildId: `#${job.build_id}`,
+                    testName: job.test_name || 'Unknown Test',
+                    triggerType: job.trigger_source || 'manual',
+                    triggeredBy: job.triggered_by_user || 'system',
+                    startedAt: new Date(job.triggered_at),
+                    currentStage: currentStage,
+                    errorCategory: job.error_category || 'UNKNOWN',
+                    stageProgress: 50,
+                    estimatedTime: isInRagQueue ? 'Awaiting human approval' : '~30 sec remaining',
+                    logId: `log_${job.job_id}`,
+                    logSize: '24 KB',
+                    logStoredInDB: true,
+                    stages: {
+                        trigger: { status: 'completed', duration: 100 },
+                        classify: { status: 'completed', duration: 500 },
+                        rag_queue: { status: isInRagQueue ? 'in_progress' : 'completed', duration: null, progress: 50 },
+                        human_review: { status: isInHumanReview ? 'in_progress' : (isInRagQueue ? 'pending' : 'completed'), duration: null },
+                        ai_analysis: { status: isInAiAnalysis ? 'in_progress' : (isInHumanReview || isInRagQueue ? 'pending' : 'completed'), duration: null },
+                        complete: { status: currentStage === 'complete' ? 'completed' : 'pending', duration: null },
+                    }
+                };
+            });
 
             const transformedCompleted = completed.map(job => ({
                 id: `job-${job.job_id}`,
@@ -142,6 +180,8 @@ const PipelineStatusPreview = () => {
                 testName: job.test_name || 'Unknown Test',
                 triggerType: job.trigger_source || 'manual',
                 status: job.status === 'completed' ? 'success' : 'failed',
+                errorCategory: job.error_category || 'UNKNOWN',
+                aiTriggered: job.ai_triggered || false,
                 totalDuration: 35000,
                 completedAt: job.analyzed_at ? new Date(job.analyzed_at).toLocaleString() : '-',
                 logId: `log_${job.job_id}`,
@@ -191,10 +231,14 @@ const PipelineStatusPreview = () => {
     useEffect(() => {
         const interval = setInterval(() => {
             setActiveJobs(prev => prev.map(job => {
+                // Null safety checks
+                if (!job?.stages || !job?.currentStage) return job;
+
                 const currentStageIndex = getStageIndex(job.currentStage);
                 const stage = job.stages[job.currentStage];
 
-                if (stage.status === 'in_progress') {
+                // Check if stage exists and is in progress
+                if (stage?.status === 'in_progress') {
                     const newProgress = Math.min((stage.progress || 0) + Math.random() * 10, 100);
                     return {
                         ...job,
@@ -253,6 +297,58 @@ const PipelineStatusPreview = () => {
         navigator.clipboard.writeText(logText);
     };
 
+    // Handle restart AI analysis
+    const handleRestartClick = (job) => {
+        setJobToRestart(job);
+        setRestartDialogOpen(true);
+    };
+
+    const handleRestartConfirm = async () => {
+        if (!jobToRestart) return;
+
+        setRestarting(true);
+        try {
+            const buildId = jobToRestart.buildId.replace('#', '');
+            await triggerAPI.triggerAnalysis({
+                build_id: buildId,
+                reason: 'Manual restart from Pipeline Status page',
+                triggered_by: 'dashboard_user'
+            });
+
+            // Refresh the job list after restart
+            await fetchPipelineData();
+            setRestartDialogOpen(false);
+            setJobToRestart(null);
+        } catch (err) {
+            console.error('Error restarting analysis:', err);
+            setError('Failed to restart analysis: ' + (err.message || 'Unknown error'));
+        } finally {
+            setRestarting(false);
+        }
+    };
+
+    // Filter jobs by status
+    const getFilteredJobs = (jobs, isCompleted = false) => {
+        if (statusFilter === 'all') return jobs;
+
+        return jobs.filter(job => {
+            if (isCompleted) {
+                // For completed jobs table
+                if (statusFilter === 'completed') return job.status === 'success';
+                if (statusFilter === 'error') return job.status === 'failed';
+            } else {
+                // For active jobs
+                if (statusFilter === 'completed') return job.currentStage === 'complete';
+                if (statusFilter === 'error') return job.stages && Object.values(job.stages).some(s => s?.status === 'failed');
+                if (statusFilter === 'in_progress') return !['complete'].includes(job.currentStage) && !(job.stages && Object.values(job.stages).some(s => s?.status === 'failed'));
+            }
+            return true;
+        });
+    };
+
+    const filteredActiveJobs = getFilteredJobs(activeJobs, false);
+    const filteredCompletedJobs = getFilteredJobs(completedJobs, true);
+
     const getFilteredLogs = () => {
         if (!selectedJobForLog) return [];
         const logs = getJobLogs(selectedJobForLog);
@@ -264,7 +360,9 @@ const PipelineStatusPreview = () => {
     };
 
     const activeCount = activeJobs.length;
-    const queuedCount = activeJobs.filter(j => j.currentStage === 'queue').length;
+    const queuedCount = activeJobs.filter(j => j.currentStage === 'rag_queue').length;
+    const pendingApproval = ragStats.pending || 0;
+    const totalApproved = ragStats.approved || 0;
 
     return (
         <Box sx={{ minHeight: '100vh', bgcolor: theme.background, pb: 4 }}>
@@ -285,26 +383,46 @@ const PipelineStatusPreview = () => {
                     <Box display="flex" justifyContent="space-between" alignItems="center">
                         <Box>
                             <Typography variant="h4" fontWeight="bold" gutterBottom>
-                                Pipeline Status & Logs
+                                Agentic AI & RAG Pipelines
                             </Typography>
                             <Typography variant="subtitle1" sx={{ opacity: 0.9 }}>
-                                Real-time tracking with full log access for debugging
+                                Monitor AI analysis workflows, RAG processing, and pipeline status
                             </Typography>
                         </Box>
-                        <Box display="flex" gap={2}>
+                        <Box display="flex" gap={2} alignItems="center">
+                            <FormControl size="small" sx={{ minWidth: 140 }}>
+                                <Select
+                                    value={statusFilter}
+                                    onChange={(e) => setStatusFilter(e.target.value)}
+                                    displayEmpty
+                                    sx={{
+                                        bgcolor: 'rgba(255,255,255,0.2)',
+                                        color: 'white',
+                                        '& .MuiOutlinedInput-notchedOutline': { border: 'none' },
+                                        '& .MuiSvgIcon-root': { color: 'white' }
+                                    }}
+                                    startAdornment={<FilterListIcon sx={{ mr: 1, color: 'white' }} />}
+                                >
+                                    <MenuItem value="all">All Status</MenuItem>
+                                    <MenuItem value="completed">Completed</MenuItem>
+                                    <MenuItem value="error">Error/Failed</MenuItem>
+                                    <MenuItem value="in_progress">In Progress</MenuItem>
+                                </Select>
+                            </FormControl>
                             <Chip
-                                icon={<StorageIcon sx={{ color: `${theme.success} !important` }} />}
-                                label="Logs in MongoDB"
+                                icon={<HourglassEmptyIcon sx={{ color: '#f59e0b !important' }} />}
+                                label={`${pendingApproval} Pending Approval`}
+                                sx={{ bgcolor: pendingApproval > 0 ? 'rgba(245,158,11,0.3)' : 'rgba(255,255,255,0.2)', color: 'white', fontWeight: pendingApproval > 0 ? 600 : 400 }}
+                                onClick={() => window.location.href = '/rag-approval'}
+                            />
+                            <Chip
+                                icon={<CheckCircleIcon sx={{ color: `${theme.success} !important` }} />}
+                                label={`${totalApproved} Approved`}
                                 sx={{ bgcolor: 'rgba(255,255,255,0.2)', color: 'white' }}
                             />
                             <Chip
                                 icon={<PlayArrowIcon sx={{ color: `${theme.success} !important` }} />}
                                 label={`${activeCount} Active`}
-                                sx={{ bgcolor: 'rgba(255,255,255,0.2)', color: 'white' }}
-                            />
-                            <Chip
-                                icon={<HourglassEmptyIcon sx={{ color: `${theme.warning} !important` }} />}
-                                label={`${queuedCount} Queued`}
                                 sx={{ bgcolor: 'rgba(255,255,255,0.2)', color: 'white' }}
                             />
                             <Button
@@ -350,20 +468,21 @@ const PipelineStatusPreview = () => {
                     </Stepper>
                 </Paper>
 
-                {/* Log Storage Info */}
+                {/* RAG Approval Flow Info */}
                 <Alert
                     severity="info"
-                    icon={<StorageIcon />}
+                    icon={<FactCheckIcon />}
                     sx={{ mb: 3, borderRadius: 3 }}
                     action={
-                        <Button color="inherit" size="small" startIcon={<CloudDownloadIcon />}>
-                            Export All Logs
+                        <Button color="inherit" size="small" onClick={() => window.location.href = '/rag-approval'}>
+                            Go to RAG Approval
                         </Button>
                     }
                 >
                     <Typography variant="body2">
-                        <strong>Log Storage:</strong> All pipeline logs are automatically stored in MongoDB with 90-day retention.
-                        Logs are indexed by job ID, build ID, and timestamp for fast retrieval.
+                        <strong>Human-in-the-Loop Flow:</strong> All triggers go to RAG Queue for human approval.
+                        <strong> CODE_ERROR</strong> → triggers AI deep analysis after approval.
+                        <strong> Other categories</strong> → RAG solution accepted, marked resolved.
                     </Typography>
                 </Alert>
 
@@ -371,14 +490,18 @@ const PipelineStatusPreview = () => {
                 <Paper elevation={0} sx={{ p: 3, mb: 3, borderRadius: 4, boxShadow: '0 4px 20px rgba(0,0,0,0.04)' }}>
                     <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
                         <Typography variant="h6" fontWeight="bold">
-                            Active Analyses ({activeJobs.length})
+                            Active Analyses ({filteredActiveJobs.length}{statusFilter !== 'all' ? ` of ${activeJobs.length}` : ''})
                         </Typography>
                     </Box>
 
-                    {activeJobs.length === 0 ? (
-                        <Alert severity="info">No active analysis jobs. Trigger a new analysis to see pipeline progress.</Alert>
+                    {filteredActiveJobs.length === 0 ? (
+                        <Alert severity="info">
+                            {statusFilter !== 'all'
+                                ? `No jobs matching filter "${statusFilter}". Try changing the filter.`
+                                : 'No active analysis jobs. Trigger a new analysis to see pipeline progress.'}
+                        </Alert>
                     ) : (
-                        activeJobs.map((job) => {
+                        filteredActiveJobs.map((job) => {
                             const currentStageIndex = getStageIndex(job.currentStage);
                             const isExpanded = expandedJob === job.id;
 
@@ -451,12 +574,12 @@ const PipelineStatusPreview = () => {
                                     <Box mb={2}>
                                         <Stepper activeStep={currentStageIndex} alternativeLabel>
                                             {pipelineStages.map((stage, index) => {
-                                                const stageData = job.stages[stage.id];
+                                                const stageData = job.stages?.[stage.id] || { status: 'pending', progress: 0 };
                                                 return (
                                                     <Step key={stage.id} completed={stageData.status === 'completed'}>
                                                         <StepLabel
                                                             error={stageData.status === 'failed'}
-                                                            StepIconComponent={() => <StageStatusIcon status={stageData.status} />}
+                                                            StepIconComponent={() => <StageStatusIcon status={stageData.status || 'pending'} />}
                                                         >
                                                             <Typography variant="caption">
                                                                 {stageData.status === 'completed' ? formatDuration(stageData.duration) :
@@ -556,7 +679,9 @@ const PipelineStatusPreview = () => {
                 {/* Completed Jobs with Log Access */}
                 <Paper elevation={0} sx={{ borderRadius: 4, boxShadow: '0 4px 20px rgba(0,0,0,0.04)', overflow: 'hidden' }}>
                     <Box sx={{ p: 3, borderBottom: '1px solid #e2e8f0' }}>
-                        <Typography variant="h6" fontWeight="bold">Recent Completed Analyses</Typography>
+                        <Typography variant="h6" fontWeight="bold">
+                            Recent Completed Analyses ({filteredCompletedJobs.length}{statusFilter !== 'all' ? ` of ${completedJobs.length}` : ''})
+                        </Typography>
                     </Box>
                     <TableContainer>
                         <Table>
@@ -570,18 +695,21 @@ const PipelineStatusPreview = () => {
                                     <TableCell sx={{ fontWeight: 600 }}>Log Info</TableCell>
                                     <TableCell sx={{ fontWeight: 600 }}>Completed</TableCell>
                                     <TableCell align="center" sx={{ fontWeight: 600 }}>Logs</TableCell>
+                                    <TableCell align="center" sx={{ fontWeight: 600 }}>Actions</TableCell>
                                 </TableRow>
                             </TableHead>
                             <TableBody>
-                                {completedJobs.length === 0 ? (
+                                {filteredCompletedJobs.length === 0 ? (
                                     <TableRow>
-                                        <TableCell colSpan={7} align="center" sx={{ py: 4 }}>
+                                        <TableCell colSpan={9} align="center" sx={{ py: 4 }}>
                                             <Typography variant="body2" color="textSecondary">
-                                                No completed jobs found
+                                                {statusFilter !== 'all'
+                                                    ? `No jobs matching filter "${statusFilter}"`
+                                                    : 'No completed jobs found'}
                                             </Typography>
                                         </TableCell>
                                     </TableRow>
-                                ) : completedJobs.map((job) => (
+                                ) : filteredCompletedJobs.map((job) => (
                                     <TableRow key={job.id} sx={{ '&:hover': { bgcolor: '#f8fafc' } }}>
                                         <TableCell>
                                             <Typography variant="body2" fontWeight={600}>{job.buildId}</Typography>
@@ -641,8 +769,159 @@ const PipelineStatusPreview = () => {
                                                 </IconButton>
                                             </Tooltip>
                                         </TableCell>
+                                        <TableCell align="center">
+                                            {job.status === 'failed' && (
+                                                <Tooltip title="Restart AI Analysis">
+                                                    <Button
+                                                        size="small"
+                                                        variant="outlined"
+                                                        color="primary"
+                                                        startIcon={<ReplayIcon />}
+                                                        onClick={() => handleRestartClick(job)}
+                                                        sx={{ fontSize: '0.7rem' }}
+                                                    >
+                                                        Restart
+                                                    </Button>
+                                                </Tooltip>
+                                            )}
+                                            {job.status === 'success' && (
+                                                <Typography variant="body2" color="textSecondary">-</Typography>
+                                            )}
+                                        </TableCell>
                                     </TableRow>
                                 ))}
+                            </TableBody>
+                        </Table>
+                    </TableContainer>
+                </Paper>
+
+                {/* RAG Approval History */}
+                <Paper elevation={0} sx={{ borderRadius: 4, boxShadow: '0 4px 20px rgba(0,0,0,0.04)', overflow: 'hidden', mt: 3 }}>
+                    <Box sx={{ p: 3, borderBottom: '1px solid #e2e8f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <Typography variant="h6" fontWeight="bold">
+                            RAG Approval History ({approvalHistory.length})
+                        </Typography>
+                        <FormControl size="small" sx={{ minWidth: 140 }}>
+                            <Select
+                                value={historyFilter}
+                                onChange={(e) => setHistoryFilter(e.target.value)}
+                                displayEmpty
+                            >
+                                <MenuItem value="all">All Status</MenuItem>
+                                <MenuItem value="approved">Approved</MenuItem>
+                                <MenuItem value="rejected">Rejected</MenuItem>
+                                <MenuItem value="escalated">Escalated</MenuItem>
+                            </Select>
+                        </FormControl>
+                    </Box>
+                    <TableContainer>
+                        <Table size="small">
+                            <TableHead>
+                                <TableRow sx={{ bgcolor: '#f8fafc' }}>
+                                    <TableCell sx={{ fontWeight: 600 }}>Build ID</TableCell>
+                                    <TableCell sx={{ fontWeight: 600 }}>Category</TableCell>
+                                    <TableCell sx={{ fontWeight: 600 }}>Status</TableCell>
+                                    <TableCell sx={{ fontWeight: 600 }}>Trigger</TableCell>
+                                    <TableCell sx={{ fontWeight: 600 }}>Reviewed By</TableCell>
+                                    <TableCell sx={{ fontWeight: 600 }}>Reviewed At</TableCell>
+                                    <TableCell sx={{ fontWeight: 600 }}>AI Triggered</TableCell>
+                                    <TableCell sx={{ fontWeight: 600 }}>Notes</TableCell>
+                                </TableRow>
+                            </TableHead>
+                            <TableBody>
+                                {approvalHistory
+                                    .filter(item => historyFilter === 'all' || item.review_status === historyFilter)
+                                    .map((item) => (
+                                    <TableRow key={item.id} sx={{ '&:hover': { bgcolor: '#f8fafc' } }}>
+                                        <TableCell>
+                                            <Typography variant="body2" fontWeight={600}>#{item.build_id}</Typography>
+                                        </TableCell>
+                                        <TableCell>
+                                            <Box display="flex" alignItems="center" gap={0.5}>
+                                                <Chip
+                                                    label={item.error_category || 'UNKNOWN'}
+                                                    size="small"
+                                                    sx={{
+                                                        bgcolor: item.error_category === 'CODE_ERROR' ? '#fee2e2' : '#e0f2fe',
+                                                        color: item.error_category === 'CODE_ERROR' ? '#991b1b' : '#0369a1',
+                                                        fontSize: '0.7rem'
+                                                    }}
+                                                />
+                                                {item.category_changed && (
+                                                    <Tooltip title={`Changed from: ${item.original_category}`}>
+                                                        <Chip
+                                                            label={`← ${item.original_category}`}
+                                                            size="small"
+                                                            variant="outlined"
+                                                            sx={{ fontSize: '0.6rem', height: 20, color: '#f59e0b' }}
+                                                        />
+                                                    </Tooltip>
+                                                )}
+                                            </Box>
+                                        </TableCell>
+                                        <TableCell>
+                                            <Chip
+                                                icon={item.review_status === 'approved' ? <CheckCircleIcon /> :
+                                                      item.review_status === 'rejected' ? <CancelIcon /> : <BoltIcon />}
+                                                label={(item.review_status || 'pending').charAt(0).toUpperCase() + (item.review_status || 'pending').slice(1)}
+                                                size="small"
+                                                sx={{
+                                                    bgcolor: item.review_status === 'approved' ? '#dcfce7' :
+                                                             item.review_status === 'rejected' ? '#fee2e2' : '#fef3c7',
+                                                    color: item.review_status === 'approved' ? '#166534' :
+                                                           item.review_status === 'rejected' ? '#991b1b' : '#92400e',
+                                                    '& .MuiChip-icon': { color: 'inherit' }
+                                                }}
+                                            />
+                                        </TableCell>
+                                        <TableCell>
+                                            <Chip
+                                                label={item.trigger_type || 'MANUAL'}
+                                                size="small"
+                                                variant="outlined"
+                                                sx={{ fontSize: '0.65rem' }}
+                                            />
+                                        </TableCell>
+                                        <TableCell>
+                                            <Typography variant="body2">{item.reviewed_by || '-'}</Typography>
+                                        </TableCell>
+                                        <TableCell>
+                                            <Typography variant="body2" color="textSecondary">
+                                                {item.reviewed_at ? new Date(item.reviewed_at).toLocaleString() : '-'}
+                                            </Typography>
+                                        </TableCell>
+                                        <TableCell>
+                                            {item.ai_analysis_id ? (
+                                                <Chip
+                                                    icon={<SmartToyIcon />}
+                                                    label={`AI #${item.ai_analysis_id}`}
+                                                    size="small"
+                                                    sx={{ bgcolor: '#dbeafe', color: '#1e40af', '& .MuiChip-icon': { color: 'inherit', fontSize: 14 } }}
+                                                />
+                                            ) : (
+                                                <Typography variant="body2" color="textSecondary">-</Typography>
+                                            )}
+                                        </TableCell>
+                                        <TableCell>
+                                            {item.review_feedback ? (
+                                                <Tooltip title={item.review_feedback}>
+                                                    <Typography variant="body2" color="textSecondary" sx={{ maxWidth: 150, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                                        {item.review_feedback}
+                                                    </Typography>
+                                                </Tooltip>
+                                            ) : '-'}
+                                        </TableCell>
+                                    </TableRow>
+                                ))}
+                                {approvalHistory.filter(item => historyFilter === 'all' || item.review_status === historyFilter).length === 0 && (
+                                    <TableRow>
+                                        <TableCell colSpan={8} align="center" sx={{ py: 4 }}>
+                                            <Typography variant="body2" color="textSecondary">
+                                                No approval history found
+                                            </Typography>
+                                        </TableCell>
+                                    </TableRow>
+                                )}
                             </TableBody>
                         </Table>
                     </TableContainer>
@@ -825,6 +1104,69 @@ const PipelineStatusPreview = () => {
                         Logs are stored in MongoDB and retained for 90 days. Log ID: {selectedJobForLog?.logId}
                     </Typography>
                     <Button onClick={() => setLogDialogOpen(false)}>Close</Button>
+                </DialogActions>
+            </Dialog>
+
+            {/* Restart Confirmation Dialog */}
+            <Dialog
+                open={restartDialogOpen}
+                onClose={() => !restarting && setRestartDialogOpen(false)}
+                maxWidth="sm"
+                fullWidth
+            >
+                <DialogTitle>
+                    <Box display="flex" alignItems="center" gap={1}>
+                        <ReplayIcon sx={{ color: '#0891b2' }} />
+                        Restart AI Analysis
+                    </Box>
+                </DialogTitle>
+                <DialogContent>
+                    <Alert severity="info" sx={{ mb: 2 }}>
+                        This will restart the AI analysis for the selected build. The previous analysis results will be replaced.
+                    </Alert>
+                    {jobToRestart && (
+                        <Box sx={{ p: 2, bgcolor: '#f8fafc', borderRadius: 2 }}>
+                            <Grid container spacing={2}>
+                                <Grid item xs={6}>
+                                    <Typography variant="caption" color="textSecondary">Build ID</Typography>
+                                    <Typography variant="body1" fontWeight={600}>{jobToRestart.buildId}</Typography>
+                                </Grid>
+                                <Grid item xs={6}>
+                                    <Typography variant="caption" color="textSecondary">Test Name</Typography>
+                                    <Typography variant="body2">{jobToRestart.testName}</Typography>
+                                </Grid>
+                                <Grid item xs={6}>
+                                    <Typography variant="caption" color="textSecondary">Previous Status</Typography>
+                                    <Chip
+                                        label={jobToRestart.status === 'success' ? 'Success' : 'Failed'}
+                                        size="small"
+                                        color={jobToRestart.status === 'success' ? 'success' : 'error'}
+                                    />
+                                </Grid>
+                                <Grid item xs={6}>
+                                    <Typography variant="caption" color="textSecondary">Trigger Type</Typography>
+                                    <Typography variant="body2">{jobToRestart.triggerType}</Typography>
+                                </Grid>
+                            </Grid>
+                        </Box>
+                    )}
+                </DialogContent>
+                <DialogActions sx={{ p: 2 }}>
+                    <Button
+                        onClick={() => setRestartDialogOpen(false)}
+                        disabled={restarting}
+                    >
+                        Cancel
+                    </Button>
+                    <Button
+                        variant="contained"
+                        color="primary"
+                        onClick={handleRestartConfirm}
+                        disabled={restarting}
+                        startIcon={restarting ? <CircularProgress size={20} color="inherit" /> : <ReplayIcon />}
+                    >
+                        {restarting ? 'Restarting...' : 'Restart Analysis'}
+                    </Button>
                 </DialogActions>
             </Dialog>
         </Box>

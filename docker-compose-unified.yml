@@ -286,6 +286,15 @@ services:
       - PINECONE_API_KEY=${PINECONE_API_KEY}
       - PINECONE_INDEX_NAME=${PINECONE_INDEX_NAME}
       - PINECONE_HOST=${PINECONE_HOST}
+      - PINECONE_KNOWLEDGE_INDEX=${PINECONE_KNOWLEDGE_INDEX}
+      - PINECONE_FAILURES_INDEX=${PINECONE_FAILURES_INDEX}
+      # OpenAI for AI Chatbot
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      # Jira Integration
+      - JIRA_URL=${JIRA_URL}
+      - JIRA_EMAIL=${JIRA_EMAIL}
+      - JIRA_API_TOKEN=${JIRA_API_TOKEN}
+      - JIRA_PROJECT_KEY=${JIRA_PROJECT_KEY}
     networks:
       - ddn-network
     depends_on:

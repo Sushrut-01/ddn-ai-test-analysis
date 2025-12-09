@@ -37,8 +37,8 @@ logger = logging.getLogger(__name__)
 app = Flask(__name__)
 
 # Configuration
-MONGODB_URI = os.getenv('MONGODB_URI', 'mongodb://localhost:27017/')
-MONGODB_DB = os.getenv('MONGODB_DB', 'ddn_test_failures')
+MONGODB_URI = os.getenv('MONGODB_URI')  # Must be set via environment variable
+MONGODB_DB = os.getenv('MONGODB_DB', 'ddn_tests')
 POSTGRES_HOST = os.getenv('POSTGRES_HOST', 'localhost')
 POSTGRES_PORT = int(os.getenv('POSTGRES_PORT', 5434))
 POSTGRES_DB = os.getenv('POSTGRES_DB', 'ddn_qa_system')
@@ -47,12 +47,12 @@ POSTGRES_PASSWORD = os.getenv('POSTGRES_PASSWORD', 'postgres')
 N8N_WEBHOOK_URL = os.getenv('N8N_WEBHOOK_AUTO_TRIGGER', 'http://localhost:5678/webhook/ddn-test-failure')
 PORT = int(os.getenv('AGING_SERVICE_PORT', 5007))
 
-# Aging criteria (from Phase 0F spec - CORRECTED LOGIC)
-# - Same build_id failing multiple times over a time span
-# - Time span (first to last failure) must be >= AGING_DAYS_THRESHOLD
-# - Number of failures must be >= MIN_FAILURE_COUNT
-AGING_DAYS_THRESHOLD = 3  # Days span from first to last failure
-MIN_FAILURE_COUNT = 2  # Minimum number of failures (changed from CONSECUTIVE_FAILURES_THRESHOLD)
+# Aging criteria (UPDATED - OR logic)
+# Auto-trigger AI analysis when EITHER:
+# - Aging days > AGING_DAYS_THRESHOLD (failure older than N days), OR
+# - Fail count > MIN_FAILURE_COUNT (more than N failures for same build)
+AGING_DAYS_THRESHOLD = 3  # Days old (trigger if > 3 days)
+MIN_FAILURE_COUNT = 3  # Minimum failures (trigger if > 3 failures)
 CHECK_INTERVAL_HOURS = 6
 
 # Initialize connections
@@ -130,12 +130,113 @@ def initialize_postgres():
 # AGING LOGIC
 # ============================================================================
 
+def get_build_level_summary() -> Dict:
+    """
+    Phase 6: Query build_results collection for build-level metrics.
+    Returns failed build count per job (Jenkins pipeline failures vs test failures).
+
+    Returns:
+        Dict with job_name -> {total_builds, failed_builds, success_builds, etc.}
+    """
+    if not mongo_client:
+        logger.warning("MongoDB not connected for build_level_summary")
+        return {}
+
+    try:
+        db = mongo_client[MONGODB_DB]
+        build_results = db['build_results']
+
+        # Aggregation to summarize builds by job
+        pipeline = [
+            # Group by job_name and count build results
+            {
+                "$group": {
+                    "_id": "$job_name",
+                    "total_builds": {"$sum": 1},
+                    "failed_builds": {
+                        "$sum": {
+                            "$cond": [{"$eq": ["$build_result", "FAILURE"]}, 1, 0]
+                        }
+                    },
+                    "success_builds": {
+                        "$sum": {
+                            "$cond": [{"$eq": ["$build_result", "SUCCESS"]}, 1, 0]
+                        }
+                    },
+                    "unstable_builds": {
+                        "$sum": {
+                            "$cond": [{"$eq": ["$build_result", "UNSTABLE"]}, 1, 0]
+                        }
+                    },
+                    "latest_build": {"$max": "$build_number"},
+                    "latest_timestamp": {"$max": "$timestamp"},
+                    "total_test_failures": {"$sum": {"$ifNull": ["$test_fail_count", 0]}},
+                    "total_test_passes": {"$sum": {"$ifNull": ["$test_pass_count", 0]}}
+                }
+            },
+            # Project clean output
+            {
+                "$project": {
+                    "job_name": "$_id",
+                    "total_builds": 1,
+                    "failed_builds": 1,
+                    "success_builds": 1,
+                    "unstable_builds": 1,
+                    "latest_build": 1,
+                    "latest_timestamp": 1,
+                    "total_test_failures": 1,
+                    "total_test_passes": 1,
+                    "build_success_rate": {
+                        "$cond": [
+                            {"$eq": ["$total_builds", 0]},
+                            0,
+                            {"$multiply": [
+                                {"$divide": ["$success_builds", "$total_builds"]},
+                                100
+                            ]}
+                        ]
+                    }
+                }
+            }
+        ]
+
+        results = list(build_results.aggregate(pipeline))
+
+        # Convert to dict keyed by job_name
+        summary = {}
+        for r in results:
+            job_name = r.get('job_name') or r.get('_id')
+            summary[job_name] = {
+                'total_builds': r.get('total_builds', 0),
+                'failed_builds': r.get('failed_builds', 0),
+                'success_builds': r.get('success_builds', 0),
+                'unstable_builds': r.get('unstable_builds', 0),
+                'latest_build': r.get('latest_build', 0),
+                'latest_timestamp': r.get('latest_timestamp'),
+                'total_test_failures': r.get('total_test_failures', 0),
+                'total_test_passes': r.get('total_test_passes', 0),
+                'build_success_rate': round(r.get('build_success_rate', 0), 1)
+            }
+
+        logger.info(f"📊 Build-level summary: {len(summary)} jobs")
+        for job, data in summary.items():
+            logger.info(f"   - {job}: {data['failed_builds']}/{data['total_builds']} failed builds, "
+                       f"{data['total_test_failures']} test failures")
+
+        return summary
+
+    except Exception as e:
+        logger.error(f"❌ Error getting build-level summary: {e}")
+        import traceback
+        logger.error(traceback.format_exc())
+        return {}
+
+
 def get_aged_failures() -> List[Dict]:
     """
-    Query MongoDB for failures meeting aging criteria:
-    - Same build_id failing multiple times
-    - Time span (first to last failure) >= AGING_DAYS_THRESHOLD days
-    - At least MIN_FAILURE_COUNT failures
+    Query MongoDB for failures meeting aging criteria (OR logic):
+    - Aging days > AGING_DAYS_THRESHOLD (failure older than N days), OR
+    - Fail count > MIN_FAILURE_COUNT (more than N failures for same build)
     - Not yet analyzed
 
     Returns:
@@ -155,24 +256,28 @@ def get_aged_failures() -> List[Dict]:
         # Aggregation pipeline to group builds by build_id and calculate span
         pipeline = [
             # Stage 1: Match only failures that haven't been analyzed
-            # BUG FIX #2: Changed status from "FAILURE" to "failed" (Robot Framework listener uses lowercase)
+            # BUG FIX #3: Support both "FAILURE" (simulator) and "failed" (Robot Framework) statuses
+            # Also filter out documents with null build_id (can't be grouped)
             {
                 "$match": {
-                    "status": "failed",
-                    "analyzed": {"$ne": True}
+                    "status": {"$in": ["FAILURE", "failed"]},
+                    "analyzed": {"$ne": True},
+                    "build_id": {"$ne": None, "$exists": True}
                 }
             },
 
             # Stage 2: Group by build_id and calculate metrics
+            # BUG FIX #3: Use $timestamp (always populated) instead of $created_at (often None)
+            # BUG FIX #3: Use $sum:1 to count failures (fail_count field is never populated)
             {
                 "$group": {
                     "_id": "$build_id",
                     "job_name": {"$first": "$job_name"},
                     "test_suite": {"$first": "$test_suite"},
                     "build_url": {"$first": "$build_url"},
-                    "first_failure": {"$min": "$created_at"},
-                    "last_failure": {"$max": "$created_at"},
-                    "failure_count": {"$sum": 1},
+                    "first_failure": {"$min": "$timestamp"},
+                    "last_failure": {"$max": "$timestamp"},
+                    "failure_count": {"$sum": 1},  # Count failures (fail_count field is never populated)
                     "latest_build": {"$last": "$$ROOT"}  # Keep latest build document
                 }
             },
@@ -197,11 +302,14 @@ def get_aged_failures() -> List[Dict]:
                 }
             },
 
-            # Stage 4: Filter by aging criteria
+            # Stage 4: Filter by aging criteria (OR logic)
+            # Trigger if: days_span > 3 OR failure_count > 3
             {
                 "$match": {
-                    "days_span": {"$gte": AGING_DAYS_THRESHOLD},
-                    "failure_count": {"$gte": MIN_FAILURE_COUNT}
+                    "$or": [
+                        {"days_span": {"$gt": AGING_DAYS_THRESHOLD}},
+                        {"failure_count": {"$gt": MIN_FAILURE_COUNT}}
+                    ]
                 }
             },
 
@@ -221,7 +329,9 @@ def get_aged_failures() -> List[Dict]:
 
         logger.info(f"📊 Found {len(aged_builds)} aged failure patterns:")
         for build in aged_builds:
-            logger.info(f"   - {build['build_id']}: {build['failure_count']} failures over {build['days_span']:.1f} days")
+            failure_count = build.get('failure_count') or 0
+            days_span = build.get('days_span') or 0
+            logger.info(f"   - {build['build_id']}: {failure_count} failures over {days_span:.1f} days")
 
         return aged_builds
 
@@ -247,22 +357,29 @@ def trigger_n8n_analysis(build_summary: Dict) -> Dict:
     try:
         # Extract data from summary
         build_id = build_summary.get('build_id')
-        latest = build_summary.get('latest_build', {})
+        latest = build_summary.get('latest_build') or {}
+
+        # BUG FIX #3: Handle None values properly (use 'or' not default in .get())
+        # .get(key, default) returns None if key exists with None value, not default
+        last_failure = build_summary.get('last_failure') or datetime.now()
+        first_failure = build_summary.get('first_failure') or datetime.now()
+        days_span = build_summary.get('days_span') or 0
+        failure_count = build_summary.get('failure_count') or 0
 
         # Prepare payload for n8n webhook
         payload = {
             'build_id': build_id,
-            'build_url': build_summary.get('build_url', latest.get('build_url', '')),
-            'job_name': build_summary.get('job_name', ''),
-            'test_suite': build_summary.get('test_suite', ''),
+            'build_url': build_summary.get('build_url') or latest.get('build_url') or '',
+            'job_name': build_summary.get('job_name') or '',
+            'test_suite': build_summary.get('test_suite') or '',
             'status': 'FAILURE',
-            'timestamp': build_summary.get('last_failure', datetime.now()).isoformat(),
+            'timestamp': last_failure.isoformat(),
             'trigger_source': 'aging_service',
             'aging_metadata': {
-                'days_span': round(build_summary.get('days_span', 0), 2),
-                'failure_count': build_summary.get('failure_count', 0),
-                'first_failure': build_summary.get('first_failure', datetime.now()).isoformat(),
-                'last_failure': build_summary.get('last_failure', datetime.now()).isoformat()
+                'days_span': round(days_span, 2),
+                'failure_count': failure_count,
+                'first_failure': first_failure.isoformat(),
+                'last_failure': last_failure.isoformat()
             }
         }
 
@@ -331,11 +448,12 @@ def log_trigger_to_postgres(build_summary: Dict, trigger_result: Dict):
                 build_summary.get('build_id'),
                 build_summary.get('job_name'),
                 build_summary.get('test_suite'),
-                build_summary.get('failure_count', 0),
-                round(build_summary.get('days_span', 0), 2),
-                trigger_result.get('status', 'unknown'),
-                str(trigger_result.get('response', ''))[:1000],
-                trigger_result.get('error', '')[:500] if 'error' in trigger_result else None
+                # BUG FIX #3: Handle None values properly (use 'or' not default in .get())
+                build_summary.get('failure_count') or 0,
+                round(build_summary.get('days_span') or 0, 2),
+                trigger_result.get('status') or 'unknown',
+                str(trigger_result.get('response') or '')[:1000],
+                (trigger_result.get('error') or '')[:500] if 'error' in trigger_result else None
             ))
             postgres_conn.commit()
             logger.debug(f"📝 Logged trigger for {build_summary.get('build_id')} to PostgreSQL")
@@ -359,7 +477,7 @@ def process_aged_failures():
     """
     logger.info("=" * 80)
     logger.info("🕐 AGING SERVICE CHECK STARTED")
-    logger.info(f"   Criteria: {MIN_FAILURE_COUNT}+ failures over {AGING_DAYS_THRESHOLD}+ day span, not analyzed")
+    logger.info(f"   Criteria: days > {AGING_DAYS_THRESHOLD} OR failures > {MIN_FAILURE_COUNT}, not analyzed")
     logger.info("=" * 80)
 
     # Get aged failures
@@ -516,10 +634,18 @@ def trigger_now():
 
 @app.route('/stats', methods=['GET'])
 def get_stats():
-    """Get aging service statistics"""
+    """Get aging service statistics with dual metrics (test failures + build failures)"""
     try:
-        # Get aged builds count
+        # Get aged builds count (test-level)
         aged_count = len(get_aged_failures())
+
+        # Phase 6: Get build-level summary
+        build_summary = get_build_level_summary()
+
+        # Calculate totals from build summary
+        total_failed_builds = sum(j.get('failed_builds', 0) for j in build_summary.values())
+        total_test_failures = sum(j.get('total_test_failures', 0) for j in build_summary.values())
+        total_builds = sum(j.get('total_builds', 0) for j in build_summary.values())
 
         # Get PostgreSQL trigger log stats
         pg_stats = {}
@@ -547,6 +673,14 @@ def get_stats():
 
         return jsonify({
             'aged_failures_pending': aged_count,
+            # Phase 6: Dual metrics
+            'dual_metrics': {
+                'failed_test_count': total_test_failures,
+                'failed_build_count': total_failed_builds,
+                'total_builds': total_builds,
+                'jobs_tracked': len(build_summary)
+            },
+            'build_summary_by_job': build_summary,
             'trigger_log': pg_stats,
             'criteria': {
                 'aging_threshold_days': AGING_DAYS_THRESHOLD,
@@ -556,6 +690,40 @@ def get_stats():
 
     except Exception as e:
         logger.error(f"❌ Error getting stats: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/builds/summary', methods=['GET'])
+def get_builds_summary():
+    """
+    Phase 6: New endpoint for build-level metrics.
+    Returns dual metrics: failed_test_count AND failed_build_count per job.
+    """
+    try:
+        build_summary = get_build_level_summary()
+
+        # Calculate totals
+        total_failed_builds = sum(j.get('failed_builds', 0) for j in build_summary.values())
+        total_success_builds = sum(j.get('success_builds', 0) for j in build_summary.values())
+        total_test_failures = sum(j.get('total_test_failures', 0) for j in build_summary.values())
+        total_test_passes = sum(j.get('total_test_passes', 0) for j in build_summary.values())
+        total_builds = sum(j.get('total_builds', 0) for j in build_summary.values())
+
+        return jsonify({
+            'totals': {
+                'failed_build_count': total_failed_builds,
+                'success_build_count': total_success_builds,
+                'total_builds': total_builds,
+                'failed_test_count': total_test_failures,
+                'passed_test_count': total_test_passes,
+                'build_success_rate': round((total_success_builds / total_builds * 100) if total_builds > 0 else 0, 1)
+            },
+            'by_job': build_summary,
+            'generated_at': datetime.now().isoformat()
+        }), 200
+
+    except Exception as e:
+        logger.error(f"❌ Error getting builds summary: {e}")
         return jsonify({'error': str(e)}), 500
 
 
@@ -604,7 +772,7 @@ def main():
     logger.info("🚀 DDN AGING SERVICE STARTING")
     logger.info(f"   Port: {PORT}")
     logger.info(f"   Check Interval: Every {CHECK_INTERVAL_HOURS} hours")
-    logger.info(f"   Criteria: {MIN_FAILURE_COUNT}+ failures over {AGING_DAYS_THRESHOLD}+ day span")
+    logger.info(f"   Criteria: days > {AGING_DAYS_THRESHOLD} OR failures > {MIN_FAILURE_COUNT}")
     logger.info("=" * 80)
 
     # Initialize connections

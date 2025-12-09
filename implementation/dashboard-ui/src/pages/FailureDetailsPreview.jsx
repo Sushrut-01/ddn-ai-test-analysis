@@ -27,6 +27,8 @@ import FolderIcon from '@mui/icons-material/Folder';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import SendIcon from '@mui/icons-material/Send';
 import HistoryIcon from '@mui/icons-material/History';
+import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
+import AnalyticsIcon from '@mui/icons-material/Analytics';
 import { useNavigate, useParams } from 'react-router-dom';
 import { failuresAPI } from '../services/api';
 
@@ -133,7 +135,7 @@ const FailureDetailsPreview = () => {
                     <Alert severity="error" sx={{ mb: 2 }}>
                         {error || 'Failed to load failure details'}
                     </Alert>
-                    <Button startIcon={<ArrowBackIcon />} onClick={() => navigate('/failures')}>
+                    <Button startIcon={<ArrowBackIcon />} onClick={() => navigate('/')}>
                         Back to Failures
                     </Button>
                 </Container>
@@ -245,10 +247,10 @@ const FailureDetailsPreview = () => {
                 <Container maxWidth="xl">
                     <Button
                         startIcon={<ArrowBackIcon />}
-                        onClick={() => navigate('/failures-preview')}
+                        onClick={() => navigate('/')}
                         sx={{ color: 'white', mb: 2, '&:hover': { bgcolor: 'rgba(255,255,255,0.1)' } }}
                     >
-                        Back to Failures
+                        Back to AI Completed
                     </Button>
                     <Box display="flex" justifyContent="space-between" alignItems="flex-start">
                         <Box>
@@ -277,6 +279,46 @@ const FailureDetailsPreview = () => {
             </Box>
 
             <Container maxWidth="xl">
+                {/* Navigation Flow Indicator */}
+                <Paper elevation={0} sx={{ p: 2, mb: 3, borderRadius: 3, bgcolor: 'white', boxShadow: '0 4px 20px rgba(0,0,0,0.04)', display: 'flex', alignItems: 'center', gap: 2, flexWrap: 'wrap' }}>
+                    <Typography variant="subtitle2" color="textSecondary" sx={{ mr: 1 }}>
+                        Flow:
+                    </Typography>
+                    <Chip
+                        label="1. Trigger/Auto"
+                        size="small"
+                        variant="outlined"
+                        onClick={() => navigate('/manual-trigger')}
+                        sx={{ cursor: 'pointer', '&:hover': { bgcolor: alpha('#3b82f6', 0.1) } }}
+                    />
+                    <ArrowForwardIcon sx={{ color: '#94a3b8', fontSize: 18 }} />
+                    <Chip
+                        label="2. AI Completed"
+                        size="small"
+                        variant="outlined"
+                        onClick={() => navigate('/')}
+                        sx={{ cursor: 'pointer', '&:hover': { bgcolor: alpha('#3b82f6', 0.1) } }}
+                    />
+                    <ArrowForwardIcon sx={{ color: '#94a3b8', fontSize: 18 }} />
+                    <Chip label="3. Review & Approve" color="primary" size="small" sx={{ fontWeight: 600 }} />
+                    <ArrowForwardIcon sx={{ color: '#94a3b8', fontSize: 18 }} />
+                    <Chip
+                        label="4. Create Jira Bug"
+                        size="small"
+                        variant="outlined"
+                        onClick={() => navigate('/jira-bugs')}
+                        sx={{ cursor: 'pointer', '&:hover': { bgcolor: alpha('#8b5cf6', 0.1) } }}
+                    />
+                    <ArrowForwardIcon sx={{ color: '#94a3b8', fontSize: 18 }} />
+                    <Chip
+                        label="5. Analytics"
+                        size="small"
+                        variant="outlined"
+                        onClick={() => navigate('/analytics')}
+                        sx={{ cursor: 'pointer', '&:hover': { bgcolor: alpha('#10b981', 0.1) } }}
+                    />
+                </Paper>
+
                 {/* Quick Access Links - IMPORTANT for user verification */}
                 <Paper elevation={0} sx={{ p: 3, mb: 3, borderRadius: 4, boxShadow: '0 4px 20px rgba(0,0,0,0.04)', bgcolor: '#f0f9ff', border: '1px solid #bae6fd' }}>
                     <Box display="flex" alignItems="center" gap={2} mb={2}>
@@ -595,6 +637,44 @@ const FailureDetailsPreview = () => {
                                         {feedbackStatus === 'refining' && 'Refinement in progress...'}
                                         {feedbackStatus === 'refined' && 'Analysis has been refined based on your feedback.'}
                                     </Alert>
+
+                                    {/* Next Steps after Approval */}
+                                    {feedbackStatus === 'accepted' && (
+                                        <Box display="flex" flexDirection="column" gap={2}>
+                                            <Typography variant="subtitle2" color="textSecondary" mb={1}>
+                                                Next Steps:
+                                            </Typography>
+                                            <Button
+                                                variant="contained"
+                                                fullWidth
+                                                startIcon={<BugReportIcon />}
+                                                endIcon={<ArrowForwardIcon />}
+                                                onClick={() => navigate('/jira-bugs')}
+                                                sx={{ bgcolor: '#8b5cf6', '&:hover': { bgcolor: '#7c3aed' }, py: 1.5, borderRadius: 3 }}
+                                            >
+                                                Create Jira Bug
+                                            </Button>
+                                            <Button
+                                                variant="outlined"
+                                                fullWidth
+                                                startIcon={<AnalyticsIcon />}
+                                                endIcon={<ArrowForwardIcon />}
+                                                onClick={() => navigate('/analytics')}
+                                                sx={{ borderRadius: 3 }}
+                                            >
+                                                View Analytics
+                                            </Button>
+                                            <Divider sx={{ my: 1 }} />
+                                            <Button
+                                                variant="text"
+                                                fullWidth
+                                                onClick={() => navigate('/')}
+                                                sx={{ color: 'textSecondary' }}
+                                            >
+                                                Back to AI Completed
+                                            </Button>
+                                        </Box>
+                                    )}
 
                                     {feedbackStatus === 'refined' && (
                                         <Box display="flex" flexDirection="column" gap={2}>

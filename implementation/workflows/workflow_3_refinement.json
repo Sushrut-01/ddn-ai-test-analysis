@@ -159,25 +159,30 @@
     },
     {
       "parameters": {
-        "operation": "update",
-        "collection": "analysis_solutions",
-        "query": "={ \"build_id\": \"{{ $json.build_id }}\" }",
-        "fields": "={{ JSON.stringify($json) }}",
+        "method": "PUT",
+        "url": "http://localhost:5006/api/analysis/update",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"build_id\": \"{{ $json.build_id }}\",\n  \"error_category\": \"{{ $json.error_category }}\",\n  \"root_cause\": \"{{ $json.root_cause }}\",\n  \"fix_recommendation\": \"{{ $json.fix_recommendation }}\",\n  \"confidence_score\": {{ $json.confidence_score }},\n  \"code_fix\": \"{{ $json.code_fix || '' }}\",\n  \"prevention_strategy\": \"{{ $json.prevention_strategy || '' }}\",\n  \"user_feedback\": \"{{ $json.user_feedback_text || '' }}\",\n  \"original_category\": \"{{ $json.original_analysis.error_category || '' }}\",\n  \"original_confidence\": {{ $json.original_analysis.confidence || 0 }},\n  \"triggered_by\": \"{{ $json.triggered_by || 'system' }}\"\n}",
         "options": {
-          "upsert": false
+          "timeout": 30000
         }
       },
       "id": "update-solution",
-      "name": "9. Update Solution in MongoDB",
-      "type": "n8n-nodes-base.mongoDb",
-      "typeVersion": 1.2,
+      "name": "9. Update Solution (Dashboard API)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
       "position": [1850, 300],
-      "credentials": {
-        "mongoDb": {
-          "id": "mongodb-prod",
-          "name": "MongoDB Production"
-        }
-      }
+      "notes": "Architecture Best Practice: Update via Dashboard API (like Workflow 4)"
     },
     {
       "parameters": {

@@ -38,6 +38,7 @@ import BoltIcon from '@mui/icons-material/Bolt'
 import MonitorHeartIcon from '@mui/icons-material/MonitorHeart'
 import AccountTreeIcon from '@mui/icons-material/AccountTree'
 import BugReportIcon from '@mui/icons-material/BugReport'
+import CheckCircleIcon from '@mui/icons-material/CheckCircle'
 import MergeIcon from '@mui/icons-material/Merge'
 import SmartToyIcon from '@mui/icons-material/SmartToy'
 import ScienceIcon from '@mui/icons-material/Science'
@@ -45,9 +46,12 @@ import GroupIcon from '@mui/icons-material/Group'
 import SettingsIcon from '@mui/icons-material/Settings'
 import NotificationsIcon from '@mui/icons-material/Notifications'
 import HistoryIcon from '@mui/icons-material/History'
+import HowToVoteIcon from '@mui/icons-material/HowToVote'
+import AutoFixHighIcon from '@mui/icons-material/AutoFixHigh'
 import ExpandLess from '@mui/icons-material/ExpandLess'
 import ExpandMore from '@mui/icons-material/ExpandMore'
 import ThemeSelector from './ThemeSelector'
+import AppBreadcrumbs from './Breadcrumbs'
 import { useColorTheme } from '../theme/ThemeContext'
 
 const drawerWidth = 260
@@ -58,17 +62,20 @@ const menuSections = [
     title: 'Dashboard',
     items: [
       { text: 'Overview', icon: <DashboardIcon />, path: '/' },
-      { text: 'Pipeline Status', icon: <AccountTreeIcon />, path: '/pipeline' },
+      { text: 'Agentic AI & RAG Pipelines', icon: <AccountTreeIcon />, path: '/pipeline' },
       { text: 'Services', icon: <MonitorHeartIcon />, path: '/services' }
     ]
   },
   {
     title: 'Analysis',
     items: [
-      { text: 'Failures', icon: <ErrorIcon />, path: '/failures' },
-      { text: 'Analytics', icon: <AnalyticsIcon />, path: '/analytics' },
-      { text: 'Manual Trigger', icon: <PlayArrowIcon />, path: '/manual-trigger' },
-      { text: 'Bulk Trigger', icon: <BoltIcon />, path: '/bulk-trigger' }
+      { text: 'Manual Trigger Flow', icon: <PlayArrowIcon />, path: '/bulk-trigger' },
+      { text: 'RAG Review', icon: <HowToVoteIcon />, path: '/rag-approval' },
+      { text: 'Approval Flow', icon: <CheckCircleIcon />, path: '/approval-flow' },
+      { text: 'AI Root Cause Analysis', icon: <BugReportIcon />, path: '/ai-root-cause' },
+      { text: 'Code Healing Pipeline', icon: <AutoFixHighIcon />, path: '/code-healing' },
+      { text: 'Trigger Records', icon: <HistoryIcon />, path: '/manual-trigger' },
+      { text: 'Analytics', icon: <AnalyticsIcon />, path: '/analytics' }
     ]
   },
   {
@@ -472,14 +479,16 @@ function Layout({ children }) {
         component="main"
         sx={{
           flexGrow: 1,
-          p: 3,
           width: { sm: `calc(100% - ${drawerWidth}px)` },
           mt: 8,
           bgcolor: theme.background,
           minHeight: 'calc(100vh - 64px)'
         }}
       >
-        {children}
+        <AppBreadcrumbs />
+        <Box sx={{ p: 3 }}>
+          {children}
+        </Box>
       </Box>
     </Box>
   )

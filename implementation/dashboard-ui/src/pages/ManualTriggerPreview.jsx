@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import {
     Box, Container, Paper, Typography, Grid, TextField, Button, Alert, Chip,
     Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TablePagination,
@@ -18,10 +18,13 @@ import StorageIcon from '@mui/icons-material/Storage';
 import SmartToyIcon from '@mui/icons-material/SmartToy';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import WarningIcon from '@mui/icons-material/Warning';
+import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
+import ErrorIcon from '@mui/icons-material/Error';
 import { triggerAPI } from '../services/api';
 
 const ManualTriggerPreview = () => {
     const location = useLocation();
+    const navigate = useNavigate();
     const [buildId, setBuildId] = useState('');
     const [email, setEmail] = useState('');
     const [reason, setReason] = useState('');
@@ -118,10 +121,10 @@ const ManualTriggerPreview = () => {
                     <Box display="flex" justifyContent="space-between" alignItems="center">
                         <Box>
                             <Typography variant="h4" fontWeight="bold" gutterBottom>
-                                Manual Trigger
+                                Trigger Records
                             </Typography>
                             <Typography variant="subtitle1" sx={{ opacity: 0.9 }}>
-                                Bypass the 3-failure rule and trigger immediate AI analysis
+                                View trigger history and create new analysis requests
                             </Typography>
                         </Box>
                         <Box display="flex" gap={2} alignItems="center">
@@ -144,6 +147,37 @@ const ManualTriggerPreview = () => {
             </Box>
 
             <Container maxWidth="xl">
+                {/* Navigation Context */}
+                <Paper elevation={0} sx={{ p: 2, mb: 3, borderRadius: 3, bgcolor: 'white', boxShadow: '0 4px 20px rgba(0,0,0,0.04)', display: 'flex', alignItems: 'center', gap: 2, flexWrap: 'wrap' }}>
+                    <Typography variant="subtitle2" color="textSecondary" sx={{ mr: 1 }}>
+                        Flow:
+                    </Typography>
+                    <Chip label="1. Trigger Analysis" color="primary" size="small" sx={{ fontWeight: 600 }} />
+                    <ArrowForwardIcon sx={{ color: '#94a3b8', fontSize: 18 }} />
+                    <Chip
+                        label="2. View Results"
+                        size="small"
+                        variant="outlined"
+                        onClick={() => navigate('/failures')}
+                        icon={<ErrorIcon sx={{ fontSize: 16 }} />}
+                        sx={{ cursor: 'pointer', '&:hover': { bgcolor: alpha('#3b82f6', 0.1) } }}
+                    />
+                    <ArrowForwardIcon sx={{ color: '#94a3b8', fontSize: 18 }} />
+                    <Chip
+                        label="3. Review & Approve"
+                        size="small"
+                        variant="outlined"
+                        sx={{ cursor: 'default' }}
+                    />
+                    <ArrowForwardIcon sx={{ color: '#94a3b8', fontSize: 18 }} />
+                    <Chip
+                        label="4. Create Jira Bug"
+                        size="small"
+                        variant="outlined"
+                        sx={{ cursor: 'default' }}
+                    />
+                </Paper>
+
                 <Grid container spacing={3}>
                     {/* Trigger Form */}
                     <Grid item xs={12} lg={6}>
@@ -208,8 +242,23 @@ const ManualTriggerPreview = () => {
                             </Button>
 
                             {showSuccess && (
-                                <Alert severity="success" sx={{ mt: 3, borderRadius: 3 }} icon={<CheckCircleIcon />}>
-                                    AI analysis triggered successfully! Check your Teams/Slack for results.
+                                <Alert
+                                    severity="success"
+                                    sx={{ mt: 3, borderRadius: 3 }}
+                                    icon={<CheckCircleIcon />}
+                                    action={
+                                        <Button
+                                            color="inherit"
+                                            size="small"
+                                            endIcon={<ArrowForwardIcon />}
+                                            onClick={() => navigate('/failures')}
+                                            sx={{ fontWeight: 600 }}
+                                        >
+                                            View Results
+                                        </Button>
+                                    }
+                                >
+                                    AI analysis triggered successfully! Check your Teams/Slack or view results in Failures page.
                                 </Alert>
                             )}
                         </Paper>

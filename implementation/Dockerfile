@@ -27,6 +27,9 @@ COPY tasks/ ./tasks/
 # Copy retrieval directory (required for FusionRAG)
 COPY retrieval/ ./retrieval/
 
+# Copy workflows directory (required for Agentic Workflows API)
+COPY workflows/ ./workflows/
+
 # Set PYTHONPATH to include /app so all modules are found
 ENV PYTHONPATH=/app
 

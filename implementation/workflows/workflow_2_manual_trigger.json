@@ -223,21 +223,29 @@
     },
     {
       "parameters": {
-        "operation": "insertOne",
-        "collection": "analysis_solutions",
-        "fields": "={{ JSON.stringify($json) }}"
+        "url": "http://localhost:5006/api/analysis/store",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json) }}",
+        "options": {
+          "timeout": 30000
+        }
       },
       "id": "store-mongodb",
-      "name": "10. Store Solution",
-      "type": "n8n-nodes-base.mongoDb",
-      "typeVersion": 1.2,
+      "name": "10. Store Solution (Dashboard API)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
       "position": [2050, 300],
-      "credentials": {
-        "mongoDb": {
-          "id": "mongodb-prod",
-          "name": "MongoDB Production"
-        }
-      }
+      "notes": "Architecture Best Practice: Store via Dashboard API (like Workflow 4)"
     },
     {
       "parameters": {
