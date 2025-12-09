@@ -14,7 +14,17 @@
       "Bash(docker compose:*)",
       "Bash(docker ps:*)",
       "Bash(curl:*)",
-      "Bash(npm run build:*)"
+      "Bash(npm run build:*)",
+      "Bash(cat:*)",
+      "Bash(java -jar jenkins-cli.jar:*)",
+      "Bash(python -m json.tool:*)",
+      "Bash(\"/c/Program Files/Rancher Desktop/resources/resources/win32/bin/docker.exe\" logs ddn-jira --tail 20)",
+      "Bash(\"/c/Program Files/Rancher Desktop/resources/resources/win32/bin/docker.exe\" ps)",
+      "Bash(\"/c/Program Files/Rancher Desktop/resources/resources/win32/bin/docker.exe\" exec ddn-postgres psql -U postgres -d ddn_test_results -c \"\\d failure_analysis\")",
+      "Bash(\"/c/Program Files/Rancher Desktop/resources/resources/win32/bin/docker.exe\" exec ddn-postgres psql:*)",
+      "Bash(\"/c/Program Files/Rancher Desktop/resources/resources/win32/bin/docker.exe\" exec ddn-postgres psql -U postgres -d ddn_ai_analysis -c \"\\d jira_bugs\")",
+      "Bash(\"/c/Program Files/Rancher Desktop/resources/resources/win32/bin/docker.exe\" ps --format \"table {{.Names}}\\t{{.Status}}\")",
+      "Bash(\"/c/Program Files/Rancher Desktop/resources/resources/win32/bin/docker.exe\" compose -f docker-compose-unified.yml up -d dashboard-ui)"
     ],
     "deny": [],
     "ask": []
