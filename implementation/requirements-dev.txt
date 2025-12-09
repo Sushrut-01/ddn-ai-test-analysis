@@ -1,0 +1,21 @@
+# DDN AI - Layer 4: Development/Testing Dependencies
+# Install: pip install -r requirements-dev.txt
+# Use case: Local development, testing, debugging
+# Prerequisite: requirements-base.txt
+
+# Include base
+-r requirements-base.txt
+
+# Testing
+pytest==8.3.4
+pytest-asyncio==0.24.0
+pytest-cov>=4.1.0
+
+# Code Quality
+black>=24.0.0
+flake8>=7.0.0
+mypy>=1.8.0
+
+# Debugging
+ipython>=8.0.0
+jupyter>=1.0.0

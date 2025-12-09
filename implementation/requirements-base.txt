@@ -1,0 +1,31 @@
+# DDN AI - Layer 1: Base Dependencies (Lightweight - ~10MB)
+# Install: pip install -r requirements-base.txt
+# Use case: Development, basic API, testing without ML
+
+# Core Framework
+flask==3.0.3
+flask-cors==4.0.0
+python-dotenv==1.0.1
+
+# HTTP & Requests
+requests==2.32.3
+urllib3==2.2.3
+
+# Databases
+pymongo==4.10.1
+psycopg2-binary==2.9.10
+
+# Data Processing
+pydantic==2.10.4
+pydantic-settings==2.6.1
+
+# Utilities
+python-dateutil==2.9.0
+pytz==2024.2
+psutil==5.9.8
+
+# Logging
+colorlog==6.9.0
+
+# Caching
+redis>=5.0.1,<8.0.0
