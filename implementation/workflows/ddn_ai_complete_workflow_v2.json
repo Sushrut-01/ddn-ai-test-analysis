@@ -365,21 +365,21 @@
       "main": [[{"node": "5. Build Context Bundle", "type": "main", "index": 0}]]
     },
     "5. Build Context Bundle": {
-      "main": [[{"node": "6. LangGraph Classification + RAG", "type": "main", "index": 0}]]
+      "main": [[{"node": "6. LangGraph ReAct Agent (Dual-Index RAG)", "type": "main", "index": 0}]]
     },
-    "6. LangGraph Classification + RAG": {
-      "main": [[{"node": "7. Route: Deep Analysis Needed?", "type": "main", "index": 0}]]
+    "6. LangGraph ReAct Agent (Dual-Index RAG)": {
+      "main": [[{"node": "7. OPTION C Route: CODE_ERROR or Deep Analysis?", "type": "main", "index": 0}]]
     },
-    "7. Route: Deep Analysis Needed?": {
+    "7. OPTION C Route: CODE_ERROR or Deep Analysis?": {
       "main": [
-        [{"node": "8b. Claude Deep Analysis (Full Context)", "type": "main", "index": 0}],
-        [{"node": "8a. RAG Solution (Full Context)", "type": "main", "index": 0}]
+        [{"node": "8b. Claude Deep Analysis (CODE_ERROR + Gemini+GitHub)", "type": "main", "index": 0}],
+        [{"node": "8a. RAG Solution (Dual-Index + Full Context)", "type": "main", "index": 0}]
       ]
     },
-    "8a. RAG Solution (Full Context)": {
+    "8a. RAG Solution (Dual-Index + Full Context)": {
       "main": [[{"node": "10. Merge Solutions", "type": "main", "index": 0}]]
     },
-    "8b. Claude Deep Analysis (Full Context)": {
+    "8b. Claude Deep Analysis (CODE_ERROR + Gemini+GitHub)": {
       "main": [[{"node": "9. Parse Claude Response", "type": "main", "index": 0}]]
     },
     "9. Parse Claude Response": {
@@ -388,13 +388,13 @@
     "10. Merge Solutions": {
       "main": [[{"node": "11. Store Solution", "type": "main", "index": 0}]]
     },
-    "11. Store Solution": {
+    "11. Store Solution (Dashboard API)": {
       "main": [[{"node": "12. Archive Full Context", "type": "main", "index": 0}]]
     },
     "12. Archive Full Context": {
       "main": [[{"node": "13. Store in Pinecone RAG", "type": "main", "index": 0}]]
     },
-    "13. Store in Pinecone RAG": {
+    "13. Store in Pinecone (ddn-knowledge-docs)": {
       "main": [[{"node": "14. Prepare Teams Notification", "type": "main", "index": 0}]]
     },
     "14. Prepare Teams Notification": {

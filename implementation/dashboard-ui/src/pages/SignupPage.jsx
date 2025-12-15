@@ -37,6 +37,7 @@ import ArrowForwardIcon from '@mui/icons-material/ArrowForward'
 import GoogleIcon from '@mui/icons-material/Google'
 import GitHubIcon from '@mui/icons-material/GitHub'
 import { useNavigate, Link as RouterLink } from 'react-router-dom'
+import { useAuth } from '../hooks/useAuth'
 
 // Animated background
 const FloatingShape = ({ delay, duration, size, top, left, color }) => (
@@ -70,6 +71,7 @@ const plans = [
 
 function SignupPage() {
   const navigate = useNavigate()
+  const { register } = useAuth()
   const [activeStep, setActiveStep] = useState(0)
   const [showPassword, setShowPassword] = useState(false)
   const [loading, setLoading] = useState(false)
@@ -160,17 +162,29 @@ function SignupPage() {
 
   const handleSubmit = async () => {
     setLoading(true)
-    await new Promise(resolve => setTimeout(resolve, 2000))
+    setError('')
 
-    localStorage.setItem('ddn-user', JSON.stringify({
-      email: formData.email,
-      name: `${formData.firstName} ${formData.lastName}`,
-      company: formData.companyName,
-      team: formData.teamName,
-      plan: formData.selectedPlan
-    }))
+    try {
+      // Call real registration API
+      const result = await register({
+        email: formData.email,
+        password: formData.password,
+        first_name: formData.firstName,
+        last_name: formData.lastName,
+        role: 'user'
+      })
 
-    navigate('/dashboard')
+      if (result.success) {
+        // Registration successful, navigate to dashboard
+        navigate('/dashboard')
+      } else {
+        setError(result.error || 'Registration failed. Please try again.')
+        setLoading(false)
+      }
+    } catch (err) {
+      setError('An unexpected error occurred. Please try again.')
+      setLoading(false)
+    }
   }
 
   const handleSocialSignup = (provider) => {

@@ -293,19 +293,19 @@
         [{"node": "Error: Build Not Found", "type": "main", "index": 0}]
       ]
     },
-    "5. LangGraph Classification": {
+    "5. LangGraph ReAct (Dual-Index RAG)": {
       "main": [[{"node": "6. Route by Category", "type": "main", "index": 0}]]
     },
-    "6. Route by Category": {
+    "6. OPTION C Route: CODE_ERROR or Deep Analysis?": {
       "main": [
         [{"node": "7b. Claude MCP Analysis (Deep)", "type": "main", "index": 0}],
         [{"node": "7a. RAG Solution (Fast)", "type": "main", "index": 0}]
       ]
     },
-    "7a. RAG Solution (Fast)": {
+    "7a. RAG Solution (Dual-Index Fast Path)": {
       "main": [[{"node": "9. Merge Paths", "type": "main", "index": 0}]]
     },
-    "7b. Claude MCP Analysis (Deep)": {
+    "7b. Claude MCP Analysis (CODE_ERROR + GitHub)": {
       "main": [[{"node": "8. Parse Claude Response", "type": "main", "index": 0}]]
     },
     "8. Parse Claude Response": {
@@ -314,7 +314,7 @@
     "9. Merge Paths": {
       "main": [[{"node": "10. Store Solution", "type": "main", "index": 0}]]
     },
-    "10. Store Solution": {
+    "10. Store Solution (Dashboard API)": {
       "main": [[{"node": "11. Store in Pinecone", "type": "main", "index": 0}]]
     },
     "11. Store in Pinecone": {

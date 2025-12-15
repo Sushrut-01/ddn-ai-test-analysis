@@ -256,6 +256,20 @@ services:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=password
       - N8N_WEBHOOK_URL=http://n8n:5678/webhook/ddn-test-failure
+      # AI API Keys - REQUIRED for real analysis
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      # MongoDB for failure data
+      - MONGODB_URI=${MONGODB_URI}
+      - MONGODB_DB=ddn_tests
+      # Pinecone for RAG
+      - PINECONE_API_KEY=${PINECONE_API_KEY}
+      - PINECONE_INDEX_NAME=${PINECONE_INDEX_NAME}
+      # LangGraph service
+      - LANGGRAPH_URL=http://ddn-langgraph:5000
+      # Dashboard API for storing results
+      - DASHBOARD_API_URL=http://ddn-dashboard-api:5006
     networks:
       - ddn-network
     depends_on:
@@ -479,6 +493,81 @@ services:
       - ddn-network
     restart: unless-stopped
     command: python reranking_service.py
+
+  # ============================================================================
+  # AUTHENTICATION & NOTIFICATIONS
+  # ============================================================================
+
+  # Authentication Service (JWT + User Management)
+  auth-service:
+    build:
+      context: ./implementation
+      dockerfile: Dockerfile
+    container_name: ddn-auth-service
+    ports:
+      - "5013:5013"
+    environment:
+      - POSTGRES_HOST=postgres
+      - POSTGRES_PORT=5432
+      - POSTGRES_DB=ddn_ai_analysis
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=password
+      - JWT_SECRET_KEY=${JWT_SECRET_KEY}
+      - JWT_ALGORITHM=HS256
+      - TOKEN_EXPIRE_MINUTES=60
+      - REFRESH_TOKEN_EXPIRE_DAYS=7
+      - SERVICE_PORT=5013
+    networks:
+      - ddn-network
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+    command: python auth_service.py
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:5013/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Notifications Service (Email + In-App)
+  notifications-service:
+    build:
+      context: ./implementation
+      dockerfile: Dockerfile
+    container_name: ddn-notifications
+    ports:
+      - "5014:5014"
+    environment:
+      - POSTGRES_HOST=postgres
+      - POSTGRES_PORT=5432
+      - POSTGRES_DB=ddn_ai_analysis
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=password
+      - SERVICE_PORT=5014
+      # SMTP Configuration
+      - SMTP_HOST=${SMTP_HOST:-smtp.gmail.com}
+      - SMTP_PORT=${SMTP_PORT:-587}
+      - SMTP_USERNAME=${SMTP_USERNAME}
+      - SMTP_PASSWORD=${SMTP_PASSWORD}
+      - SMTP_FROM_ADDRESS=${SMTP_FROM_ADDRESS:-DDN AI <noreply@ddn-ai.com>}
+      - SMTP_USE_TLS=true
+      # Redis for async tasks
+      - REDIS_URL=redis://redis:6379/0
+    networks:
+      - ddn-network
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+    command: python notifications_service.py
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:5014/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
 
   # ============================================================================
   # FRONTEND

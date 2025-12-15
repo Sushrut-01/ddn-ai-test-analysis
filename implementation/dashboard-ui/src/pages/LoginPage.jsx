@@ -44,6 +44,7 @@ import RadarIcon from '@mui/icons-material/Radar'
 import MemoryIcon from '@mui/icons-material/Memory'
 import { useNavigate, Link as RouterLink } from 'react-router-dom'
 import PaletteIcon from '@mui/icons-material/Palette'
+import { useAuth } from '../hooks/useAuth'
 
 // JARVIS Theme Definitions
 const jarvisThemes = {
@@ -367,6 +368,7 @@ const jarvisResponses = {
 
 function LoginPage() {
   const navigate = useNavigate()
+  const { login } = useAuth()
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -453,23 +455,30 @@ function LoginPage() {
       })
     }, 150)
 
-    await new Promise(resolve => setTimeout(resolve, 2000))
+    try {
+      // Call real authentication API
+      const result = await login(formData.email, formData.password)
 
-    if (formData.email && formData.password) {
-      typeMessage(jarvisResponses.success)
-      await new Promise(resolve => setTimeout(resolve, 1000))
-      localStorage.setItem('ddn-user', JSON.stringify({
-        email: formData.email,
-        name: formData.email.split('@')[0],
-        loginTime: new Date().toISOString()
-      }))
-      navigate('/dashboard')
-    } else {
+      clearInterval(progressInterval)
+      setAuthProgress(100)
+
+      if (result.success) {
+        typeMessage(jarvisResponses.success)
+        await new Promise(resolve => setTimeout(resolve, 1000))
+        navigate('/dashboard')
+      } else {
+        typeMessage(jarvisResponses.error)
+        setError(result.error || 'Login failed. Please check your credentials.')
+        setAuthProgress(0)
+      }
+    } catch (err) {
+      clearInterval(progressInterval)
       typeMessage(jarvisResponses.error)
-      setError('Please enter valid credentials')
+      setError('An unexpected error occurred. Please try again.')
+      setAuthProgress(0)
+    } finally {
+      setLoading(false)
     }
-    setLoading(false)
-    setAuthProgress(0)
   }
 
   const handleVoiceLogin = () => {

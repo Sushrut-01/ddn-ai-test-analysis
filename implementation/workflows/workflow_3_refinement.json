@@ -254,13 +254,13 @@
     "6. Merge Feedback & Context": {
       "main": [[{"node": "7. Claude Refinement Analysis", "type": "main", "index": 0}]]
     },
-    "7. Claude Refinement Analysis": {
+    "7. Claude Refinement (Dual-Index + Feedback)": {
       "main": [[{"node": "8. Parse Refined Analysis", "type": "main", "index": 0}]]
     },
     "8. Parse Refined Analysis": {
       "main": [[{"node": "9. Update Solution in MongoDB", "type": "main", "index": 0}]]
     },
-    "9. Update Solution in MongoDB": {
+    "9. Update Solution (Dashboard API)": {
       "main": [[{"node": "10. Log Refinement Event", "type": "main", "index": 0}]]
     },
     "10. Log Refinement Event": {

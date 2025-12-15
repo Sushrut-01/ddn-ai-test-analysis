@@ -23,6 +23,7 @@ from dotenv import load_dotenv
 import logging
 import requests
 from bson import ObjectId
+import google.generativeai as genai
 
 # Load environment from master config (or rely on calling script)
 # Only load if not already loaded by parent script
@@ -62,6 +63,18 @@ PINECONE_FAILURES_INDEX = os.getenv('PINECONE_FAILURES_INDEX', 'ddn-error-librar
 
 # AI Service (use Docker service name in containerized environment)
 AI_SERVICE_URL = os.getenv('AI_SERVICE_URL', 'http://langgraph-service:5000')
+
+# MCP GitHub Service (for PR workflow integration)
+MCP_GITHUB_URL = os.getenv('MCP_GITHUB_URL', 'http://ddn-mcp-github:5002')
+GITHUB_REPO_OWNER = os.getenv('GITHUB_REPO_OWNER', 'your-org')
+GITHUB_REPO_NAME = os.getenv('GITHUB_REPO_NAME', 'your-repo')
+
+# Gemini AI (for chatbot and test generation)
+GEMINI_API_KEY = os.getenv('GEMINI_API_KEY')
+if GEMINI_API_KEY:
+    genai.configure(api_key=GEMINI_API_KEY)
+else:
+    logger.warning("GEMINI_API_KEY not configured. AI chatbot and test generator will not work.")
 
 def init_mongodb():
     """Initialize MongoDB connection"""
@@ -654,6 +667,314 @@ def get_analysis_details(failure_id):
         return jsonify({'error': str(e)}), 500
 
 # ============================================================================
+# GITHUB PR WORKFLOW
+# ============================================================================
+
+def call_mcp_github(endpoint, method='GET', data=None):
+    """Helper function to call MCP GitHub server"""
+    try:
+        response = requests.request(
+            method,
+            f"{MCP_GITHUB_URL}{endpoint}",
+            json=data,
+            timeout=10
+        )
+        return response.json()
+    except Exception as e:
+        logger.error(f"MCP GitHub API Error: {str(e)}")
+        return {'error': str(e)}
+
+@app.route('/api/github/prs', methods=['GET'])
+def get_pull_requests():
+    """
+    Get list of pull requests from GitHub repository
+    Query params: state (open/closed/all), label, limit
+    """
+    try:
+        state = request.args.get('state', 'open')
+        label = request.args.get('label', 'ddn-ai-fix')
+        limit = int(request.args.get('limit', 20))
+
+        # Call MCP GitHub server to get PRs
+        result = call_mcp_github(
+            f'/repos/{GITHUB_REPO_OWNER}/{GITHUB_REPO_NAME}/pulls',
+            method='GET',
+            data={
+                'state': state,
+                'labels': label,
+                'per_page': limit
+            }
+        )
+
+        if 'error' in result:
+            return jsonify({
+                'status': 'error',
+                'message': result['error'],
+                'data': {'prs': []}
+            }), 500
+
+        # Format PR data for frontend
+        prs = []
+        for pr in result.get('prs', []):
+            prs.append({
+                'number': pr.get('number'),
+                'title': pr.get('title'),
+                'state': pr.get('state'),
+                'created_at': pr.get('created_at'),
+                'updated_at': pr.get('updated_at'),
+                'merged_at': pr.get('merged_at'),
+                'user': pr.get('user', {}).get('login'),
+                'labels': [label['name'] for label in pr.get('labels', [])],
+                'html_url': pr.get('html_url'),
+                'head': pr.get('head', {}).get('ref'),
+                'base': pr.get('base', {}).get('ref')
+            })
+
+        return jsonify({
+            'status': 'success',
+            'data': {
+                'prs': prs,
+                'total': len(prs)
+            }
+        })
+
+    except Exception as e:
+        logger.error(f"Error fetching PRs: {str(e)}")
+        return jsonify({
+            'status': 'error',
+            'message': str(e),
+            'data': {'prs': []}
+        }), 500
+
+@app.route('/api/github/pr/<int:pr_number>', methods=['GET'])
+def get_pr_details(pr_number):
+    """
+    Get detailed information about a specific pull request
+    Includes commits, checks, reviews
+    """
+    try:
+        # Get PR details
+        pr_result = call_mcp_github(
+            f'/repos/{GITHUB_REPO_OWNER}/{GITHUB_REPO_NAME}/pulls/{pr_number}'
+        )
+
+        if 'error' in pr_result:
+            return jsonify({
+                'status': 'error',
+                'message': pr_result['error']
+            }), 404
+
+        # Get PR commits
+        commits_result = call_mcp_github(
+            f'/repos/{GITHUB_REPO_OWNER}/{GITHUB_REPO_NAME}/pulls/{pr_number}/commits'
+        )
+
+        # Get PR checks
+        checks_result = call_mcp_github(
+            f'/repos/{GITHUB_REPO_OWNER}/{GITHUB_REPO_NAME}/commits/{pr_result.get("head", {}).get("sha")}/check-runs'
+        )
+
+        # Get PR reviews
+        reviews_result = call_mcp_github(
+            f'/repos/{GITHUB_REPO_OWNER}/{GITHUB_REPO_NAME}/pulls/{pr_number}/reviews'
+        )
+
+        pr_details = {
+            'number': pr_result.get('number'),
+            'title': pr_result.get('title'),
+            'body': pr_result.get('body'),
+            'state': pr_result.get('state'),
+            'created_at': pr_result.get('created_at'),
+            'updated_at': pr_result.get('updated_at'),
+            'merged_at': pr_result.get('merged_at'),
+            'closed_at': pr_result.get('closed_at'),
+            'user': pr_result.get('user', {}).get('login'),
+            'labels': [label['name'] for label in pr_result.get('labels', [])],
+            'html_url': pr_result.get('html_url'),
+            'head': pr_result.get('head', {}).get('ref'),
+            'base': pr_result.get('base', {}).get('ref'),
+            'commits': commits_result.get('commits', []),
+            'checks': checks_result.get('check_runs', []),
+            'reviews': reviews_result.get('reviews', []),
+            'additions': pr_result.get('additions', 0),
+            'deletions': pr_result.get('deletions', 0),
+            'changed_files': pr_result.get('changed_files', 0)
+        }
+
+        return jsonify({
+            'status': 'success',
+            'data': pr_details
+        })
+
+    except Exception as e:
+        logger.error(f"Error fetching PR details: {str(e)}")
+        return jsonify({
+            'status': 'error',
+            'message': str(e)
+        }), 500
+
+# ============================================================================
+# AI CHATBOT & TEST GENERATION (Gemini)
+# ============================================================================
+
+def build_chat_context():
+    """Build context from database stats for AI chatbot"""
+    try:
+        conn = get_postgres_connection()
+        cursor = conn.cursor(cursor_factory=RealDictCursor)
+
+        # Get failure stats
+        cursor.execute("""
+            SELECT
+                COUNT(*) as total_analyses,
+                COUNT(CASE WHEN error_category = 'CODE_ERROR' THEN 1 END) as code_errors,
+                COUNT(CASE WHEN error_category = 'ENV_CONFIG' THEN 1 END) as env_errors,
+                AVG(confidence_score) as avg_confidence
+            FROM failure_analysis
+            WHERE analyzed_at > NOW() - INTERVAL '7 days'
+        """)
+
+        stats = cursor.fetchone()
+        cursor.close()
+        conn.close()
+
+        context = f"""You are a helpful AI assistant for a Test Failure Analysis System.
+
+Current System Stats (Last 7 days):
+- Total analyzed failures: {stats['total_analyses'] or 0}
+- Code errors: {stats['code_errors'] or 0}
+- Environment errors: {stats['env_errors'] or 0}
+- Average AI confidence: {round((stats['avg_confidence'] or 0) * 100)}%
+
+You can help users understand test failures, analyze error patterns, and suggest fixes.
+Answer questions based on these stats and general knowledge about automated testing and CI/CD."""
+
+        return context
+
+    except Exception as e:
+        logger.error(f"Error building chat context: {str(e)}")
+        return "You are a helpful AI assistant for a Test Failure Analysis System."
+
+
+@app.route('/api/chat', methods=['POST'])
+def chat():
+    """
+    AI Chatbot endpoint using Gemini
+    Accepts: message, conversation_history
+    Returns: AI response with context
+    """
+    try:
+        data = request.get_json()
+        message = data.get('message', '')
+        conversation_history = data.get('conversation_history', [])
+
+        if not message:
+            return jsonify({
+                'status': 'error',
+                'message': 'Message is required'
+            }), 400
+
+        if not GEMINI_API_KEY:
+            return jsonify({
+                'status': 'error',
+                'message': 'Gemini API key not configured'
+            }), 500
+
+        # Build context
+        context = build_chat_context()
+
+        # Prepare conversation for Gemini
+        full_prompt = f"{context}\n\n"
+
+        # Add conversation history
+        for msg in conversation_history[-5:]:  # Last 5 messages
+            role = msg.get('role', 'user')
+            content = msg.get('content', '')
+            full_prompt += f"{role.capitalize()}: {content}\n"
+
+        full_prompt += f"User: {message}\nAssistant:"
+
+        # Call Gemini
+        model = genai.GenerativeModel('gemini-1.5-flash')
+        response = model.generate_content(full_prompt)
+
+        return jsonify({
+            'status': 'success',
+            'data': {
+                'response': response.text,
+                'context_used': True
+            }
+        })
+
+    except Exception as e:
+        logger.error(f"Chat error: {str(e)}")
+        return jsonify({
+            'status': 'error',
+            'message': str(e)
+        }), 500
+
+
+@app.route('/api/test-generator/generate', methods=['POST'])
+def generate_tests():
+    """
+    Test generation endpoint using Gemini
+    Accepts: code, test_framework (pytest, jest, junit, etc.)
+    Returns: Generated test code
+    """
+    try:
+        data = request.get_json()
+        code = data.get('code', '')
+        test_framework = data.get('framework', 'pytest')
+
+        if not code:
+            return jsonify({
+                'status': 'error',
+                'message': 'Code is required'
+            }), 400
+
+        if not GEMINI_API_KEY:
+            return jsonify({
+                'status': 'error',
+                'message': 'Gemini API key not configured'
+            }), 500
+
+        # Build test generation prompt
+        prompt = f"""Generate comprehensive {test_framework} tests for the following code.
+
+CODE TO TEST:
+```
+{code}
+```
+
+Generate tests that include:
+1. Happy path tests (normal/expected behavior)
+2. Edge cases (boundary values, empty inputs, etc.)
+3. Error handling (invalid inputs, exceptions)
+4. Mock/fixture setup if needed
+
+Return ONLY the test code, properly formatted and ready to use.
+Include helpful comments explaining what each test does."""
+
+        # Call Gemini
+        model = genai.GenerativeModel('gemini-1.5-flash')
+        response = model.generate_content(prompt)
+
+        return jsonify({
+            'status': 'success',
+            'data': {
+                'generated_tests': response.text,
+                'framework': test_framework
+            }
+        })
+
+    except Exception as e:
+        logger.error(f"Test generation error: {str(e)}")
+        return jsonify({
+            'status': 'error',
+            'message': str(e)
+        }), 500
+
+# ============================================================================
 # STATISTICS & METRICS
 # ============================================================================
 
@@ -1003,6 +1324,105 @@ def get_activity_log():
 # ============================================================================
 # ANALYTICS & FEEDBACK
 # ============================================================================
+
+@app.route('/api/analytics/summary', methods=['GET'])
+def get_analytics_summary():
+    """
+    Get analytics summary for dashboard
+
+    Query params:
+    - time_range: '7d', '30d', '90d' (default: '7d')
+    """
+    try:
+        time_range = request.args.get('time_range', '7d')
+        days_map = {'7d': 7, '30d': 30, '90d': 90}
+        days = days_map.get(time_range, 7)
+
+        conn = get_postgres_connection()
+        if not conn:
+            return jsonify({'error': 'Database connection failed'}), 500
+
+        try:
+            cursor = conn.cursor(cursor_factory=RealDictCursor)
+
+            # Get total analyses
+            cursor.execute("""
+                SELECT
+                    COUNT(*) as total_analyses,
+                    AVG(confidence_score) as avg_confidence,
+                    COUNT(CASE WHEN created_at >= NOW() - INTERVAL '24 hours' THEN 1 END) as analyses_24h,
+                    COUNT(CASE WHEN created_at >= NOW() - INTERVAL '%s days' THEN 1 END) as analyses_period
+                FROM failure_analysis
+            """, (days,))
+            analysis_stats = cursor.fetchone()
+
+            # Get classification breakdown
+            cursor.execute("""
+                SELECT
+                    COALESCE(classification, 'UNKNOWN') as category,
+                    COUNT(*) as count
+                FROM failure_analysis
+                WHERE created_at >= NOW() - INTERVAL '%s days'
+                GROUP BY classification
+                ORDER BY count DESC
+            """, (days,))
+            categories = cursor.fetchall()
+
+            # Get trigger stats
+            cursor.execute("""
+                SELECT
+                    COUNT(*) as total_triggers,
+                    COUNT(CASE WHEN trigger_successful = true THEN 1 END) as successful_triggers
+                FROM manual_trigger_log
+                WHERE triggered_at >= NOW() - INTERVAL '%s days'
+            """, (days,))
+            trigger_stats = cursor.fetchone()
+
+            # Get MongoDB failure counts
+            mongo_failures_24h = 0
+            mongo_failures_period = 0
+            try:
+                mongo_client = get_mongo_client()
+                if mongo_client:
+                    db = mongo_client[MONGO_DB]
+                    from datetime import timedelta
+                    now = datetime.utcnow()
+                    mongo_failures_24h = db.test_results.count_documents({
+                        'status': 'failed',
+                        'timestamp': {'$gte': now - timedelta(hours=24)}
+                    })
+                    mongo_failures_period = db.test_results.count_documents({
+                        'status': 'failed',
+                        'timestamp': {'$gte': now - timedelta(days=days)}
+                    })
+            except Exception as e:
+                logger.warning(f"Could not get MongoDB stats: {e}")
+
+            return jsonify({
+                'success': True,
+                'time_range': time_range,
+                'summary': {
+                    'total_analyses': analysis_stats['total_analyses'] or 0,
+                    'avg_confidence': float(analysis_stats['avg_confidence'] or 0),
+                    'analyses_24h': analysis_stats['analyses_24h'] or 0,
+                    'analyses_period': analysis_stats['analyses_period'] or 0,
+                    'failures_24h': mongo_failures_24h,
+                    'failures_period': mongo_failures_period,
+                    'total_triggers': trigger_stats['total_triggers'] or 0,
+                    'successful_triggers': trigger_stats['successful_triggers'] or 0,
+                    'success_rate': round((trigger_stats['successful_triggers'] or 0) / max(trigger_stats['total_triggers'] or 1, 1) * 100, 1)
+                },
+                'categories': [{'category': c['category'], 'count': c['count']} for c in categories]
+            })
+
+        finally:
+            cursor.close()
+            conn.close()
+
+    except Exception as e:
+        logger.error(f"Error getting analytics summary: {e}")
+        return jsonify({'error': str(e)}), 500
+
 
 @app.route('/api/analytics/trends', methods=['GET'])
 def get_analytics_trends():
@@ -4097,6 +4517,377 @@ def get_workflow_executions():
 
     except Exception as e:
         logger.error(f"Error getting workflow executions: {str(e)}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+# ============================================================================
+# CONFIGURATION MANAGEMENT
+# ============================================================================
+
+@app.route('/api/config', methods=['GET'])
+def get_all_configs():
+    """Get all configuration settings"""
+    try:
+        category = request.args.get('category')
+        include_sensitive = request.args.get('include_sensitive', 'false').lower() == 'true'
+
+        conn = get_postgres_connection()
+        if not conn:
+            return jsonify({'success': False, 'error': 'Database connection failed'}), 500
+
+        cursor = conn.cursor(cursor_factory=RealDictCursor)
+
+        # Build query
+        query = "SELECT * FROM system_config WHERE 1=1"
+        params = []
+
+        if category:
+            query += " AND category = %s"
+            params.append(category)
+
+        if not include_sensitive:
+            query += " AND is_sensitive = false"
+
+        query += " ORDER BY category, config_key"
+
+        cursor.execute(query, params)
+        configs = cursor.fetchall()
+
+        cursor.close()
+        conn.close()
+
+        # Format datetime fields
+        for config in configs:
+            if config.get('created_at'):
+                config['created_at'] = config['created_at'].isoformat()
+            if config.get('updated_at'):
+                config['updated_at'] = config['updated_at'].isoformat()
+
+        # Group by category
+        configs_by_category = {}
+        for config in configs:
+            cat = config['category']
+            if cat not in configs_by_category:
+                configs_by_category[cat] = []
+            configs_by_category[cat].append(config)
+
+        return jsonify({
+            'success': True,
+            'configs': configs,
+            'configs_by_category': configs_by_category,
+            'total': len(configs)
+        }), 200
+
+    except Exception as e:
+        logger.error(f"Error fetching configurations: {str(e)}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/config/<config_key>', methods=['GET'])
+def get_config(config_key):
+    """Get specific configuration value"""
+    try:
+        conn = get_postgres_connection()
+        if not conn:
+            return jsonify({'success': False, 'error': 'Database connection failed'}), 500
+
+        cursor = conn.cursor(cursor_factory=RealDictCursor)
+
+        cursor.execute("""
+            SELECT * FROM system_config
+            WHERE config_key = %s
+        """, (config_key,))
+
+        config = cursor.fetchone()
+
+        cursor.close()
+        conn.close()
+
+        if not config:
+            return jsonify({'success': False, 'error': 'Configuration not found'}), 404
+
+        # Format datetime fields
+        if config.get('created_at'):
+            config['created_at'] = config['created_at'].isoformat()
+        if config.get('updated_at'):
+            config['updated_at'] = config['updated_at'].isoformat()
+
+        # Parse value based on type
+        value = config['config_value']
+        value_type = config['value_type']
+
+        if value_type == 'integer':
+            parsed_value = int(value)
+        elif value_type == 'float':
+            parsed_value = float(value)
+        elif value_type == 'boolean':
+            parsed_value = value.lower() == 'true'
+        elif value_type == 'json':
+            import json
+            parsed_value = json.loads(value)
+        else:
+            parsed_value = value
+
+        config['parsed_value'] = parsed_value
+
+        return jsonify({
+            'success': True,
+            'config': config
+        }), 200
+
+    except Exception as e:
+        logger.error(f"Error fetching configuration {config_key}: {str(e)}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/config/<config_key>', methods=['PUT'])
+def update_config(config_key):
+    """Update configuration value"""
+    try:
+        data = request.get_json()
+        new_value = data.get('config_value')
+        updated_by = data.get('updated_by', 'system')
+
+        if new_value is None:
+            return jsonify({'success': False, 'error': 'config_value is required'}), 400
+
+        conn = get_postgres_connection()
+        if not conn:
+            return jsonify({'success': False, 'error': 'Database connection failed'}), 500
+
+        cursor = conn.cursor(cursor_factory=RealDictCursor)
+
+        # Get current config to validate value type
+        cursor.execute("""
+            SELECT value_type, config_value FROM system_config
+            WHERE config_key = %s
+        """, (config_key,))
+
+        current_config = cursor.fetchone()
+
+        if not current_config:
+            cursor.close()
+            conn.close()
+            return jsonify({'success': False, 'error': 'Configuration not found'}), 404
+
+        # Validate value type
+        value_type = current_config['value_type']
+        old_value = current_config['config_value']
+
+        try:
+            if value_type == 'integer':
+                int(new_value)
+            elif value_type == 'float':
+                float(new_value)
+            elif value_type == 'boolean':
+                if str(new_value).lower() not in ['true', 'false']:
+                    raise ValueError("Boolean must be 'true' or 'false'")
+            elif value_type == 'json':
+                import json
+                json.loads(new_value)
+        except ValueError as ve:
+            cursor.close()
+            conn.close()
+            return jsonify({'success': False, 'error': f'Invalid value type: {str(ve)}'}), 400
+
+        # Update configuration
+        cursor.execute("""
+            UPDATE system_config
+            SET config_value = %s, updated_at = NOW(), updated_by = %s
+            WHERE config_key = %s
+            RETURNING *
+        """, (str(new_value), updated_by, config_key))
+
+        updated_config = cursor.fetchone()
+
+        # Log to audit log
+        cursor.execute("""
+            INSERT INTO audit_log (timestamp, user_email, action, resource_type, resource_id, details, status)
+            VALUES (NOW(), %s, 'update', 'config', %s, %s, 'success')
+        """, (
+            updated_by,
+            config_key,
+            json.dumps({
+                'config_key': config_key,
+                'old_value': old_value,
+                'new_value': str(new_value),
+                'value_type': value_type
+            })
+        ))
+
+        conn.commit()
+        cursor.close()
+        conn.close()
+
+        # Format datetime fields
+        if updated_config.get('created_at'):
+            updated_config['created_at'] = updated_config['created_at'].isoformat()
+        if updated_config.get('updated_at'):
+            updated_config['updated_at'] = updated_config['updated_at'].isoformat()
+
+        logger.info(f"Configuration updated: {config_key} = {new_value} (by {updated_by})")
+
+        return jsonify({
+            'success': True,
+            'config': updated_config,
+            'message': f'Configuration {config_key} updated successfully'
+        }), 200
+
+    except Exception as e:
+        logger.error(f"Error updating configuration {config_key}: {str(e)}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/config/test', methods=['POST'])
+def test_config():
+    """Test configuration (e.g., SMTP, Jira, GitHub connection)"""
+    try:
+        data = request.get_json()
+        test_type = data.get('type')
+        config = data.get('config', {})
+
+        if not test_type:
+            return jsonify({'success': False, 'error': 'type is required'}), 400
+
+        result = {'success': False, 'message': 'Unknown test type'}
+
+        if test_type == 'smtp':
+            # Test SMTP connection
+            try:
+                import smtplib
+                from email.mime.text import MIMEText
+
+                smtp_host = config.get('host', 'smtp.gmail.com')
+                smtp_port = int(config.get('port', 587))
+                smtp_username = config.get('username')
+                smtp_password = config.get('password')
+
+                if not smtp_username or not smtp_password:
+                    return jsonify({'success': False, 'error': 'SMTP credentials required'}), 400
+
+                server = smtplib.SMTP(smtp_host, smtp_port)
+                server.starttls()
+                server.login(smtp_username, smtp_password)
+                server.quit()
+
+                result = {
+                    'success': True,
+                    'message': 'SMTP connection successful',
+                    'details': f'Connected to {smtp_host}:{smtp_port}'
+                }
+            except Exception as smtp_error:
+                result = {
+                    'success': False,
+                    'message': 'SMTP connection failed',
+                    'error': str(smtp_error)
+                }
+
+        elif test_type == 'jira':
+            # Test Jira connection
+            try:
+                from jira import JIRA
+
+                jira_url = config.get('url')
+                jira_email = config.get('email')
+                jira_token = config.get('token')
+
+                if not all([jira_url, jira_email, jira_token]):
+                    return jsonify({'success': False, 'error': 'Jira credentials required'}), 400
+
+                jira = JIRA(server=jira_url, basic_auth=(jira_email, jira_token))
+                projects = jira.projects()
+
+                result = {
+                    'success': True,
+                    'message': 'Jira connection successful',
+                    'details': f'Found {len(projects)} accessible projects'
+                }
+            except Exception as jira_error:
+                result = {
+                    'success': False,
+                    'message': 'Jira connection failed',
+                    'error': str(jira_error)
+                }
+
+        elif test_type == 'github':
+            # Test GitHub connection
+            try:
+                github_token = config.get('token')
+                github_repo = config.get('repo')
+
+                if not github_token:
+                    return jsonify({'success': False, 'error': 'GitHub token required'}), 400
+
+                headers = {
+                    'Authorization': f'token {github_token}',
+                    'Accept': 'application/vnd.github.v3+json'
+                }
+
+                # Test API access
+                response = requests.get('https://api.github.com/user', headers=headers)
+                response.raise_for_status()
+                user_data = response.json()
+
+                message = f"GitHub connection successful (User: {user_data.get('login')})"
+
+                # If repo specified, test repo access
+                if github_repo:
+                    repo_response = requests.get(f'https://api.github.com/repos/{github_repo}', headers=headers)
+                    if repo_response.status_code == 200:
+                        message += f" - Repository {github_repo} accessible"
+                    else:
+                        message += f" - Repository {github_repo} not found or no access"
+
+                result = {
+                    'success': True,
+                    'message': message,
+                    'details': user_data
+                }
+            except Exception as github_error:
+                result = {
+                    'success': False,
+                    'message': 'GitHub connection failed',
+                    'error': str(github_error)
+                }
+
+        return jsonify(result), 200 if result['success'] else 400
+
+    except Exception as e:
+        logger.error(f"Error testing configuration: {str(e)}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/config/categories', methods=['GET'])
+def get_config_categories():
+    """Get all configuration categories"""
+    try:
+        conn = get_postgres_connection()
+        if not conn:
+            return jsonify({'success': False, 'error': 'Database connection failed'}), 500
+
+        cursor = conn.cursor(cursor_factory=RealDictCursor)
+
+        cursor.execute("""
+            SELECT
+                category,
+                COUNT(*) as config_count
+            FROM system_config
+            GROUP BY category
+            ORDER BY category
+        """)
+
+        categories = cursor.fetchall()
+
+        cursor.close()
+        conn.close()
+
+        return jsonify({
+            'success': True,
+            'categories': categories
+        }), 200
+
+    except Exception as e:
+        logger.error(f"Error fetching config categories: {str(e)}")
         return jsonify({'success': False, 'error': str(e)}), 500
 
 

@@ -34,6 +34,15 @@ const triggerApiClient = axios.create({
   }
 })
 
+// Separate API client for Jira Integration (runs on port 5009)
+const jiraApiClient = axios.create({
+  baseURL: JIRA_API_URL,
+  timeout: 30000,
+  headers: {
+    'Content-Type': 'application/json'
+  }
+})
+
 // Response interceptor for trigger API
 triggerApiClient.interceptors.response.use(
   response => response.data,
@@ -43,9 +52,38 @@ triggerApiClient.interceptors.response.use(
   }
 )
 
-// Request interceptor
+// Response interceptor for Jira API
+jiraApiClient.interceptors.response.use(
+  response => response.data,
+  error => {
+    console.error('Jira API Error:', error)
+    return Promise.reject(error)
+  }
+)
+
+// JWT Token Management
+let isRefreshing = false
+let failedQueue = []
+
+const processQueue = (error, token = null) => {
+  failedQueue.forEach(prom => {
+    if (error) {
+      prom.reject(error)
+    } else {
+      prom.resolve(token)
+    }
+  })
+
+  failedQueue = []
+}
+
+// Request interceptor - Add JWT token to all requests
 api.interceptors.request.use(
   config => {
+    const token = localStorage.getItem('auth_token')
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`
+    }
     return config
   },
   error => {
@@ -53,14 +91,106 @@ api.interceptors.request.use(
   }
 )
 
-// Response interceptor
+// Response interceptor - Handle token expiration
 api.interceptors.response.use(
   response => response.data,
-  error => {
+  async error => {
+    const originalRequest = error.config
+
+    // If 401 Unauthorized and we haven't tried to refresh yet
+    if (error.response?.status === 401 && !originalRequest._retry) {
+      if (isRefreshing) {
+        // If already refreshing, queue this request
+        return new Promise((resolve, reject) => {
+          failedQueue.push({ resolve, reject })
+        })
+          .then(token => {
+            originalRequest.headers.Authorization = `Bearer ${token}`
+            return axios(originalRequest)
+          })
+          .catch(err => {
+            return Promise.reject(err)
+          })
+      }
+
+      originalRequest._retry = true
+      isRefreshing = true
+
+      const refreshToken = localStorage.getItem('refresh_token')
+
+      if (!refreshToken) {
+        // No refresh token, redirect to login
+        localStorage.removeItem('auth_token')
+        localStorage.removeItem('refresh_token')
+        window.location.href = '/login'
+        return Promise.reject(error)
+      }
+
+      try {
+        // Try to refresh the token
+        const AUTH_API_URL = import.meta.env.VITE_AUTH_API_URL || 'http://localhost:5013'
+        const response = await axios.post(`${AUTH_API_URL}/api/auth/refresh`, {
+          refresh_token: refreshToken
+        })
+
+        if (response.data.success) {
+          const { access_token, refresh_token: newRefreshToken } = response.data.data
+
+          // Update tokens
+          localStorage.setItem('auth_token', access_token)
+          if (newRefreshToken) {
+            localStorage.setItem('refresh_token', newRefreshToken)
+          }
+
+          // Update authorization header
+          api.defaults.headers.common.Authorization = `Bearer ${access_token}`
+          originalRequest.headers.Authorization = `Bearer ${access_token}`
+
+          // Process queued requests
+          processQueue(null, access_token)
+
+          isRefreshing = false
+
+          // Retry original request
+          return axios(originalRequest)
+        }
+      } catch (refreshError) {
+        // Refresh failed, clear tokens and redirect to login
+        processQueue(refreshError, null)
+        isRefreshing = false
+
+        localStorage.removeItem('auth_token')
+        localStorage.removeItem('refresh_token')
+        window.location.href = '/login'
+
+        return Promise.reject(refreshError)
+      }
+    }
+
     console.error('API Error:', error)
     return Promise.reject(error)
   }
 )
+
+// Add JWT interceptor to other API clients
+const addJWTInterceptor = (client) => {
+  client.interceptors.request.use(
+    config => {
+      const token = localStorage.getItem('auth_token')
+      if (token) {
+        config.headers.Authorization = `Bearer ${token}`
+      }
+      return config
+    },
+    error => Promise.reject(error)
+  )
+}
+
+// Apply to all API clients
+addJWTInterceptor(knowledgeApiClient)
+addJWTInterceptor(triggerApiClient)
+addJWTInterceptor(jiraApiClient)
+addJWTInterceptor(serviceManagerClient)
 
 // Analytics APIs
 export const analyticsAPI = {
@@ -370,19 +500,69 @@ export const fixAPI = {
 
 // Jira Bugs API
 export const jiraAPI = {
-  // Get list of Jira bugs
-  getBugs: (params = {}) => {
-    const queryString = new URLSearchParams(params).toString()
-    return api.get(`/api/jira/bugs?${queryString}`)
+  // Get list of Jira bugs from Jira service (port 5009)
+  getBugs: async (params = {}) => {
+    try {
+      const queryString = new URLSearchParams(params).toString()
+      const response = await jiraApiClient.get(`/api/bugs${queryString ? '?' + queryString : ''}`)
+      return response
+    } catch (error) {
+      console.error('Failed to fetch Jira bugs:', error)
+      return { status: 'error', data: { issues: [], total: 0 } }
+    }
+  },
+
+  // Get detailed bug information from Jira service
+  getBugDetails: async (issueKey) => {
+    try {
+      const response = await jiraApiClient.get(`/api/bugs/${issueKey}`)
+      return response
+    } catch (error) {
+      console.error('Failed to fetch bug details:', error)
+      return { status: 'error', data: null }
+    }
   },
 
   // Create a new Jira bug from analysis
-  createBug: (data) =>
-    api.post('/api/jira/bugs', data),
+  createBug: async (data) => {
+    try {
+      const response = await jiraApiClient.post('/api/jira/create-issue', data)
+      return response
+    } catch (error) {
+      console.error('Failed to create Jira bug:', error)
+      return { status: 'error', message: error.message }
+    }
+  },
 
-  // Get approved analyses ready for bug creation
+  // Get approved analyses ready for bug creation (from dashboard API)
   getApprovedAnalyses: (limit = 50) =>
-    api.get(`/api/jira/approved-analyses?limit=${limit}`)
+    api.get(`/api/failures?analyzed=true&classification=CODE_ERROR&limit=${limit}`)
+}
+
+// GitHub PR API (for PR Workflow page)
+export const githubAPI = {
+  // Get list of pull requests
+  getPRs: async (params = {}) => {
+    try {
+      const queryString = new URLSearchParams(params).toString()
+      const response = await api.get(`/api/github/prs${queryString ? '?' + queryString : ''}`)
+      return response
+    } catch (error) {
+      console.error('Failed to fetch GitHub PRs:', error)
+      return { status: 'error', data: { prs: [], total: 0 } }
+    }
+  },
+
+  // Get detailed PR information
+  getPRDetails: async (prNumber) => {
+    try {
+      const response = await api.get(`/api/github/pr/${prNumber}`)
+      return response
+    } catch (error) {
+      console.error('Failed to fetch PR details:', error)
+      return { status: 'error', data: null }
+    }
+  }
 }
 
 // Pipeline Jobs API
@@ -478,6 +658,180 @@ export const ragApprovalAPI = {
   // Add item to RAG approval queue (used by RAG system)
   add: (data) =>
     api.post('/api/rag/add', data)
+}
+
+// Authentication API
+const AUTH_API_URL = import.meta.env.VITE_AUTH_API_URL || 'http://localhost:5013'
+
+export const authAPI = {
+  // Register new user
+  register: async (userData) => {
+    const response = await axios.post(`${AUTH_API_URL}/api/auth/register`, userData)
+    return response.data
+  },
+
+  // Login user
+  login: async (email, password) => {
+    const response = await axios.post(`${AUTH_API_URL}/api/auth/login`, { email, password })
+    return response.data
+  },
+
+  // Logout user
+  logout: async (token) => {
+    const response = await axios.post(
+      `${AUTH_API_URL}/api/auth/logout`,
+      {},
+      { headers: { Authorization: `Bearer ${token}` } }
+    )
+    return response.data
+  },
+
+  // Get current user info
+  getCurrentUser: async (token) => {
+    const response = await axios.get(`${AUTH_API_URL}/api/auth/me`, {
+      headers: { Authorization: `Bearer ${token}` }
+    })
+    return response.data
+  },
+
+  // Refresh access token
+  refreshToken: async (refreshToken) => {
+    const response = await axios.post(`${AUTH_API_URL}/api/auth/refresh`, {
+      refresh_token: refreshToken
+    })
+    return response.data
+  },
+
+  // Get all users (admin only)
+  getUsers: async (params = {}) => {
+    const queryString = new URLSearchParams(params).toString()
+    const response = await axios.get(
+      `${AUTH_API_URL}/api/users${queryString ? '?' + queryString : ''}`,
+      { headers: { Authorization: `Bearer ${localStorage.getItem('auth_token')}` } }
+    )
+    return response.data
+  },
+
+  // Update user
+  updateUser: async (userId, data) => {
+    const response = await axios.put(`${AUTH_API_URL}/api/users/${userId}`, data, {
+      headers: { Authorization: `Bearer ${localStorage.getItem('auth_token')}` }
+    })
+    return response.data
+  },
+
+  // Delete user (admin only)
+  deleteUser: async (userId) => {
+    const response = await axios.delete(`${AUTH_API_URL}/api/users/${userId}`, {
+      headers: { Authorization: `Bearer ${localStorage.getItem('auth_token')}` }
+    })
+    return response.data
+  },
+
+  // Get user stats
+  getUserStats: async (userId) => {
+    const response = await axios.get(`${AUTH_API_URL}/api/users/${userId}/stats`, {
+      headers: { Authorization: `Bearer ${localStorage.getItem('auth_token')}` }
+    })
+    return response.data
+  }
+}
+
+// Configuration Management API
+export const configAPI = {
+  // Get all configurations
+  getAll: (params = {}) => {
+    const queryString = new URLSearchParams(params).toString()
+    return api.get(`/api/config${queryString ? '?' + queryString : ''}`)
+  },
+
+  // Get specific configuration
+  get: (configKey) =>
+    api.get(`/api/config/${configKey}`),
+
+  // Update configuration
+  update: (configKey, data) =>
+    api.put(`/api/config/${configKey}`, data),
+
+  // Test configuration (SMTP, Jira, GitHub)
+  test: (data) =>
+    api.post('/api/config/test', data),
+
+  // Get configuration categories
+  getCategories: () =>
+    api.get('/api/config/categories')
+}
+
+// Copilot API - AI-powered code assistant
+export const copilotAPI = {
+  // Send a chat message and get AI response
+  chat: (data) =>
+    api.post('/api/copilot/chat', data),
+
+  // Stream chat response (for real-time streaming)
+  streamChat: async (data, onChunk) => {
+    const response = await fetch(`${API_BASE_URL}/api/copilot/stream`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(data)
+    })
+
+    const reader = response.body.getReader()
+    const decoder = new TextDecoder()
+
+    while (true) {
+      const { done, value } = await reader.read()
+      if (done) break
+
+      const chunk = decoder.decode(value)
+      const lines = chunk.split('\n').filter(line => line.trim())
+
+      for (const line of lines) {
+        if (line.startsWith('data: ')) {
+          try {
+            const data = JSON.parse(line.substring(6))
+            onChunk(data)
+          } catch (e) {
+            console.error('Failed to parse stream data:', e)
+          }
+        }
+      }
+    }
+  },
+
+  // Get chat history
+  getHistory: (limit = 50) =>
+    api.get(`/api/copilot/history?limit=${limit}`),
+
+  // Clear chat history
+  clearHistory: () =>
+    api.delete('/api/copilot/history'),
+
+  // Analyze code snippet
+  analyzeCode: (data) =>
+    api.post('/api/copilot/analyze', data),
+
+  // Generate code based on description
+  generateCode: (data) =>
+    api.post('/api/copilot/generate', data),
+
+  // Explain code
+  explainCode: (data) =>
+    api.post('/api/copilot/explain', data),
+
+  // Optimize code
+  optimizeCode: (data) =>
+    api.post('/api/copilot/optimize', data),
+
+  // Generate tests
+  generateTests: (data) =>
+    api.post('/api/copilot/generate-tests', data),
+
+  // Review code
+  reviewCode: (data) =>
+    api.post('/api/copilot/review', data)
 }
 
 export default api

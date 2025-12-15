@@ -25,6 +25,9 @@ from pymongo import MongoClient
 # Claude SDK for deep analysis
 import anthropic
 
+# Google Gemini SDK for AI analysis
+import google.generativeai as genai
+
 # Load environment
 load_dotenv()
 
@@ -47,7 +50,12 @@ MONGODB_DB = os.getenv("MONGODB_DB", "ddn_tests")
 LANGGRAPH_URL = os.getenv("LANGGRAPH_URL", "http://ddn-langgraph:5000")
 DASHBOARD_API_URL = os.getenv("DASHBOARD_API_URL", "http://ddn-dashboard-api:5006")
 ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY")
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 TEAMS_WEBHOOK_URL = os.getenv("TEAMS_WEBHOOK_URL")
+
+# Configure Gemini if API key is available
+if GEMINI_API_KEY:
+    genai.configure(api_key=GEMINI_API_KEY)
 SLACK_WEBHOOK_URL = os.getenv("SLACK_WEBHOOK_URL")
 AUTO_FIX_CONFIDENCE_THRESHOLD = float(os.getenv("AUTO_FIX_CONFIDENCE_THRESHOLD", "0.70"))
 
@@ -201,6 +209,127 @@ def analyze_with_claude_mcp(build_data: dict, classification: dict) -> dict:
         }
 
 
+def analyze_with_gemini(build_data: dict, classification: dict) -> dict:
+    """
+    Deep analysis using Google Gemini for CODE_ERROR category.
+    Used when Claude is not available or as primary AI.
+    """
+    if not GEMINI_API_KEY:
+        logger.error("❌ GEMINI_API_KEY not set - cannot use Gemini analysis")
+        return {
+            "root_cause": "Gemini analysis unavailable - API key not configured",
+            "fix_recommendation": "Please configure GEMINI_API_KEY",
+            "confidence_score": 0.0,
+            "analysis_type": "GEMINI_ANALYSIS_UNAVAILABLE"
+        }
+
+    prompt = f"""**CODE ERROR ANALYSIS REQUEST**
+
+**Build Information:**
+- Build ID: {build_data.get('build_id')}
+- Job: {build_data.get('job_name')}
+- Test Name: {build_data.get('test_name', 'N/A')}
+- Repository: {build_data.get('repository', 'N/A')}
+- Branch: {build_data.get('branch', 'N/A')}
+
+**Error Message:**
+```
+{str(build_data.get('error_message', build_data.get('error_log', '')))[:2000]}
+```
+
+**Stack Trace:**
+```
+{str(build_data.get('stack_trace', ''))[:1500]}
+```
+
+**Similar Past Issues (from RAG):**
+{json.dumps(classification.get('similar_solutions', [])[:3], indent=2, default=str)}
+
+**YOUR TASK:**
+1. Analyze the error deeply and understand the root cause
+2. Identify root cause with technical precision
+3. Provide specific fix recommendation with code examples if applicable
+4. Include prevention strategy
+
+**OUTPUT FORMAT (strict JSON only, no markdown):**
+{{
+  "error_category": "CODE_ERROR|ENV_CONFIG|NETWORK_ERROR|INFRA_ERROR",
+  "root_cause": "Technical explanation of why this error occurred",
+  "fix_recommendation": "Step-by-step instructions to fix the issue",
+  "code_fix": "Actual code fix or configuration change if applicable",
+  "prevention_strategy": "How to prevent this in the future",
+  "confidence_score": 0.90,
+  "files_to_modify": ["file1.py", "file2.py"]
+}}"""
+
+    try:
+        model = genai.GenerativeModel('gemini-1.5-pro')
+        response = model.generate_content(
+            prompt,
+            generation_config=genai.types.GenerationConfig(
+                temperature=0.3,
+                max_output_tokens=4000,
+            )
+        )
+
+        text = response.text
+        logger.info(f"📝 Gemini raw response: {text[:500]}...")
+
+        # Extract JSON from response
+        result = None
+
+        # Try to find JSON in response
+        json_match = text.find('{')
+        if json_match != -1:
+            json_end = text.rfind('}') + 1
+            json_str = text[json_match:json_end]
+            try:
+                result = json.loads(json_str)
+                logger.info(f"✅ Parsed JSON from Gemini response")
+            except json.JSONDecodeError as e:
+                logger.warning(f"⚠️ JSON parse failed: {e}")
+
+        # Fallback: extract from markdown code block
+        if not result and '```json' in text:
+            json_start = text.find('```json') + 7
+            json_end = text.find('```', json_start)
+            json_str = text[json_start:json_end].strip()
+            try:
+                result = json.loads(json_str)
+            except json.JSONDecodeError:
+                pass
+
+        # Final fallback
+        if not result:
+            result = {
+                "root_cause": text[:500],
+                "fix_recommendation": text[:1000],
+                "confidence_score": 0.80,
+                "error_category": classification.get('error_category', 'UNKNOWN')
+            }
+
+        # Add metadata
+        result['analysis_type'] = 'GEMINI_DEEP_ANALYSIS'
+        result['ai_model'] = 'gemini-1.5-pro'
+        result['token_usage'] = 0  # Gemini doesn't expose token count easily
+        result['estimated_cost_usd'] = 0.005  # Gemini is cheaper
+
+        logger.info(f"✅ Gemini analysis complete - category: {result.get('error_category')}")
+        return result
+
+    except Exception as e:
+        logger.error(f"❌ Gemini analysis failed: {e}")
+        return {
+            "root_cause": f"Analysis failed: {str(e)}",
+            "fix_recommendation": "Please retry or use RAG fallback",
+            "confidence_score": 0.0,
+            "analysis_type": "GEMINI_ANALYSIS_FAILED",
+            "error_category": "UNKNOWN",
+            "token_usage": 0,
+            "estimated_cost_usd": 0
+        }
+
+
 def get_rag_solution(classification: dict, build_data: dict) -> dict:
     """
     Fast path using RAG retrieval for non-CODE_ERROR categories.
@@ -297,21 +426,63 @@ def run_agentic_trigger(build_id: str, triggered_by: str) -> dict:
             "needs_code_analysis": False
         }
 
-    # Step 3: Get RAG suggestion based on classification
-    # This provides a preliminary suggestion that humans will review
-    rag_solution = get_rag_solution(classification, build_data)
-
-    # Step 4: ADD TO RAG APPROVAL QUEUE (Human-in-the-Loop)
-    # Items go to RAG queue for human review BEFORE AI analysis runs
+    # Step 3: RUN AI ANALYSIS using Gemini (PRIMARY) or Claude (FALLBACK)
+    # Now we actually analyze the error with real AI
     error_category = classification.get('error_category', 'UNKNOWN')
-    rag_confidence = classification.get('confidence', 0.5)
     similar_solutions = classification.get('similar_solutions', [])
 
-    # Build RAG suggestion text
-    rag_suggestion = rag_solution.get('fix_recommendation', 'Review required')
-    if rag_solution.get('root_cause'):
-        rag_suggestion = f"{rag_solution.get('root_cause')} - {rag_suggestion}"
+    logger.info(f"🤖 Starting AI analysis with Gemini for build {build_id}")
 
+    # Use Gemini for AI analysis (primary)
+    if GEMINI_API_KEY:
+        analysis_result = analyze_with_gemini(build_data, classification)
+        logger.info(f"✅ Gemini analysis complete - category: {analysis_result.get('error_category')}")
+    # Fallback to Claude if Gemini not available
+    elif ANTHROPIC_API_KEY and ANTHROPIC_API_KEY != 'your-anthropic-api-key-here':
+        analysis_result = analyze_with_claude_mcp(build_data, classification)
+        logger.info(f"✅ Claude analysis complete")
+    # Final fallback to RAG solution
+    else:
+        logger.warning("⚠️ No AI API keys configured - using RAG fallback")
+        analysis_result = get_rag_solution(classification, build_data)
+
+    # Update error_category from AI analysis if available
+    if analysis_result.get('error_category') and analysis_result.get('error_category') != 'UNKNOWN':
+        error_category = analysis_result.get('error_category')
+
+    # Step 4: STORE ANALYSIS RESULT via Dashboard API
+    storage_id = None
+    try:
+        store_response = requests.post(
+            f"{DASHBOARD_API_URL}/api/analysis/store",
+            json={
+                "build_id": build_id,
+                "job_name": build_data.get('job_name', ''),
+                "test_suite": build_data.get('test_suite', build_data.get('suite_name', '')),
+                "error_category": error_category,
+                "root_cause": analysis_result.get('root_cause', ''),
+                "fix_recommendation": analysis_result.get('fix_recommendation', ''),
+                "code_fix": analysis_result.get('code_fix', ''),
+                "prevention_strategy": analysis_result.get('prevention_strategy', ''),
+                "confidence_score": analysis_result.get('confidence_score', 0.75),
+                "analysis_type": analysis_result.get('analysis_type', 'GEMINI_ANALYSIS'),
+                "trigger_type": "MANUAL",
+                "triggered_by": triggered_by,
+                "token_usage": analysis_result.get('token_usage', 0),
+                "estimated_cost_usd": analysis_result.get('estimated_cost_usd', 0)
+            },
+            timeout=30
+        )
+        store_response.raise_for_status()
+        store_result = store_response.json()
+        storage_id = store_result.get('analysis_id')
+        logger.info(f"✅ Stored analysis via Dashboard API (ID: {storage_id})")
+    except Exception as e:
+        logger.error(f"❌ Failed to store analysis: {e}")
+
+    # Step 5: ADD TO RAG APPROVAL QUEUE for human validation
+    approval_id = None
+    rag_suggestion = f"{analysis_result.get('root_cause', '')} - {analysis_result.get('fix_recommendation', '')}"
     try:
         rag_queue_response = requests.post(
             f"{DASHBOARD_API_URL}/api/rag/add",
@@ -319,42 +490,46 @@ def run_agentic_trigger(build_id: str, triggered_by: str) -> dict:
                 "build_id": build_id,
                 "job_name": build_data.get('job_name', ''),
                 "error_category": error_category,
-                "rag_suggestion": rag_suggestion[:500],  # Limit length
-                "rag_confidence": rag_confidence,
+                "rag_suggestion": rag_suggestion[:500],
+                "rag_confidence": analysis_result.get('confidence_score', 0.75),
                 "similar_cases_count": len(similar_solutions),
                 "triggered_by": triggered_by,
-                "trigger_type": "MANUAL"
+                "trigger_type": "MANUAL",
+                "ai_analysis_id": storage_id
             },
             timeout=10
         )
         rag_queue_response.raise_for_status()
         rag_result = rag_queue_response.json()
         approval_id = rag_result.get('approval_id')
-        logger.info(f"📋 Added to RAG approval queue (ID: {approval_id}) - awaiting human review")
+        logger.info(f"📋 Added to RAG approval queue (ID: {approval_id})")
     except Exception as e:
         logger.warning(f"⚠️ Failed to add to RAG queue: {e}")
-        approval_id = None
 
-    # Return result showing item is PENDING APPROVAL (not analyzed yet)
+    # Build final result with AI analysis
     result = {
         "build_id": build_id,
         "job_name": build_data.get('job_name'),
         "test_name": build_data.get('test_name', build_data.get('test_suite')),
         "error_category": error_category,
         "classification": error_category,
-        "rag_suggestion": rag_suggestion,
-        "rag_confidence": rag_confidence,
-        "status": "pending_approval",  # Key: indicates human review needed
+        "root_cause": analysis_result.get('root_cause'),
+        "fix_recommendation": analysis_result.get('fix_recommendation'),
+        "code_fix": analysis_result.get('code_fix'),
+        "prevention_strategy": analysis_result.get('prevention_strategy'),
+        "confidence_score": analysis_result.get('confidence_score', 0.75),
+        "analysis_type": analysis_result.get('analysis_type'),
+        "storage_id": storage_id,
         "approval_id": approval_id,
         "similar_cases_count": len(similar_solutions),
         "triggered_by": triggered_by,
         "trigger_type": "MANUAL",
         "timestamp": datetime.now().isoformat(),
-        "message": f"Added to RAG approval queue. Category: {error_category}. "
-                   f"{'CODE_ERROR will trigger AI analysis after approval.' if error_category == 'CODE_ERROR' else 'RAG solution provided, approval will mark resolved.'}"
+        "token_usage": analysis_result.get('token_usage', 0),
+        "estimated_cost_usd": analysis_result.get('estimated_cost_usd', 0)
     }
 
-    logger.info(f"✅ AgenticTrigger complete for build {build_id} - pending human approval")
+    logger.info(f"✅ AgenticTrigger complete for build {build_id} - AI analysis done")
     return result
 
 # ============================================================================
