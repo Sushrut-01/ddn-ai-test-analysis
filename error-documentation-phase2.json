@@ -134,6 +134,7 @@
         "Include both bucket and object resource ARNs",
         "Specify explicit actions instead of wildcard (*)",
         "Add Statement ID (Sid) for clarity",
+      
         "Test policy with AWS Policy Simulator",
         "Review S3 bucket policy examples in DDN docs"
       ],

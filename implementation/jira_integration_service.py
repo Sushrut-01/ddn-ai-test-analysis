@@ -368,6 +368,161 @@ def get_jira_issue(build_id):
         }), 500
 
 
+@app.route('/api/bugs', methods=['GET'])
+def get_bugs():
+    """
+    Get list of Jira bugs created by DDN AI system
+    Query parameters: status, priority, assignee, limit, offset
+    """
+    try:
+        status_filter = request.args.get('status')
+        priority_filter = request.args.get('priority')
+        assignee_filter = request.args.get('assignee')
+        limit = int(request.args.get('limit', 50))
+        offset = int(request.args.get('offset', 0))
+
+        jql_parts = [f'project = {JIRA_PROJECT_KEY}', 'labels = ai-detected']
+
+        if status_filter:
+            jql_parts.append(f'status = "{status_filter}"')
+        if priority_filter:
+            jql_parts.append(f'priority = "{priority_filter}"')
+        if assignee_filter:
+            jql_parts.append(f'assignee = "{assignee_filter}"')
+
+        jql = ' AND '.join(jql_parts)
+        jql += ' ORDER BY created DESC'
+
+        response = requests.get(
+            f'{JIRA_URL}/rest/api/3/search',
+            headers=JIRA_HEADERS,
+            auth=JIRA_AUTH,
+            params={
+                'jql': jql,
+                'maxResults': limit,
+                'startAt': offset,
+                'fields': 'summary,status,priority,assignee,created,updated,labels,description'
+            }
+        )
+
+        if response.status_code != 200:
+            return jsonify({
+                'status': 'error',
+                'message': f'Failed to fetch Jira issues: {response.text}'
+            }), response.status_code
+
+        jira_data = response.json()
+        issues = []
+
+        for issue in jira_data.get('issues', []):
+            fields = issue.get('fields', {})
+            issues.append({
+                'key': issue.get('key'),
+                'summary': fields.get('summary'),
+                'status': fields.get('status', {}).get('name'),
+                'priority': fields.get('priority', {}).get('name'),
+                'assignee': fields.get('assignee', {}).get('displayName') if fields.get('assignee') else 'Unassigned',
+                'created': fields.get('created'),
+                'updated': fields.get('updated'),
+                'labels': fields.get('labels', []),
+                'url': f"{JIRA_URL}/browse/{issue.get('key')}"
+            })
+
+        return jsonify({
+            'status': 'success',
+            'data': {
+                'issues': issues,
+                'total': jira_data.get('total', 0),
+                'limit': limit,
+                'offset': offset
+            }
+        })
+
+    except Exception as e:
+        return jsonify({
+            'status': 'error',
+            'message': str(e)
+        }), 500
+
+
+@app.route('/api/bugs/<issue_key>', methods=['GET'])
+def get_bug_details(issue_key):
+    """
+    Get full Jira issue details including comments and attachments
+    """
+    try:
+        response = requests.get(
+            f'{JIRA_URL}/rest/api/3/issue/{issue_key}',
+            headers=JIRA_HEADERS,
+            auth=JIRA_AUTH,
+            params={
+                'expand': 'renderedFields,names,schema,operations,editmeta,changelog,versionedRepresentations,customfield_10000'
+            }
+        )
+
+        if response.status_code != 200:
+            return jsonify({
+                'status': 'error',
+                'message': f'Failed to fetch issue details: {response.text}'
+            }), response.status_code
+
+        issue_data = response.json()
+        fields = issue_data.get('fields', {})
+
+        comments_response = requests.get(
+            f'{JIRA_URL}/rest/api/3/issue/{issue_key}/comment',
+            headers=JIRA_HEADERS,
+            auth=JIRA_AUTH
+        )
+
+        comments = []
+        if comments_response.status_code == 200:
+            comments_data = comments_response.json()
+            for comment in comments_data.get('comments', []):
+                comments.append({
+                    'id': comment.get('id'),
+                    'author': comment.get('author', {}).get('displayName'),
+                    'body': comment.get('body'),
+                    'created': comment.get('created'),
+                    'updated': comment.get('updated')
+                })
+
+        issue_details = {
+            'key': issue_data.get('key'),
+            'summary': fields.get('summary'),
+            'description': fields.get('description'),
+            'status': fields.get('status', {}).get('name'),
+            'priority': fields.get('priority', {}).get('name'),
+            'assignee': fields.get('assignee', {}).get('displayName') if fields.get('assignee') else 'Unassigned',
+            'reporter': fields.get('reporter', {}).get('displayName'),
+            'created': fields.get('created'),
+            'updated': fields.get('updated'),
+            'labels': fields.get('labels', []),
+            'url': f"{JIRA_URL}/browse/{issue_key}",
+            'comments': comments,
+            'attachments': [
+                {
+                    'filename': att.get('filename'),
+                    'size': att.get('size'),
+                    'created': att.get('created'),
+                    'url': att.get('content')
+                }
+                for att in fields.get('attachment', [])
+            ]
+        }
+
+        return jsonify({
+            'status': 'success',
+            'data': issue_details
+        })
+
+    except Exception as e:
+        return jsonify({
+            'status': 'error',
+            'message': str(e)
+        }), 500
+
+
 @app.route('/health', methods=['GET'])
 def health_check():
     """Health check endpoint"""
@@ -404,10 +559,12 @@ if __name__ == '__main__':
     print(f"Project Key: {JIRA_PROJECT_KEY}")
     print("=" * 60)
     print("\nAvailable Endpoints:")
-    print("  GET  /health                       - Health check")
-    print("  POST /api/jira/create-issue        - Create Jira issue")
-    print("  POST /api/jira/update-from-feedback - Update from feedback")
-    print("  GET  /api/jira/get-issue/<build_id> - Get issue details")
+    print("  GET  /health                         - Health check")
+    print("  POST /api/jira/create-issue          - Create Jira issue")
+    print("  POST /api/jira/update-from-feedback  - Update from feedback")
+    print("  GET  /api/jira/get-issue/<build_id>  - Get issue details")
+    print("  GET  /api/bugs                       - List all AI-detected bugs")
+    print("  GET  /api/bugs/<issue_key>           - Get bug details with comments")
     print("=" * 60)
     print("\nStarting server...")
 

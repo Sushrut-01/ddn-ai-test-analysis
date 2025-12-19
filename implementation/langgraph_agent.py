@@ -29,6 +29,9 @@ sys.path.insert(0, agents_dir)
 # Import ReAct Agent (Task 0-ARCH.2, 0-ARCH.3, 0-ARCH.4, 0-ARCH.5)
 from react_agent_service import ReActAgent, create_react_agent
 
+# Import ReAct Agent Logger for workflow execution tracking (Phase 3)
+from react_agent_logger import create_logged_agent
+
 # Load environment variables
 load_dotenv()
 
@@ -63,6 +66,7 @@ except Exception as e:
 
 # Initialize ReAct Agent (Task 0-ARCH.6)
 react_agent = None
+logged_agent = None  # Phase 3: Logged agent for workflow execution tracking
 
 # ============================================================================
 # REACT AGENT INITIALIZATION
@@ -77,10 +81,13 @@ def initialize_react_agent():
     - Task 0-ARCH.3: Data-driven tool registry
     - Task 0-ARCH.4: Category-specific thought prompts
     - Task 0-ARCH.5: Self-correction mechanism with retry logic
+    - Phase 3: Workflow execution tracking (n8n-style debugging)
 
     Returns:
-        ReActAgent instance or None if initialization fails
+        Tuple of (ReActAgent, LoggedAgent) or (None, None) if initialization fails
     """
+    global logged_agent
+
     try:
         logger.info("🚀 Initializing ReAct Agent...")
         agent = create_react_agent()
@@ -89,6 +96,13 @@ def initialize_react_agent():
         logger.info("   - Data-driven categories from Pinecone")
         logger.info("   - Self-correction with 3 retries per tool")
         logger.info("   - Context-aware routing (80/20 rule)")
+
+        # Phase 3: Wrap agent with execution logger
+        logger.info("📊 Wrapping agent with workflow execution tracker...")
+        logged_agent = create_logged_agent(agent)
+        logger.info("✅ Workflow execution tracking enabled")
+        logger.info("   - View executions at: http://localhost:5173/workflow-executions")
+
         return agent
     except Exception as e:
         logger.error(f"❌ Failed to initialize ReAct Agent: {e}")
@@ -249,6 +263,7 @@ def cache_stats():
 def analyze_error_endpoint():
     """
     Main endpoint for error analysis using ReAct agent (Task 0-ARCH.6)
+    Phase 3: Now with workflow execution tracking (n8n-style debugging)
 
     Request body:
     {
@@ -264,6 +279,7 @@ def analyze_error_endpoint():
     {
         "success": true,
         "build_id": "12345",
+        "execution_id": "exec_12345_a1b2c3d4",  # NEW: View at /workflow-executions
         "error_category": "CODE_ERROR",
         "classification_confidence": 0.95,
         "root_cause": "Null pointer exception in...",
@@ -277,11 +293,11 @@ def analyze_error_endpoint():
         "similar_cases": [...]
     }
     """
-    global react_agent
+    global react_agent, logged_agent
 
     try:
-        # Check if agent is initialized
-        if react_agent is None:
+        # Check if agents are initialized
+        if react_agent is None or logged_agent is None:
             return jsonify({
                 "error": "ReAct agent not initialized",
                 "details": "Agent initialization failed at startup"
@@ -312,15 +328,19 @@ def analyze_error_endpoint():
             logger.info(f"⚡ Returning cached result for build {data['build_id']}")
             return jsonify(cached_result), 200
 
-        # Cache miss - run ReAct agent analysis
-        logger.info(f"🔄 Running fresh analysis for build {data['build_id']}")
-        result = react_agent.analyze(
+        # Cache miss - run ReAct agent analysis with execution tracking
+        logger.info(f"🔄 Running fresh analysis with execution tracking for build {data['build_id']}")
+
+        # Phase 3: Use logged agent for execution tracking
+        result = logged_agent.execute_with_logging(
             build_id=data['build_id'],
             error_log=data['error_log'],
             error_message=error_message,
             stack_trace=data.get('stack_trace'),
             job_name=data.get('job_name'),
-            test_name=data.get('test_name')
+            test_name=data.get('test_name'),
+            trigger_type='api',  # Triggered via API
+            triggered_by=request.headers.get('X-User-Email', 'api_user')
         )
 
         # Add request metadata
@@ -337,6 +357,8 @@ def analyze_error_endpoint():
         save_to_cache(cache_key, result, ttl_seconds=3600)
 
         logger.info(f"📤 ReAct analysis complete: {result.get('error_category')} ({result.get('iterations')} iterations)")
+        logger.info(f"   Execution ID: {result.get('execution_id')}")
+        logger.info(f"   View at: http://localhost:5173/workflow-executions")
 
         return jsonify(result), 200
 

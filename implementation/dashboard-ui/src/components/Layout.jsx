@@ -48,6 +48,7 @@ import NotificationsIcon from '@mui/icons-material/Notifications'
 import HistoryIcon from '@mui/icons-material/History'
 import HowToVoteIcon from '@mui/icons-material/HowToVote'
 import AutoFixHighIcon from '@mui/icons-material/AutoFixHigh'
+import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome'
 import ExpandLess from '@mui/icons-material/ExpandLess'
 import ExpandMore from '@mui/icons-material/ExpandMore'
 import ThemeSelector from './ThemeSelector'
@@ -90,7 +91,8 @@ const menuSections = [
     items: [
       { text: 'AI Chatbot', icon: <SmartToyIcon />, path: '/ai-chatbot' },
       { text: 'Test Generator', icon: <ScienceIcon />, path: '/test-generator' },
-      { text: 'Knowledge Base', icon: <LibraryBooksIcon />, path: '/knowledge' }
+      { text: 'Knowledge Base', icon: <LibraryBooksIcon />, path: '/knowledge' },
+      { text: 'AI Copilot', icon: <AutoAwesomeIcon />, path: '/copilot' },
     ]
   },
   {

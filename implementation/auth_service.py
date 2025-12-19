@@ -152,6 +152,44 @@ def register():
         """, (email, password_hash, first_name, last_name, role))
 
         user = cursor.fetchone()
+        user_id = user['id']
+
+        # Generate JWT tokens for auto-login
+        access_token_payload = {
+            'user_id': user_id,
+            'email': user['email'],
+            'role': user['role'],
+            'exp': datetime.utcnow() + timedelta(minutes=TOKEN_EXPIRE_MINUTES),
+            'iat': datetime.utcnow()
+        }
+
+        refresh_token_payload = {
+            'user_id': user_id,
+            'email': user['email'],
+            'type': 'refresh',
+            'exp': datetime.utcnow() + timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS),
+            'iat': datetime.utcnow()
+        }
+
+        access_token = jwt.encode(access_token_payload, JWT_SECRET_KEY, algorithm=JWT_ALGORITHM)
+        refresh_token = jwt.encode(refresh_token_payload, JWT_SECRET_KEY, algorithm=JWT_ALGORITHM)
+
+        # Create session for the new user (auto-login)
+        ip_address = request.remote_addr
+        user_agent = request.headers.get('User-Agent', '')
+
+        cursor.execute("""
+            INSERT INTO user_sessions (user_id, token, refresh_token, expires_at, ip_address, user_agent, created_at)
+            VALUES (%s, %s, %s, %s, %s, %s, NOW())
+        """, (
+            user_id,
+            access_token,
+            refresh_token,
+            datetime.utcnow() + timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS),
+            ip_address,
+            user_agent
+        ))
+
         conn.commit()
         cursor.close()
         conn.close()
@@ -164,7 +202,12 @@ def register():
         return jsonify({
             'status': 'success',
             'message': 'User registered successfully',
-            'data': {'user': user_data}
+            'data': {
+                'user': user_data,
+                'access_token': access_token,
+                'refresh_token': refresh_token,
+                'expires_in': 3600  # 1 hour
+            }
         }), 201
 
     except Exception as e:

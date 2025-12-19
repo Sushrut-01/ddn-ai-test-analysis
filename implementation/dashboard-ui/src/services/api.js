@@ -43,6 +43,13 @@ const jiraApiClient = axios.create({
   }
 })
 
+// Service Manager API client (runs on port 5007)
+const serviceManagerClient = axios.create({
+  baseURL: SERVICE_MANAGER_URL,
+  timeout: 10000,
+  headers: { 'Content-Type': 'application/json' }
+})
+
 // Response interceptor for trigger API
 triggerApiClient.interceptors.response.use(
   response => response.data,
@@ -277,12 +284,6 @@ export const monitoringAPI = {
 }
 
 // Service Manager API (port 5007) - All Docker services status
-const serviceManagerClient = axios.create({
-  baseURL: SERVICE_MANAGER_URL,
-  timeout: 10000,
-  headers: { 'Content-Type': 'application/json' }
-})
-
 export const serviceManagerAPI = {
   // Get all services status
   getAllServices: async () => {

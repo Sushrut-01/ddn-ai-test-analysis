@@ -193,10 +193,17 @@ services:
       - LANGFUSE_HOST=http://langfuse-server:3000
       - LANGFUSE_PUBLIC_KEY=${LANGFUSE_PUBLIC_KEY}
       - LANGFUSE_SECRET_KEY=${LANGFUSE_SECRET_KEY}
+      - POSTGRES_HOST=postgres
+      - POSTGRES_PORT=5432
+      - POSTGRES_DB=ddn_ai_analysis
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=password
     networks:
       - ddn-network
     depends_on:
       redis:
+        condition: service_healthy
+      postgres:
         condition: service_healthy
     restart: unless-stopped
     command: python langgraph_agent.py
@@ -569,6 +576,34 @@ services:
       timeout: 10s
       retries: 3
 
+  # Workflow Executions API (n8n-style execution viewer)
+  workflow-executions:
+    build:
+      context: ./implementation
+      dockerfile: Dockerfile
+    container_name: ddn-workflow-executions
+    ports:
+      - "5016:5016"
+    environment:
+      - POSTGRES_HOST=postgres
+      - POSTGRES_PORT=5432
+      - POSTGRES_DB=ddn_ai_analysis
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=password
+      - SERVICE_PORT=5016
+    networks:
+      - ddn-network
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+    command: python workflow_executions_api.py
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:5016/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
   # ============================================================================
   # FRONTEND
   # ============================================================================
@@ -578,16 +613,24 @@ services:
     build:
       context: ./implementation/dashboard-ui
       dockerfile: Dockerfile
-      target: production  # Use production stage for built static files
+      target: development  # Use development mode with Vite dev server
     container_name: ddn-dashboard-ui
     ports:
       - "5173:5173"
+    volumes:
+      # Mount source code for hot reload - changes reflect immediately
+      - ./implementation/dashboard-ui/src:/app/src
+      - ./implementation/dashboard-ui/public:/app/public
+      - ./implementation/dashboard-ui/index.html:/app/index.html
     environment:
-      - VITE_API_URL=http://dashboard-api:5006
-      - VITE_JIRA_API_URL=http://jira-service:5009
-      - VITE_SLACK_API_URL=http://slack-service:5012
-      - VITE_KNOWLEDGE_API_URL=http://knowledge-management-api:5015
-      - VITE_SERVICE_MANAGER_URL=http://service-manager:5007
+      - VITE_API_URL=http://localhost:5006
+      - VITE_JIRA_API_URL=http://localhost:5009
+      - VITE_SLACK_API_URL=http://localhost:5012
+      - VITE_KNOWLEDGE_API_URL=http://localhost:5015
+      - VITE_SERVICE_MANAGER_URL=http://localhost:5007
+      - VITE_WORKFLOW_API_URL=http://localhost:5016
+      - VITE_AUTH_API_URL=http://localhost:5013
+      - VITE_TRIGGER_API_URL=http://localhost:5004
     networks:
       - ddn-network
     depends_on:
@@ -614,6 +657,8 @@ services:
       - VITE_SLACK_API_URL=http://slack-service:5012
       - VITE_KNOWLEDGE_API_URL=http://knowledge-management-api:5015
       - VITE_SERVICE_MANAGER_URL=http://service-manager:5007
+      - VITE_WORKFLOW_API_URL=http://workflow-executions:5016
+      - VITE_AUTH_API_URL=http://auth-service:5013
     volumes:
       - ./implementation/dashboard-ui/src:/app/src:ro  # Mount source for hot reload
     networks:

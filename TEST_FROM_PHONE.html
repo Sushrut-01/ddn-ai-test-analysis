@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>DDN AI - Mobile Test</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            margin: 0;
+        }
+        .container {
+            max-width: 600px;
+            margin: 50px auto;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+        h1 { margin-top: 0; }
+        .status {
+            padding: 15px;
+            border-radius: 10px;
+            margin: 20px 0;
+            font-weight: bold;
+        }
+        .success {
+            background: rgba(16, 185, 129, 0.3);
+            border: 2px solid #10b981;
+        }
+        .error {
+            background: rgba(239, 68, 68, 0.3);
+            border: 2px solid #ef4444;
+        }
+        .loading {
+            background: rgba(59, 130, 246, 0.3);
+            border: 2px solid #3b82f6;
+        }
+        button {
+            background: white;
+            color: #667eea;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 20px;
+        }
+        button:active {
+            transform: scale(0.98);
+        }
+        pre {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 15px;
+            border-radius: 10px;
+            overflow-x: auto;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 DDN AI Mobile Test</h1>
+        <p>Test if your phone can reach the backend API</p>
+
+        <div id="status" class="status loading">
+            Testing connection...
+        </div>
+
+        <div id="result"></div>
+
+        <button onclick="testConnection()">🔄 Test Again</button>
+    </div>
+
+    <script>
+        async function testConnection() {
+            const statusDiv = document.getElementById('status');
+            const resultDiv = document.getElementById('result');
+
+            statusDiv.className = 'status loading';
+            statusDiv.textContent = 'Testing connection to http://192.168.1.7:5006...';
+            resultDiv.innerHTML = '';
+
+            try {
+                const response = await fetch('http://192.168.1.7:5006/api/health');
+                const data = await response.json();
+
+                if (response.ok && data.status === 'healthy') {
+                    statusDiv.className = 'status success';
+                    statusDiv.innerHTML = '✅ SUCCESS! Backend is reachable!';
+                    resultDiv.innerHTML = `
+                        <h3>✅ Connection Successful!</h3>
+                        <p>Your phone can reach the backend API.</p>
+                        <p><strong>You can now install the APK!</strong></p>
+                        <pre>${JSON.stringify(data, null, 2)}</pre>
+                    `;
+                } else {
+                    throw new Error('Unhealthy response');
+                }
+            } catch (error) {
+                statusDiv.className = 'status error';
+                statusDiv.innerHTML = '❌ FAILED - Cannot reach backend';
+                resultDiv.innerHTML = `
+                    <h3>❌ Connection Failed</h3>
+                    <p><strong>Error:</strong> ${error.message}</p>
+                    <h4>Troubleshooting:</h4>
+                    <ol style="text-align: left;">
+                        <li>Make sure your phone is on the same WiFi network as your computer</li>
+                        <li>Run the firewall fix script on your computer:<br>
+                            <code>FIX_MOBILE_CONNECTIVITY.ps1</code>
+                        </li>
+                        <li>Check if Docker containers are running</li>
+                        <li>Verify computer IP is 192.168.1.7:<br>
+                            Run <code>ipconfig</code> on Windows
+                        </li>
+                    </ol>
+                `;
+            }
+        }
+
+        // Auto-test on page load
+        testConnection();
+    </script>
+</body>
+</html>

@@ -1,0 +1,1734 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DDN AI Copilot - Advanced Edition</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-primary: #1e1e1e;
+            --bg-secondary: #252526;
+            --bg-tertiary: #2d2d30;
+            --bg-hover: #3c3c3c;
+            --border-color: #333;
+            --text-primary: #cccccc;
+            --text-secondary: #808080;
+            --accent-purple: #667eea;
+            --accent-blue: #3b82f6;
+            --accent-green: #10b981;
+            --accent-red: #ef4444;
+            --accent-orange: #f59e0b;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica', 'Arial', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .app-container {
+            display: flex;
+            height: 100vh;
+            width: 100vw;
+        }
+
+        /* Left Sidebar - File Explorer */
+        .sidebar {
+            width: 250px;
+            background: var(--bg-secondary);
+            border-right: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            transition: width 0.3s ease;
+        }
+
+        .sidebar.collapsed {
+            width: 50px;
+        }
+
+        .sidebar-header {
+            padding: 15px;
+            background: var(--bg-tertiary);
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .sidebar-title {
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--text-secondary);
+        }
+
+        .sidebar.collapsed .sidebar-title {
+            display: none;
+        }
+
+        .file-tree {
+            flex: 1;
+            overflow-y: auto;
+            padding: 10px 0;
+        }
+
+        .file-item {
+            padding: 8px 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+            transition: background 0.2s;
+            font-size: 13px;
+        }
+
+        .file-item:hover {
+            background: var(--bg-hover);
+        }
+
+        .file-item.active {
+            background: var(--bg-hover);
+            border-left: 2px solid var(--accent-purple);
+        }
+
+        .file-icon {
+            font-size: 16px;
+            flex-shrink: 0;
+        }
+
+        .sidebar.collapsed .file-item span:not(.file-icon) {
+            display: none;
+        }
+
+        /* Center Panel - Code Editor + Chat */
+        .main-panel {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: var(--bg-primary);
+        }
+
+        /* Top Toolbar */
+        .toolbar {
+            background: var(--bg-secondary);
+            padding: 10px 15px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .toolbar-tabs {
+            display: flex;
+            gap: 5px;
+            flex: 1;
+        }
+
+        .toolbar-tab {
+            background: var(--bg-tertiary);
+            padding: 8px 15px;
+            border-radius: 6px 6px 0 0;
+            font-size: 13px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: background 0.2s;
+            border-bottom: 2px solid transparent;
+        }
+
+        .toolbar-tab:hover {
+            background: var(--bg-hover);
+        }
+
+        .toolbar-tab.active {
+            background: var(--bg-primary);
+            border-bottom-color: var(--accent-purple);
+        }
+
+        .toolbar-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .toolbar-btn {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            padding: 6px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .toolbar-btn:hover {
+            background: var(--bg-hover);
+            border-color: var(--accent-purple);
+        }
+
+        /* Split View Container */
+        .split-view {
+            flex: 1;
+            display: flex;
+            overflow: hidden;
+        }
+
+        /* Code Editor Panel */
+        .editor-panel {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            border-right: 1px solid var(--border-color);
+            position: relative;
+        }
+
+        .editor-header {
+            background: var(--bg-secondary);
+            padding: 10px 15px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .editor-title {
+            font-size: 13px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .editor-content {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+            font-size: 14px;
+            line-height: 1.6;
+            position: relative;
+        }
+
+        .code-line {
+            display: flex;
+            gap: 15px;
+            position: relative;
+        }
+
+        .line-number {
+            color: var(--text-secondary);
+            user-select: none;
+            min-width: 35px;
+            text-align: right;
+            font-size: 13px;
+        }
+
+        .code-text {
+            flex: 1;
+        }
+
+        /* Syntax Highlighting */
+        .keyword { color: #569cd6; }
+        .string { color: #ce9178; }
+        .function { color: #dcdcaa; }
+        .comment { color: #6a9955; font-style: italic; }
+        .variable { color: #9cdcfe; }
+        .operator { color: #d4d4d4; }
+        .number { color: #b5cea8; }
+
+        /* Copilot Inline Suggestion */
+        .copilot-suggestion {
+            color: #585858;
+            position: relative;
+            font-style: italic;
+        }
+
+        .copilot-suggestion::before {
+            content: "⚡";
+            color: var(--accent-orange);
+            margin-right: 5px;
+            font-size: 11px;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .suggestion-tooltip {
+            position: absolute;
+            bottom: 100%;
+            left: 0;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 8px 12px;
+            font-size: 11px;
+            white-space: nowrap;
+            margin-bottom: 5px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        }
+
+        /* Chat Panel */
+        .chat-panel {
+            width: 450px;
+            background: var(--bg-secondary);
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+
+        .chat-panel.fullscreen {
+            width: 100%;
+        }
+
+        .chat-header {
+            background: var(--bg-tertiary);
+            padding: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .chat-header-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .copilot-avatar {
+            width: 32px;
+            height: 32px;
+            background: linear-gradient(135deg, var(--accent-purple) 0%, #764ba2 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+        }
+
+        .chat-title {
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .chat-subtitle {
+            font-size: 11px;
+            color: var(--text-secondary);
+        }
+
+        .chat-header-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .header-icon-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+            padding: 6px;
+            border-radius: 4px;
+            transition: all 0.2s;
+        }
+
+        .header-icon-btn:hover {
+            background: var(--bg-hover);
+            color: var(--text-primary);
+        }
+
+        /* Context Bar */
+        .context-bar {
+            background: var(--bg-primary);
+            padding: 10px 15px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .context-chip {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 11px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .context-chip:hover {
+            background: var(--bg-hover);
+            border-color: var(--accent-purple);
+        }
+
+        .context-chip .close-btn {
+            font-size: 14px;
+            opacity: 0.6;
+        }
+
+        .context-chip .close-btn:hover {
+            opacity: 1;
+        }
+
+        /* Messages */
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .message {
+            display: flex;
+            gap: 12px;
+            animation: fadeIn 0.4s ease;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(15px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .message-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            flex-shrink: 0;
+        }
+
+        .user-avatar {
+            background: linear-gradient(135deg, #0e639c 0%, #1e88e5 100%);
+        }
+
+        .ai-avatar {
+            background: linear-gradient(135deg, var(--accent-purple) 0%, #764ba2 100%);
+        }
+
+        .message-content {
+            flex: 1;
+        }
+
+        .message-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 8px;
+        }
+
+        .message-author {
+            font-weight: 600;
+            font-size: 13px;
+        }
+
+        .message-time {
+            font-size: 11px;
+            color: var(--text-secondary);
+        }
+
+        .message-text {
+            background: var(--bg-tertiary);
+            padding: 12px 15px;
+            border-radius: 12px;
+            font-size: 13px;
+            line-height: 1.6;
+        }
+
+        .message.user .message-text {
+            background: linear-gradient(135deg, rgba(14, 99, 156, 0.3) 0%, rgba(30, 136, 229, 0.3) 100%);
+            border: 1px solid rgba(14, 99, 156, 0.5);
+        }
+
+        /* Code Block in Chat */
+        .code-block {
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            margin: 12px 0;
+            overflow: hidden;
+        }
+
+        .code-block-header {
+            background: var(--bg-secondary);
+            padding: 8px 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .code-language {
+            font-size: 11px;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            font-weight: 600;
+        }
+
+        .code-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .code-action-btn {
+            background: var(--bg-tertiary);
+            border: none;
+            color: var(--text-secondary);
+            padding: 4px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 11px;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .code-action-btn:hover {
+            background: var(--bg-hover);
+            color: var(--text-primary);
+        }
+
+        .code-block-content {
+            padding: 15px;
+            overflow-x: auto;
+            font-family: 'Consolas', monospace;
+            font-size: 13px;
+            line-height: 1.5;
+        }
+
+        /* Thinking Indicator */
+        .thinking-indicator {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px;
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        .thinking-dots {
+            display: flex;
+            gap: 4px;
+        }
+
+        .thinking-dot {
+            width: 6px;
+            height: 6px;
+            background: var(--text-secondary);
+            border-radius: 50%;
+            animation: thinking 1.4s infinite;
+        }
+
+        .thinking-dot:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        .thinking-dot:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+
+        @keyframes thinking {
+            0%, 60%, 100% {
+                transform: translateY(0);
+                opacity: 0.5;
+            }
+            30% {
+                transform: translateY(-8px);
+                opacity: 1;
+            }
+        }
+
+        /* Quick Actions */
+        .quick-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 12px;
+        }
+
+        .quick-action-btn {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            padding: 8px 14px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .quick-action-btn:hover {
+            background: var(--bg-hover);
+            border-color: var(--accent-purple);
+            transform: translateY(-2px);
+        }
+
+        .quick-action-btn.primary {
+            background: linear-gradient(135deg, var(--accent-purple) 0%, #764ba2 100%);
+            border: none;
+            color: white;
+        }
+
+        .quick-action-btn.primary:hover {
+            opacity: 0.9;
+        }
+
+        /* Chat Input */
+        .chat-input-container {
+            padding: 15px;
+            background: var(--bg-tertiary);
+            border-top: 1px solid var(--border-color);
+        }
+
+        .chat-input-wrapper {
+            background: var(--bg-hover);
+            border-radius: 12px;
+            padding: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            border: 2px solid transparent;
+            transition: border-color 0.3s;
+        }
+
+        .chat-input-wrapper:focus-within {
+            border-color: var(--accent-purple);
+        }
+
+        .chat-input-top {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .chat-input {
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: var(--text-primary);
+            font-size: 14px;
+            outline: none;
+            resize: none;
+            max-height: 120px;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+        }
+
+        .chat-input::placeholder {
+            color: var(--text-secondary);
+        }
+
+        .input-icon-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+            padding: 6px;
+            border-radius: 6px;
+            transition: all 0.2s;
+        }
+
+        .input-icon-btn:hover {
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+        }
+
+        .send-btn {
+            background: linear-gradient(135deg, var(--accent-purple) 0%, #764ba2 100%);
+            border: none;
+            color: white;
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+
+        .send-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+
+        .send-btn:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+        }
+
+        .chat-input-bottom {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 11px;
+            color: var(--text-secondary);
+        }
+
+        .keyboard-hint {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .kbd {
+            background: var(--bg-tertiary);
+            padding: 2px 6px;
+            border-radius: 4px;
+            border: 1px solid var(--border-color);
+            font-family: monospace;
+        }
+
+        .token-counter {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .token-progress {
+            width: 60px;
+            height: 4px;
+            background: var(--bg-tertiary);
+            border-radius: 2px;
+            overflow: hidden;
+        }
+
+        .token-progress-bar {
+            height: 100%;
+            background: var(--accent-green);
+            border-radius: 2px;
+            transition: width 0.3s;
+        }
+
+        /* Right Sidebar - Tools */
+        .tools-panel {
+            width: 280px;
+            background: var(--bg-secondary);
+            border-left: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            transition: width 0.3s ease;
+        }
+
+        .tools-panel.collapsed {
+            width: 0;
+            overflow: hidden;
+        }
+
+        .tools-header {
+            padding: 15px;
+            background: var(--bg-tertiary);
+            border-bottom: 1px solid var(--border-color);
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--text-secondary);
+        }
+
+        .tools-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 15px;
+        }
+
+        .tool-section {
+            margin-bottom: 20px;
+        }
+
+        .tool-section-title {
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 10px;
+        }
+
+        .tool-item {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            padding: 10px 12px;
+            border-radius: 8px;
+            margin-bottom: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .tool-item:hover {
+            background: var(--bg-hover);
+            border-color: var(--accent-purple);
+            transform: translateX(4px);
+        }
+
+        .tool-icon {
+            font-size: 18px;
+        }
+
+        .tool-text {
+            flex: 1;
+        }
+
+        .tool-name {
+            font-size: 13px;
+            font-weight: 500;
+            margin-bottom: 2px;
+        }
+
+        .tool-desc {
+            font-size: 11px;
+            color: var(--text-secondary);
+        }
+
+        /* Status Bar */
+        .status-bar {
+            background: var(--bg-secondary);
+            border-top: 1px solid var(--border-color);
+            padding: 6px 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 11px;
+            color: var(--text-secondary);
+        }
+
+        .status-left, .status-right {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+
+        .status-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .status-indicator {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--accent-green);
+            animation: statusPulse 2s infinite;
+        }
+
+        @keyframes statusPulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        /* Feature Badges */
+        .feature-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: rgba(102, 126, 234, 0.15);
+            border: 1px solid rgba(102, 126, 234, 0.3);
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 11px;
+            color: var(--accent-purple);
+            margin-top: 10px;
+        }
+
+        /* Scrollbar Styling */
+        ::-webkit-scrollbar {
+            width: 10px;
+            height: 10px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--bg-secondary);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--bg-hover);
+            border-radius: 5px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #505050;
+        }
+
+        /* Floating Action Button */
+        .fab {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            width: 56px;
+            height: 56px;
+            background: linear-gradient(135deg, var(--accent-purple) 0%, #764ba2 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 20px rgba(102, 126, 234, 0.4);
+            cursor: pointer;
+            transition: all 0.3s;
+            color: white;
+            font-size: 24px;
+        }
+
+        .fab:hover {
+            transform: scale(1.1);
+            box-shadow: 0 6px 30px rgba(102, 126, 234, 0.6);
+        }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.show {
+            display: flex;
+        }
+
+        .modal-content {
+            background: var(--bg-secondary);
+            border-radius: 12px;
+            padding: 30px;
+            max-width: 600px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+            border: 1px solid var(--border-color);
+        }
+
+        .modal-header {
+            margin-bottom: 20px;
+        }
+
+        .modal-title {
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .modal-subtitle {
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        .modal-body {
+            margin-bottom: 20px;
+        }
+
+        .modal-footer {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+
+        .modal-btn {
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+
+        .modal-btn.primary {
+            background: linear-gradient(135deg, var(--accent-purple) 0%, #764ba2 100%);
+            border: none;
+            color: white;
+        }
+
+        .modal-btn.secondary {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Left Sidebar - File Explorer -->
+        <div class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <span class="sidebar-title">Explorer</span>
+                <button class="header-icon-btn" onclick="toggleSidebar()">📁</button>
+            </div>
+            <div class="file-tree">
+                <div class="file-item active" onclick="selectFile(this, 'test_analyzer.py')">
+                    <span class="file-icon">🐍</span>
+                    <span>test_analyzer.py</span>
+                </div>
+                <div class="file-item" onclick="selectFile(this, 'ai_models.py')">
+                    <span class="file-icon">🤖</span>
+                    <span>ai_models.py</span>
+                </div>
+                <div class="file-item" onclick="selectFile(this, 'failure_analyzer.py')">
+                    <span class="file-icon">🔍</span>
+                    <span>failure_analyzer.py</span>
+                </div>
+                <div class="file-item" onclick="selectFile(this, 'test_results.json')">
+                    <span class="file-icon">📊</span>
+                    <span>test_results.json</span>
+                </div>
+                <div class="file-item" onclick="selectFile(this, 'config.yaml')">
+                    <span class="file-icon">⚙️</span>
+                    <span>config.yaml</span>
+                </div>
+                <div class="file-item" onclick="selectFile(this, 'README.md')">
+                    <span class="file-icon">📝</span>
+                    <span>README.md</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Panel -->
+        <div class="main-panel">
+            <!-- Toolbar -->
+            <div class="toolbar">
+                <div class="toolbar-tabs">
+                    <div class="toolbar-tab active">
+                        <span>💬</span>
+                        <span>Chat</span>
+                    </div>
+                    <div class="toolbar-tab">
+                        <span>📝</span>
+                        <span>Code</span>
+                    </div>
+                    <div class="toolbar-tab">
+                        <span>🔍</span>
+                        <span>Search</span>
+                    </div>
+                </div>
+                <div class="toolbar-actions">
+                    <button class="toolbar-btn" onclick="newChat()">
+                        <span>➕</span>
+                        <span>New Chat</span>
+                    </button>
+                    <button class="toolbar-btn" onclick="exportChat()">
+                        <span>💾</span>
+                        <span>Export</span>
+                    </button>
+                    <button class="toolbar-btn" onclick="toggleTheme()">
+                        <span>🌙</span>
+                        <span>Theme</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Split View -->
+            <div class="split-view">
+                <!-- Code Editor -->
+                <div class="editor-panel">
+                    <div class="editor-header">
+                        <div class="editor-title">
+                            <span>🐍</span>
+                            <span id="currentFile">test_analyzer.py</span>
+                        </div>
+                        <div style="display: flex; gap: 10px;">
+                            <button class="header-icon-btn" title="Format Code">⚡</button>
+                            <button class="header-icon-btn" title="Run Code">▶️</button>
+                        </div>
+                    </div>
+                    <div class="editor-content" id="editorContent">
+                        <!-- Code lines will be rendered here -->
+                    </div>
+                </div>
+
+                <!-- Chat Panel -->
+                <div class="chat-panel" id="chatPanel">
+                    <div class="chat-header">
+                        <div class="chat-header-left">
+                            <div class="copilot-avatar">✨</div>
+                            <div>
+                                <div class="chat-title">DDN AI Copilot</div>
+                                <div class="chat-subtitle">Gemini Flash 2.0 • Real-time</div>
+                            </div>
+                        </div>
+                        <div class="chat-header-actions">
+                            <button class="header-icon-btn" onclick="toggleChatFullscreen()" title="Fullscreen">⛶</button>
+                            <button class="header-icon-btn" onclick="clearChat()" title="Clear Chat">🗑️</button>
+                            <button class="header-icon-btn" onclick="settingsModal()" title="Settings">⚙️</button>
+                        </div>
+                    </div>
+
+                    <!-- Context Bar -->
+                    <div class="context-bar">
+                        <div class="context-chip">
+                            <span>📄</span>
+                            <span>test_analyzer.py</span>
+                            <span class="close-btn">×</span>
+                        </div>
+                        <div class="context-chip">
+                            <span>🔍</span>
+                            <span>Code Context</span>
+                            <span class="close-btn">×</span>
+                        </div>
+                    </div>
+
+                    <!-- Messages -->
+                    <div class="chat-messages" id="chatMessages">
+                        <!-- Initial welcome message -->
+                        <div class="message ai">
+                            <div class="message-avatar ai-avatar">🤖</div>
+                            <div class="message-content">
+                                <div class="message-header">
+                                    <span class="message-author">DDN AI Copilot</span>
+                                    <span class="message-time">Just now</span>
+                                </div>
+                                <div class="message-text">
+                                    <strong>👋 Welcome to DDN AI Copilot!</strong>
+                                    <p style="margin-top: 10px;">I'm your intelligent coding assistant powered by Gemini Flash 2.0. I can help you with:</p>
+                                    <div class="quick-actions">
+                                        <div class="quick-action-btn" onclick="sendQuickAction('Analyze test failures')">
+                                            🔍 Analyze Failures
+                                        </div>
+                                        <div class="quick-action-btn" onclick="sendQuickAction('Generate test cases')">
+                                            ✅ Generate Tests
+                                        </div>
+                                        <div class="quick-action-btn" onclick="sendQuickAction('Debug code errors')">
+                                            🐛 Debug Code
+                                        </div>
+                                        <div class="quick-action-btn" onclick="sendQuickAction('Explain this code')">
+                                            💡 Explain Code
+                                        </div>
+                                        <div class="quick-action-btn" onclick="sendQuickAction('Optimize performance')">
+                                            ⚡ Optimize
+                                        </div>
+                                        <div class="quick-action-btn" onclick="sendQuickAction('Review code quality')">
+                                            👀 Code Review
+                                        </div>
+                                    </div>
+                                    <div class="feature-badge">
+                                        🚀 Real-time streaming • Context-aware • No API key needed
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Chat Input -->
+                    <div class="chat-input-container">
+                        <div class="chat-input-wrapper">
+                            <div class="chat-input-top">
+                                <button class="input-icon-btn" title="Attach file">📎</button>
+                                <button class="input-icon-btn" title="Voice input">🎤</button>
+                                <textarea
+                                    class="chat-input"
+                                    id="chatInput"
+                                    placeholder="Ask DDN AI Copilot anything... (Shift+Enter for new line)"
+                                    rows="1"
+                                    onkeydown="handleChatKeydown(event)"
+                                    oninput="autoResize(this)"
+                                ></textarea>
+                                <button class="send-btn" id="sendBtn" onclick="sendMessage()">
+                                    ▶
+                                </button>
+                            </div>
+                            <div class="chat-input-bottom">
+                                <div class="keyboard-hint">
+                                    <span class="kbd">Enter</span> to send • <span class="kbd">Shift+Enter</span> for new line
+                                </div>
+                                <div class="token-counter">
+                                    <span>0 / 2048</span>
+                                    <div class="token-progress">
+                                        <div class="token-progress-bar" style="width: 0%"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Sidebar - Tools -->
+        <div class="tools-panel" id="toolsPanel">
+            <div class="tools-header">AI Tools</div>
+            <div class="tools-content">
+                <div class="tool-section">
+                    <div class="tool-section-title">Code Actions</div>
+                    <div class="tool-item" onclick="runTool('explain')">
+                        <span class="tool-icon">💡</span>
+                        <div class="tool-text">
+                            <div class="tool-name">Explain Code</div>
+                            <div class="tool-desc">Get detailed explanation</div>
+                        </div>
+                    </div>
+                    <div class="tool-item" onclick="runTool('optimize')">
+                        <span class="tool-icon">⚡</span>
+                        <div class="tool-text">
+                            <div class="tool-name">Optimize</div>
+                            <div class="tool-desc">Improve performance</div>
+                        </div>
+                    </div>
+                    <div class="tool-item" onclick="runTool('refactor')">
+                        <span class="tool-icon">🔧</span>
+                        <div class="tool-text">
+                            <div class="tool-name">Refactor</div>
+                            <div class="tool-desc">Restructure code</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="tool-section">
+                    <div class="tool-section-title">Testing</div>
+                    <div class="tool-item" onclick="runTool('generate-tests')">
+                        <span class="tool-icon">✅</span>
+                        <div class="tool-text">
+                            <div class="tool-name">Generate Tests</div>
+                            <div class="tool-desc">Auto-create unit tests</div>
+                        </div>
+                    </div>
+                    <div class="tool-item" onclick="runTool('analyze-failures')">
+                        <span class="tool-icon">🔍</span>
+                        <div class="tool-text">
+                            <div class="tool-name">Analyze Failures</div>
+                            <div class="tool-desc">Find root causes</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="tool-section">
+                    <div class="tool-section-title">Documentation</div>
+                    <div class="tool-item" onclick="runTool('add-docstrings')">
+                        <span class="tool-icon">📝</span>
+                        <div class="tool-text">
+                            <div class="tool-name">Add Docstrings</div>
+                            <div class="tool-desc">Generate documentation</div>
+                        </div>
+                    </div>
+                    <div class="tool-item" onclick="runTool('generate-readme')">
+                        <span class="tool-icon">📄</span>
+                        <div class="tool-text">
+                            <div class="tool-name">Generate README</div>
+                            <div class="tool-desc">Create project docs</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="tool-section">
+                    <div class="tool-section-title">AI Analysis</div>
+                    <div class="tool-item" onclick="runTool('security-scan')">
+                        <span class="tool-icon">🔒</span>
+                        <div class="tool-text">
+                            <div class="tool-name">Security Scan</div>
+                            <div class="tool-desc">Check vulnerabilities</div>
+                        </div>
+                    </div>
+                    <div class="tool-item" onclick="runTool('code-review')">
+                        <span class="tool-icon">👀</span>
+                        <div class="tool-text">
+                            <div class="tool-name">Code Review</div>
+                            <div class="tool-desc">AI-powered review</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Status Bar -->
+    <div class="status-bar">
+        <div class="status-left">
+            <div class="status-item">
+                <div class="status-indicator"></div>
+                <span>Gemini Flash 2.0 Connected</span>
+            </div>
+            <div class="status-item">
+                <span>⚡</span>
+                <span>Real-time streaming enabled</span>
+            </div>
+            <div class="status-item">
+                <span>📊</span>
+                <span>Context: 2 files</span>
+            </div>
+        </div>
+        <div class="status-right">
+            <div class="status-item">
+                <span>Python 3.11</span>
+            </div>
+            <div class="status-item">
+                <span>UTF-8</span>
+            </div>
+            <div class="status-item">
+                <span>Ln 42, Col 16</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal -->
+    <div class="modal" id="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title">Settings</div>
+                <div class="modal-subtitle">Configure DDN AI Copilot preferences</div>
+            </div>
+            <div class="modal-body">
+                <p style="color: var(--text-secondary); font-size: 13px;">
+                    Settings panel coming soon! This will include:
+                </p>
+                <ul style="margin-left: 20px; margin-top: 10px; color: var(--text-secondary); font-size: 13px;">
+                    <li>Model selection (Gemini Flash 2.0, Pro, etc.)</li>
+                    <li>Temperature and creativity settings</li>
+                    <li>Context window size</li>
+                    <li>Auto-suggestions preferences</li>
+                    <li>Keyboard shortcuts customization</li>
+                </ul>
+            </div>
+            <div class="modal-footer">
+                <button class="modal-btn secondary" onclick="closeModal()">Close</button>
+                <button class="modal-btn primary" onclick="closeModal()">Save Settings</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Sample code for editor
+        const sampleCode = `import pytest
+from ai_analyzer import analyze_failure, FailureCategory
+
+def test_code_error_analysis():
+    """Test AI analysis for code errors"""
+    error_log = "NullPointerException at line 45 in UserService.java"
+
+    # Analyze the failure
+    result = analyze_failure(
+        error_log=error_log,
+        category=FailureCategory.CODE_ERROR,
+        context={"file": "UserService.java", "line": 45}
+    )
+
+    # Copilot suggestion: Add comprehensive assertions
+    assert result.confidence_score > 0.8, "Confidence should be high for clear errors"
+    assert result.category == FailureCategory.CODE_ERROR
+    assert result.root_cause is not None
+    assert "NullPointerException" in result.error_pattern
+
+    # Verify AI suggestions
+    assert len(result.fix_suggestions) > 0
+    assert result.priority in ["high", "critical"]
+
+def test_multiple_failures_batch():
+    """Test batch processing of multiple failures"""
+    failures = [
+        "AssertionError: Expected 5 but got 3",
+        "TimeoutException: Request timeout after 30s",
+        "ImportError: No module named 'deprecated_lib'"
+    ]
+
+    # Copilot suggestion: Process failures in batch
+    results = analyze_failures_batch(failures)
+    assert len(results) == len(failures)
+    for result in results:
+        assert result.analyzed_at is not None`;
+
+        // Initialize editor
+        function initEditor() {
+            const editorContent = document.getElementById('editorContent');
+            const lines = sampleCode.split('\n');
+
+            editorContent.innerHTML = lines.map((line, index) => {
+                const lineNum = index + 1;
+                const highlightedCode = highlightSyntax(line);
+
+                // Add suggestion on line 10
+                if (lineNum === 11) {
+                    return `
+                        <div class="code-line">
+                            <span class="line-number">${lineNum}</span>
+                            <span class="code-text">${highlightedCode}</span>
+                        </div>
+                        <div class="code-line">
+                            <span class="line-number">${lineNum + 1}</span>
+                            <span class="code-text">
+                                <span class="copilot-suggestion">assert result.confidence_score > 0.8, "Confidence should be high for clear errors"</span>
+                            </span>
+                        </div>`;
+                }
+
+                return `
+                    <div class="code-line">
+                        <span class="line-number">${lineNum}</span>
+                        <span class="code-text">${highlightedCode}</span>
+                    </div>`;
+            }).join('');
+        }
+
+        // Simple syntax highlighting
+        function highlightSyntax(code) {
+            return code
+                .replace(/\b(def|class|import|from|return|assert|if|else|for|in|is|not|None|True|False)\b/g, '<span class="keyword">$1</span>')
+                .replace(/(".*?"|'.*?')/g, '<span class="string">$1</span>')
+                .replace(/\b([a-zA-Z_][a-zA-Z0-9_]*)\s*\(/g, '<span class="function">$1</span>(')
+                .replace(/(#.*$)/g, '<span class="comment">$1</span>');
+        }
+
+        // Chat functions
+        function sendMessage() {
+            const input = document.getElementById('chatInput');
+            const message = input.value.trim();
+
+            if (!message) return;
+
+            addUserMessage(message);
+            input.value = '';
+            autoResize(input);
+
+            // Simulate AI response
+            setTimeout(() => {
+                addThinkingIndicator();
+                setTimeout(() => {
+                    removeThinkingIndicator();
+                    addAIResponse(message);
+                }, 2000);
+            }, 500);
+        }
+
+        function addUserMessage(text) {
+            const messagesDiv = document.getElementById('chatMessages');
+            const time = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+
+            const messageHTML = `
+                <div class="message user">
+                    <div class="message-avatar user-avatar">👤</div>
+                    <div class="message-content">
+                        <div class="message-header">
+                            <span class="message-author">You</span>
+                            <span class="message-time">${time}</span>
+                        </div>
+                        <div class="message-text">${escapeHtml(text)}</div>
+                    </div>
+                </div>
+            `;
+
+            messagesDiv.insertAdjacentHTML('beforeend', messageHTML);
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        }
+
+        function addAIResponse(userMessage) {
+            const messagesDiv = document.getElementById('chatMessages');
+            const time = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+
+            let response = getSmartResponse(userMessage);
+
+            const messageHTML = `
+                <div class="message ai">
+                    <div class="message-avatar ai-avatar">🤖</div>
+                    <div class="message-content">
+                        <div class="message-header">
+                            <span class="message-author">DDN AI Copilot</span>
+                            <span class="message-time">${time}</span>
+                        </div>
+                        <div class="message-text">${response}</div>
+                    </div>
+                </div>
+            `;
+
+            messagesDiv.insertAdjacentHTML('beforeend', messageHTML);
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        }
+
+        function getSmartResponse(userMessage) {
+            const lowerMsg = userMessage.toLowerCase();
+
+            if (lowerMsg.includes('test') || lowerMsg.includes('failure')) {
+                return `
+                    <p>I've analyzed your test failures. Here's what I found:</p>
+                    ${generateCodeBlock('python', `# Root Cause Analysis
+# Based on the error pattern, this is a NullPointerException
+
+def fix_null_pointer_issue():
+    # Add null check before accessing object
+    if user_service is not None:
+        result = user_service.process()
+    else:
+        logger.error("UserService is null, cannot process")
+        return None`)}
+                    <div class="quick-actions">
+                        <button class="quick-action-btn primary" onclick="applyFix()">
+                            ✓ Apply Fix
+                        </button>
+                        <button class="quick-action-btn" onclick="explainMore()">
+                            💬 Explain More
+                        </button>
+                        <button class="quick-action-btn" onclick="generateTests()">
+                            ✅ Generate Tests
+                        </button>
+                    </div>
+                    <div class="feature-badge">
+                        🎯 Analyzed with context from test_analyzer.py
+                    </div>
+                `;
+            }
+
+            if (lowerMsg.includes('optimize') || lowerMsg.includes('performance')) {
+                return `
+                    <p>I've identified several optimization opportunities:</p>
+                    <ul style="margin-left: 20px; margin-top: 10px;">
+                        <li>Use list comprehension instead of loops (30% faster)</li>
+                        <li>Cache repeated database queries (5x faster)</li>
+                        <li>Implement connection pooling for external APIs</li>
+                    </ul>
+                    ${generateCodeBlock('python', `# Optimized version
+results = [analyze_failure(f) for f in failures if f.severity > 3]
+
+# vs original (slower)
+results = []
+for f in failures:
+    if f.severity > 3:
+        results.append(analyze_failure(f))`)}
+                    <div class="quick-actions">
+                        <button class="quick-action-btn primary" onclick="applyOptimization()">
+                            ⚡ Apply Optimization
+                        </button>
+                        <button class="quick-action-btn" onclick="showBenchmark()">
+                            📊 Show Benchmark
+                        </button>
+                    </div>
+                `;
+            }
+
+            if (lowerMsg.includes('explain')) {
+                return `
+                    <p>Let me explain the <code>analyze_failure</code> function:</p>
+                    <p style="margin-top: 10px;">This function uses AI (Gemini) to analyze test failures by:</p>
+                    <ol style="margin-left: 20px; margin-top: 8px;">
+                        <li><strong>Extracting error patterns</strong> - Identifies common failure signatures</li>
+                        <li><strong>Categorizing failures</strong> - CODE_ERROR, TEST_FAILURE, INFRA_ERROR, etc.</li>
+                        <li><strong>Finding root causes</strong> - Uses AI to determine underlying issues</li>
+                        <li><strong>Suggesting fixes</strong> - Provides actionable recommendations</li>
+                    </ol>
+                    <div class="feature-badge">
+                        💡 Context-aware explanation based on your codebase
+                    </div>
+                `;
+            }
+
+            return `
+                <p>I understand you're asking about: "${userMessage}"</p>
+                <p style="margin-top: 10px;">Based on the context from your DDN AI project, I can help you with:</p>
+                <div class="quick-actions">
+                    <button class="quick-action-btn" onclick="sendQuickAction('Explain in detail')">
+                        💡 Explain in Detail
+                    </button>
+                    <button class="quick-action-btn" onclick="sendQuickAction('Show code example')">
+                        📝 Show Example
+                    </button>
+                    <button class="quick-action-btn" onclick="sendQuickAction('Generate solution')">
+                        ✨ Generate Solution
+                    </button>
+                </div>
+            `;
+        }
+
+        function generateCodeBlock(language, code) {
+            return `
+                <div class="code-block">
+                    <div class="code-block-header">
+                        <span class="code-language">${language}</span>
+                        <div class="code-actions">
+                            <button class="code-action-btn" onclick="copyCode(this)">
+                                📋 Copy
+                            </button>
+                            <button class="code-action-btn" onclick="insertCode(this)">
+                                ➕ Insert
+                            </button>
+                        </div>
+                    </div>
+                    <div class="code-block-content"><pre><code>${escapeHtml(code)}</code></pre></div>
+                </div>
+            `;
+        }
+
+        function addThinkingIndicator() {
+            const messagesDiv = document.getElementById('chatMessages');
+            const thinkingHTML = `
+                <div class="message ai" id="thinkingIndicator">
+                    <div class="message-avatar ai-avatar">🤖</div>
+                    <div class="message-content">
+                        <div class="thinking-indicator">
+                            <div class="thinking-dots">
+                                <div class="thinking-dot"></div>
+                                <div class="thinking-dot"></div>
+                                <div class="thinking-dot"></div>
+                            </div>
+                            <span>Analyzing with AI...</span>
+                        </div>
+                    </div>
+                </div>
+            `;
+            messagesDiv.insertAdjacentHTML('beforeend', thinkingHTML);
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        }
+
+        function removeThinkingIndicator() {
+            const indicator = document.getElementById('thinkingIndicator');
+            if (indicator) indicator.remove();
+        }
+
+        function sendQuickAction(action) {
+            const input = document.getElementById('chatInput');
+            input.value = action;
+            sendMessage();
+        }
+
+        function handleChatKeydown(event) {
+            if (event.key === 'Enter' && !event.shiftKey) {
+                event.preventDefault();
+                sendMessage();
+            }
+        }
+
+        function autoResize(textarea) {
+            textarea.style.height = 'auto';
+            textarea.style.height = Math.min(textarea.scrollHeight, 120) + 'px';
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // UI Functions
+        function toggleSidebar() {
+            document.getElementById('sidebar').classList.toggle('collapsed');
+        }
+
+        function toggleChatFullscreen() {
+            document.getElementById('chatPanel').classList.toggle('fullscreen');
+        }
+
+        function toggleTools() {
+            document.getElementById('toolsPanel').classList.toggle('collapsed');
+        }
+
+        function selectFile(element, filename) {
+            document.querySelectorAll('.file-item').forEach(el => el.classList.remove('active'));
+            element.classList.add('active');
+            document.getElementById('currentFile').textContent = filename;
+        }
+
+        function clearChat() {
+            if (confirm('Clear all messages?')) {
+                const messagesDiv = document.getElementById('chatMessages');
+                messagesDiv.innerHTML = '';
+                location.reload();
+            }
+        }
+
+        function newChat() {
+            if (confirm('Start a new chat? Current conversation will be saved.')) {
+                clearChat();
+            }
+        }
+
+        function exportChat() {
+            alert('Chat export feature coming soon! Will export as markdown or JSON.');
+        }
+
+        function toggleTheme() {
+            alert('Theme switcher coming soon! Will support light/dark/custom themes.');
+        }
+
+        function settingsModal() {
+            document.getElementById('modal').classList.add('show');
+        }
+
+        function closeModal() {
+            document.getElementById('modal').classList.remove('show');
+        }
+
+        function runTool(toolName) {
+            sendQuickAction(`Run ${toolName} on current file`);
+        }
+
+        function copyCode(button) {
+            const codeBlock = button.closest('.code-block').querySelector('code');
+            navigator.clipboard.writeText(codeBlock.textContent);
+            button.textContent = '✓ Copied!';
+            setTimeout(() => {
+                button.innerHTML = '📋 Copy';
+            }, 2000);
+        }
+
+        function insertCode(button) {
+            alert('Code will be inserted at cursor position in editor!');
+        }
+
+        function applyFix() {
+            alert('✓ Fix applied to test_analyzer.py');
+        }
+
+        function explainMore() {
+            sendQuickAction('Explain the fix in more detail');
+        }
+
+        function generateTests() {
+            sendQuickAction('Generate unit tests for this fix');
+        }
+
+        function applyOptimization() {
+            alert('⚡ Optimization applied!');
+        }
+
+        function showBenchmark() {
+            sendQuickAction('Show performance benchmark comparison');
+        }
+
+        // Initialize on load
+        window.addEventListener('load', () => {
+            initEditor();
+            document.getElementById('chatInput').focus();
+        });
+
+        // Close modal on outside click
+        window.addEventListener('click', (event) => {
+            const modal = document.getElementById('modal');
+            if (event.target === modal) {
+                closeModal();
+            }
+        });
+    </script>
+</body>
+</html>
