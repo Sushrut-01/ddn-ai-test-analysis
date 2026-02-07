@@ -79,10 +79,10 @@ function ForgotPasswordPage() {
       }}
     >
       {/* Background Elements */}
-      <FloatingShape delay={0} duration={6} size={100} top="10%" left="15%" color="#3b82f6" />
-      <FloatingShape delay={1} duration={8} size={150} top="60%" left="10%" color="#8b5cf6" />
-      <FloatingShape delay={2} duration={7} size={80} top="20%" left="80%" color="#06b6d4" />
-      <FloatingShape delay={0.5} duration={9} size={120} top="70%" left="75%" color="#10b981" />
+      <FloatingShape delay={0} duration={6} size={100} top="10%" left="15%" color="#10b981" />
+      <FloatingShape delay={1} duration={8} size={150} top="60%" left="10%" color="#14b8a6" />
+      <FloatingShape delay={2} duration={7} size={80} top="20%" left="80%" color="#10b981" />
+      <FloatingShape delay={0.5} duration={9} size={120} top="70%" left="75%" color="#14b8a6" />
 
       <Zoom in timeout={500}>
         <Paper
@@ -92,8 +92,11 @@ function ForgotPasswordPage() {
             maxWidth: 440,
             p: 4,
             borderRadius: 4,
-            bgcolor: 'white',
-            boxShadow: '0 25px 80px rgba(0,0,0,0.3)',
+            background: 'linear-gradient(135deg, rgba(17, 24, 39, 0.95) 0%, rgba(31, 41, 55, 0.95) 50%, rgba(17, 24, 39, 0.95) 100%)',
+            backdropFilter: 'blur(20px)',
+            border: '1.5px solid',
+            borderColor: alpha('#10b981', 0.3),
+            boxShadow: '0 25px 80px rgba(0,0,0,0.6), 0 0 40px rgba(16, 185, 129, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.05)',
             position: 'relative',
             zIndex: 1,
             m: 2
@@ -106,15 +109,17 @@ function ForgotPasswordPage() {
                 width: 44,
                 height: 44,
                 borderRadius: 2,
-                background: 'linear-gradient(135deg, #3b82f6, #8b5cf6)',
+                background: 'linear-gradient(135deg, #10b981, #14b8a6)',
                 display: 'flex',
                 alignItems: 'center',
-                justifyContent: 'center'
+                justifyContent: 'center',
+                boxShadow: '0 4px 12px rgba(16, 185, 129, 0.4), inset 0 1px 4px rgba(255, 255, 255, 0.2)',
+                border: '1px solid rgba(16, 185, 129, 0.3)'
               }}
             >
-              <SmartToyIcon sx={{ color: 'white' }} />
+              <SmartToyIcon sx={{ color: 'white', filter: 'drop-shadow(0 2px 3px rgba(0, 0, 0, 0.3))' }} />
             </Box>
-            <Typography variant="h5" fontWeight={700} color="#1e293b">
+            <Typography variant="h5" fontWeight={700} sx={{ color: '#f9fafb', textShadow: '0 2px 4px rgba(0, 0, 0, 0.3)' }}>
               DDN AI Platform
             </Typography>
           </Box>
@@ -128,20 +133,22 @@ function ForgotPasswordPage() {
                     width: 80,
                     height: 80,
                     borderRadius: '50%',
-                    background: 'linear-gradient(135deg, #3b82f6, #8b5cf6)',
+                    background: 'linear-gradient(135deg, #10b981, #14b8a6)',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
                     mx: 'auto',
-                    mb: 2
+                    mb: 2,
+                    boxShadow: '0 0 30px rgba(16, 185, 129, 0.6), inset 0 2px 8px rgba(255, 255, 255, 0.15)',
+                    border: '2px solid rgba(16, 185, 129, 0.3)'
                   }}
                 >
-                  <LockResetIcon sx={{ fontSize: 40, color: 'white' }} />
+                  <LockResetIcon sx={{ fontSize: 40, color: 'white', filter: 'drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3))' }} />
                 </Box>
-                <Typography variant="h5" fontWeight={700} color="#1e293b" gutterBottom>
+                <Typography variant="h5" fontWeight={700} sx={{ color: '#f9fafb', mb: 1, textShadow: '0 2px 8px rgba(0, 0, 0, 0.4)' }}>
                   Forgot Password?
                 </Typography>
-                <Typography variant="body2" color="textSecondary">
+                <Typography variant="body2" sx={{ color: '#9ca3af', fontSize: '0.95rem', lineHeight: 1.6 }}>
                   No worries! Enter your email address and we'll send you instructions to reset your password.
                 </Typography>
               </Box>
@@ -163,7 +170,7 @@ function ForgotPasswordPage() {
                   InputProps={{
                     startAdornment: (
                       <InputAdornment position="start">
-                        <EmailIcon sx={{ color: '#94a3b8' }} />
+                        <EmailIcon sx={{ color: '#10b981' }} />
                       </InputAdornment>
                     )
                   }}
@@ -171,9 +178,14 @@ function ForgotPasswordPage() {
                     mb: 3,
                     '& .MuiOutlinedInput-root': {
                       borderRadius: 2,
-                      '&:hover fieldset': { borderColor: '#3b82f6' },
-                      '&.Mui-focused fieldset': { borderColor: '#3b82f6' }
-                    }
+                      backgroundColor: 'rgba(255, 255, 255, 0.05)',
+                      '& fieldset': { borderColor: alpha('#10b981', 0.3) },
+                      '&:hover fieldset': { borderColor: '#10b981' },
+                      '&.Mui-focused fieldset': { borderColor: '#10b981', borderWidth: '2px' }
+                    },
+                    '& .MuiInputLabel-root': { color: '#9ca3af' },
+                    '& .MuiInputLabel-root.Mui-focused': { color: '#10b981' },
+                    '& .MuiInputBase-input': { color: '#f9fafb' }
                   }}
                 />
 
@@ -185,14 +197,17 @@ function ForgotPasswordPage() {
                   sx={{
                     py: 1.5,
                     borderRadius: 2,
-                    background: 'linear-gradient(135deg, #3b82f6, #8b5cf6)',
+                    background: 'linear-gradient(135deg, #10b981, #14b8a6)',
                     fontSize: '1rem',
                     fontWeight: 600,
                     textTransform: 'none',
-                    boxShadow: '0 4px 15px rgba(59, 130, 246, 0.4)',
+                    letterSpacing: '0.3px',
+                    boxShadow: '0 4px 20px rgba(16, 185, 129, 0.5)',
+                    transition: 'all 0.35s cubic-bezier(0.4, 0, 0.2, 1)',
                     '&:hover': {
-                      background: 'linear-gradient(135deg, #2563eb, #7c3aed)',
-                      boxShadow: '0 6px 20px rgba(59, 130, 246, 0.5)'
+                      background: 'linear-gradient(135deg, #14b8a6, #10b981)',
+                      boxShadow: '0 6px 24px rgba(16, 185, 129, 0.6)',
+                      transform: 'translateY(-2px)'
                     }
                   }}
                 >
@@ -209,28 +224,30 @@ function ForgotPasswordPage() {
                     width: 80,
                     height: 80,
                     borderRadius: '50%',
-                    bgcolor: '#dcfce7',
+                    background: alpha('#10b981', 0.15),
+                    border: '2px solid rgba(16, 185, 129, 0.3)',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
                     mx: 'auto',
-                    mb: 3
+                    mb: 3,
+                    boxShadow: '0 0 30px rgba(16, 185, 129, 0.4)'
                   }}
                 >
-                  <CheckCircleOutlineIcon sx={{ fontSize: 48, color: '#10b981' }} />
+                  <CheckCircleOutlineIcon sx={{ fontSize: 48, color: '#10b981', filter: 'drop-shadow(0 0 8px rgba(16, 185, 129, 0.6))' }} />
                 </Box>
-                <Typography variant="h5" fontWeight={700} color="#1e293b" gutterBottom>
+                <Typography variant="h5" fontWeight={700} sx={{ color: '#f9fafb', mb: 1, textShadow: '0 2px 8px rgba(0, 0, 0, 0.4)' }}>
                   Check Your Email
                 </Typography>
-                <Typography variant="body2" color="textSecondary" sx={{ mb: 3 }}>
-                  We've sent a password reset link to <strong>{email}</strong>. Please check your inbox and follow the instructions.
+                <Typography variant="body2" sx={{ color: '#9ca3af', mb: 3, fontSize: '0.95rem', lineHeight: 1.6 }}>
+                  We've sent a password reset link to <strong style={{ color: '#10b981' }}>{email}</strong>. Please check your inbox and follow the instructions.
                 </Typography>
-                <Typography variant="caption" color="textSecondary" display="block" sx={{ mb: 3 }}>
+                <Typography variant="caption" display="block" sx={{ mb: 3, color: '#9ca3af' }}>
                   Didn't receive the email? Check your spam folder or{' '}
                   <Link
                     href="#"
                     onClick={(e) => { e.preventDefault(); setSuccess(false) }}
-                    sx={{ color: '#3b82f6', fontWeight: 600 }}
+                    sx={{ color: '#10b981', fontWeight: 600, textDecoration: 'none', '&:hover': { textDecoration: 'underline' } }}
                   >
                     try again
                   </Link>
@@ -242,10 +259,18 @@ function ForgotPasswordPage() {
                   sx={{
                     py: 1.5,
                     borderRadius: 2,
-                    background: 'linear-gradient(135deg, #3b82f6, #8b5cf6)',
+                    background: 'linear-gradient(135deg, #10b981, #14b8a6)',
                     fontSize: '1rem',
                     fontWeight: 600,
-                    textTransform: 'none'
+                    textTransform: 'none',
+                    letterSpacing: '0.3px',
+                    boxShadow: '0 4px 20px rgba(16, 185, 129, 0.5)',
+                    transition: 'all 0.35s cubic-bezier(0.4, 0, 0.2, 1)',
+                    '&:hover': {
+                      background: 'linear-gradient(135deg, #14b8a6, #10b981)',
+                      boxShadow: '0 6px 24px rgba(16, 185, 129, 0.6)',
+                      transform: 'translateY(-2px)'
+                    }
                   }}
                 >
                   Back to Login
@@ -262,9 +287,13 @@ function ForgotPasswordPage() {
               onClick={() => navigate('/login')}
               sx={{
                 mt: 2,
-                color: '#64748b',
+                color: '#9ca3af',
                 textTransform: 'none',
-                '&:hover': { bgcolor: '#f8fafc' }
+                transition: 'all 0.3s ease',
+                '&:hover': {
+                  bgcolor: alpha('#10b981', 0.1),
+                  color: '#10b981'
+                }
               }}
             >
               Back to Login

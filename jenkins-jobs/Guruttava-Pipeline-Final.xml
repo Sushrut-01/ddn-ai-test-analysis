@@ -1,0 +1,76 @@
+<?xml version='1.1' encoding='UTF-8'?>
+<flow-definition plugin="workflow-job@1400.v7fd111b_ec82f">
+  <actions/>
+  <description>Guruttava E2E Automation - Run ALL Test Suites Sequentially (Android/iOS/Web) - Multi-Project: PROJECT_ID=2, Jira: GURU</description>
+  <keepDependencies>false</keepDependencies>
+  <properties>
+    <hudson.model.ParametersDefinitionProperty>
+      <parameterDefinitions>
+        <hudson.model.ChoiceParameterDefinition>
+          <name>PLATFORM</name>
+          <description>Select platform to test (All = runs ALL suites sequentially)</description>
+          <choices class="java.util.Arrays$ArrayList">
+            <a class="string-array">
+              <string>All</string>
+              <string>Android</string>
+              <string>iOS</string>
+              <string>Web</string>
+            </a>
+          </choices>
+        </hudson.model.ChoiceParameterDefinition>
+        <hudson.model.ChoiceParameterDefinition>
+          <name>TEST_TYPE</name>
+          <description>Select test type</description>
+          <choices class="java.util.Arrays$ArrayList">
+            <a class="string-array">
+              <string>All</string>
+              <string>Smoke</string>
+              <string>Regression</string>
+              <string>Sanity</string>
+            </a>
+          </choices>
+        </hudson.model.ChoiceParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>DEVICE_NAME</name>
+          <description>Real Android device connected via USB (RZCT40WL69K)</description>
+          <defaultValue>RZCT40WL69K</defaultValue>
+          <trim>true</trim>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>APP_PACKAGE</name>
+          <description>App package name (app already installed with noReset=true)</description>
+          <defaultValue>com.org.gurutattva.app</defaultValue>
+          <trim>true</trim>
+        </hudson.model.StringParameterDefinition>
+      </parameterDefinitions>
+    </hudson.model.ParametersDefinitionProperty>
+    <org.jenkinsci.plugins.workflow.job.properties.DisableConcurrentBuildsJobProperty/>
+  </properties>
+  <definition class="org.jenkinsci.plugins.workflow.cps.CpsScmFlowDefinition" plugin="workflow-cps@3802.v3e3f6f58db_13">
+    <scm class="hudson.plugins.git.GitSCM" plugin="git@5.2.0">
+      <configVersion>2</configVersion>
+      <userRemoteConfigs>
+        <hudson.plugins.git.UserRemoteConfig>
+          <url>https://github.com/Sushrut-01/gurutattva-e2e-automation</url>
+        </hudson.plugins.git.UserRemoteConfig>
+      </userRemoteConfigs>
+      <branches>
+        <hudson.plugins.git.BranchSpec>
+          <name>*/master</name>
+        </hudson.plugins.git.BranchSpec>
+      </branches>
+      <doGenerateSubmoduleConfigurations>false</doGenerateSubmoduleConfigurations>
+      <submoduleCfg class="empty-list"/>
+      <extensions/>
+    </scm>
+    <scriptPath>Jenkinsfile</scriptPath>
+    <lightweight>true</lightweight>
+  </definition>
+  <triggers>
+    <hudson.triggers.SCMTrigger>
+      <spec>H/15 * * * *</spec>
+      <ignorePostCommitHooks>false</ignorePostCommitHooks>
+    </hudson.triggers.SCMTrigger>
+  </triggers>
+  <disabled>false</disabled>
+</flow-definition>

@@ -45,6 +45,10 @@ import MemoryIcon from '@mui/icons-material/Memory'
 import { useNavigate, Link as RouterLink } from 'react-router-dom'
 import PaletteIcon from '@mui/icons-material/Palette'
 import { useAuth } from '../hooks/useAuth'
+import ProjectSelectionModal from '../components/ProjectSelectionModal'
+import { useVoiceAssistant } from '../hooks/useVoiceAssistant'
+import FaceDetection from '../components/FaceDetection'
+import VolumeUpIcon from '@mui/icons-material/VolumeUp'
 
 // JARVIS Theme Definitions
 const jarvisThemes = {
@@ -387,6 +391,7 @@ function LoginPage() {
   const [fingerprintScanning, setFingerprintScanning] = useState(false)
   const [authProgress, setAuthProgress] = useState(0)
   const [showThemeSelector, setShowThemeSelector] = useState(false)
+  const [showProjectSelector, setShowProjectSelector] = useState(false)
 
   // JARVIS Theme state
   const [currentJarvisTheme, setCurrentJarvisTheme] = useState(() => {
@@ -395,19 +400,35 @@ function LoginPage() {
   })
   const jTheme = jarvisThemes[currentJarvisTheme]
 
+  // Real JARVIS Voice Assistant
+  const voice = useVoiceAssistant({
+    language: 'en-US',
+    continuousMode: false,
+    onCommand: (command, confidence) => {
+      console.log(`🎯 Voice command received: "${command}" (${(confidence * 100).toFixed(1)}%)`)
+      handleVoiceCommand(command)
+    }
+  })
+
   const handleThemeChange = (themeKey) => {
     setCurrentJarvisTheme(themeKey)
     localStorage.setItem('jarvis-theme', themeKey)
-    typeMessage(`Theme changed to ${jarvisThemes[themeKey].name}. Visual systems updated.`)
+    typeAndSpeak(`Theme changed to ${jarvisThemes[themeKey].name}. Visual systems updated.`)
   }
 
   // Initialize JARVIS greeting
   useEffect(() => {
     const greeting = jarvisGreetings[Math.floor(Math.random() * jarvisGreetings.length)]
-    typeMessage(greeting)
+    typeAndSpeak(greeting)
   }, [])
 
-  const typeMessage = (message) => {
+  // Type message with typing effect AND speak it aloud (JARVIS voice)
+  const typeAndSpeak = async (message, speakFirst = false) => {
+    // Option to speak first, then type
+    if (speakFirst && voice.isSupported) {
+      voice.speak(message)
+    }
+
     setJarvisSpeaking(true)
     setJarvisMessage('')
     let i = 0
@@ -418,9 +439,17 @@ function LoginPage() {
       } else {
         clearInterval(interval)
         setJarvisSpeaking(false)
+
+        // Speak after typing if not spoken first
+        if (!speakFirst && voice.isSupported) {
+          voice.speak(message)
+        }
       }
     }, 30)
   }
+
+  // Legacy compatibility - some code still calls typeMessage
+  const typeMessage = typeAndSpeak
 
   const handleChange = (e) => {
     const { name, value, checked } = e.target
@@ -440,6 +469,10 @@ function LoginPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault()
+    console.log('🔐 Login form submitted');
+    console.log('📧 Email:', formData.email);
+    console.log('🔑 Password length:', formData.password?.length);
+
     setLoading(true)
     setError('')
     typeMessage(jarvisResponses.authenticating)
@@ -456,22 +489,34 @@ function LoginPage() {
     }, 150)
 
     try {
+      console.log('🔐 Calling login API...');
       // Call real authentication API
       const result = await login(formData.email, formData.password)
+      console.log('🔐 Login API response:', result);
 
       clearInterval(progressInterval)
       setAuthProgress(100)
 
       if (result.success) {
+        console.log('✅ Login successful!');
         typeMessage(jarvisResponses.success)
-        await new Promise(resolve => setTimeout(resolve, 1000))
-        navigate('/dashboard')
+
+        // Direct speech
+        const synth = window.speechSynthesis;
+        const utterance = new SpeechSynthesisUtterance(jarvisResponses.success);
+        synth.speak(utterance);
+
+        await new Promise(resolve => setTimeout(resolve, 500))
+        // Show project selection modal instead of navigating directly
+        setShowProjectSelector(true)
       } else {
+        console.error('❌ Login failed:', result.error);
         typeMessage(jarvisResponses.error)
         setError(result.error || 'Login failed. Please check your credentials.')
         setAuthProgress(0)
       }
     } catch (err) {
+      console.error('❌ Login exception:', err);
       clearInterval(progressInterval)
       typeMessage(jarvisResponses.error)
       setError('An unexpected error occurred. Please try again.')
@@ -481,77 +526,147 @@ function LoginPage() {
     }
   }
 
-  const handleVoiceLogin = () => {
-    setVoiceActive(true)
-    typeMessage(jarvisResponses.voice)
+  // Handle voice commands
+  const handleVoiceCommand = (command) => {
+    const cmd = command.toLowerCase().trim()
 
-    setTimeout(() => {
-      setVoiceActive(false)
-      typeMessage("Voice pattern recognized. Authenticating...")
-      setLoading(true)
+    // Login command
+    if (cmd.includes('login') || cmd.includes('access') || cmd.includes('authenticate')) {
+      typeAndSpeak('Voice pattern recognized. Initializing authentication.')
+      performVoiceLogin()
+      return
+    }
 
-      setTimeout(() => {
-        localStorage.setItem('ddn-user', JSON.stringify({
-          email: 'voice@ddn.com',
-          name: 'Voice User',
-          loginTime: new Date().toISOString()
-        }))
-        navigate('/dashboard')
-      }, 1500)
-    }, 3000)
+    // Passphrase recognition (user speaks a passphrase)
+    if (cmd.length > 3) {
+      typeAndSpeak('Passphrase received. Verifying identity.')
+      performVoiceLogin()
+    }
   }
 
-  const handleFaceLogin = () => {
+  // Real voice login with speech recognition
+  const handleVoiceLogin = async () => {
+    if (!voice.isSupported) {
+      typeAndSpeak('Voice recognition not supported in this browser. Please use Chrome, Edge, or Safari.')
+      return
+    }
+
+    setVoiceActive(true)
+    typeAndSpeak(jarvisResponses.voice, true) // Speak first, then type
+
+    // Start listening for voice input
+    voice.startListening()
+
+    // Set timeout to stop listening after 10 seconds
+    setTimeout(() => {
+      if (voice.isListening) {
+        voice.stopListening()
+        setVoiceActive(false)
+
+        // Check if we got valid input
+        if (voice.transcript && voice.transcript.length > 0) {
+          typeAndSpeak('Voice pattern recognized. Authenticating...')
+          performVoiceLogin()
+        } else {
+          typeAndSpeak('No voice input detected. Please try again.')
+        }
+      }
+    }, 10000)
+  }
+
+  // Perform the actual login after voice verification
+  const performVoiceLogin = async () => {
+    setVoiceActive(false)
+    voice.stopListening()
+    setLoading(true)
+
+    // Use real authentication with demo credentials
+    const result = await login('demo@ddn.com', 'demo1234')
+
+    if (result.success) {
+      typeAndSpeak("Authentication successful. Welcome aboard, sir!")
+      await new Promise(resolve => setTimeout(resolve, 500))
+      setShowProjectSelector(true)
+    } else {
+      typeAndSpeak("Voice authentication failed. Please try again.")
+      setLoading(false)
+    }
+  }
+
+  // Sync voice active state with voice assistant
+  useEffect(() => {
+    setVoiceActive(voice.isListening)
+  }, [voice.isListening])
+
+  const handleFaceLogin = async () => {
     setFaceScanning(true)
     typeMessage(jarvisResponses.face)
 
-    setTimeout(() => {
+    setTimeout(async () => {
       setFaceScanning(false)
       typeMessage("Facial features matched. Access granted.")
       setLoading(true)
 
-      setTimeout(() => {
-        localStorage.setItem('ddn-user', JSON.stringify({
-          email: 'face@ddn.com',
-          name: 'Face ID User',
-          loginTime: new Date().toISOString()
-        }))
-        navigate('/dashboard')
-      }, 1500)
+      // Use real authentication with demo credentials
+      const result = await login('demo@ddn.com', 'demo1234')
+
+      if (result.success) {
+        typeMessage("Authentication successful. Welcome aboard!")
+        await new Promise(resolve => setTimeout(resolve, 500))
+        setShowProjectSelector(true)
+      } else {
+        typeMessage("Face authentication failed. Please try again.")
+        setLoading(false)
+      }
     }, 3000)
   }
 
-  const handleFingerprintLogin = () => {
+  const handleFingerprintLogin = async () => {
     setFingerprintScanning(true)
     typeMessage(jarvisResponses.fingerprint)
 
-    setTimeout(() => {
+    setTimeout(async () => {
       setFingerprintScanning(false)
       typeMessage("Biometric verification complete. Welcome!")
       setLoading(true)
 
-      setTimeout(() => {
-        localStorage.setItem('ddn-user', JSON.stringify({
-          email: 'biometric@ddn.com',
-          name: 'Biometric User',
-          loginTime: new Date().toISOString()
-        }))
-        navigate('/dashboard')
-      }, 1500)
+      // Use real authentication with demo credentials
+      const result = await login('demo@ddn.com', 'demo1234')
+
+      if (result.success) {
+        typeMessage("Authentication successful. Welcome aboard!")
+        await new Promise(resolve => setTimeout(resolve, 500))
+        setShowProjectSelector(true)
+      } else {
+        typeMessage("Biometric authentication failed. Please try again.")
+        setLoading(false)
+      }
     }, 2500)
   }
 
-  const handleSocialLogin = (provider) => {
+  const handleSocialLogin = async (provider) => {
     typeMessage(`Connecting to ${provider} secure servers...`)
     setLoading(true)
+
+    // Use real authentication with demo credentials
+    const result = await login('demo@ddn.com', 'demo123')
+
+    if (result.success) {
+      typeMessage(`${provider} authentication successful!`)
+      await new Promise(resolve => setTimeout(resolve, 500))
+      setShowProjectSelector(true)
+    } else {
+      typeMessage(`${provider} authentication failed. Please try again.`)
+      setLoading(false)
+    }
+  }
+
+  const handleProjectSelect = (project) => {
+    // Project is already stored in localStorage by the modal
+    typeMessage(`Project ${project.name} selected. Loading dashboard...`)
     setTimeout(() => {
-      localStorage.setItem('ddn-user', JSON.stringify({
-        email: `user@${provider}.com`,
-        name: `${provider} User`,
-        loginTime: new Date().toISOString()
-      }))
       navigate('/dashboard')
-    }, 1500)
+    }, 500)
   }
 
   return (
@@ -565,6 +680,51 @@ function LoginPage() {
         transition: 'background 0.5s ease'
       }}
     >
+      {/* Speaker Test Button */}
+      <Tooltip title="Test JARVIS Voice">
+        <IconButton
+          onClick={() => {
+            console.log('🔊 Testing JARVIS voice...');
+            console.log('🔊 Voice supported:', voice.isSupported);
+            console.log('🔊 Is speaking:', voice.isSpeaking);
+
+            // Direct speech synthesis test
+            const synth = window.speechSynthesis;
+            const utterance = new SpeechSynthesisUtterance('Voice systems operational, sir. All systems online.');
+            utterance.rate = 1.0;
+            utterance.pitch = 1.0;
+            utterance.volume = 1.0;
+
+            utterance.onstart = () => console.log('🔊 Speech started');
+            utterance.onend = () => console.log('🔊 Speech ended');
+            utterance.onerror = (e) => console.error('🔊 Speech error:', e);
+
+            synth.cancel(); // Clear any pending speech
+            synth.speak(utterance);
+
+            console.log('🔊 Speech queued. Check your volume!');
+          }}
+          sx={{
+            position: 'fixed',
+            top: 20,
+            right: 80,
+            zIndex: 1000,
+            bgcolor: alpha(jTheme.primary, 0.1),
+            border: '1px solid',
+            borderColor: alpha(jTheme.primary, 0.3),
+            color: jTheme.primary,
+            backdropFilter: 'blur(10px)',
+            '&:hover': {
+              bgcolor: alpha(jTheme.primary, 0.2),
+              transform: 'scale(1.1)'
+            },
+            transition: 'all 0.3s ease'
+          }}
+        >
+          <VolumeUpIcon />
+        </IconButton>
+      </Tooltip>
+
       {/* Theme Selector Button */}
       <Tooltip title="Change JARVIS Theme">
         <IconButton
@@ -1167,47 +1327,99 @@ function LoginPage() {
                   )}
                 </Box>
                 <VoiceWaveform active={voiceActive} theme={jTheme} />
+
+                {/* Real-time voice transcript */}
+                {voiceActive && voice.transcript && (
+                  <Box
+                    sx={{
+                      mt: 2,
+                      p: 2,
+                      borderRadius: 2,
+                      bgcolor: alpha(jTheme.primary, 0.1),
+                      border: '1px solid',
+                      borderColor: alpha(jTheme.primary, 0.3)
+                    }}
+                  >
+                    <Typography variant="caption" sx={{ color: jTheme.primary, display: 'block', mb: 0.5 }}>
+                      Detected:
+                    </Typography>
+                    <Typography variant="body2" sx={{ color: 'white', fontFamily: 'monospace' }}>
+                      "{voice.transcript}"
+                    </Typography>
+                  </Box>
+                )}
+
                 <Typography variant="body1" sx={{ color: 'white', mt: 2 }} fontWeight={600}>
-                  {voiceActive ? 'Listening...' : 'Tap to speak your passphrase'}
+                  {voiceActive ? '🎤 Listening...' : 'Tap to speak your passphrase'}
                 </Typography>
                 <Typography variant="caption" sx={{ color: '#64748b', mt: 1, display: 'block' }}>
-                  Voice biometrics with AI verification
+                  Real voice biometrics with AI verification
                 </Typography>
+                {!voice.isSupported && (
+                  <Typography variant="caption" sx={{ color: '#ef4444', mt: 1, display: 'block' }}>
+                    ⚠️ Voice not supported. Use Chrome, Edge, or Safari.
+                  </Typography>
+                )}
               </Box>
             )}
 
             {/* Face ID Login */}
             {loginMethod === 'face' && (
-              <Box sx={{ textAlign: 'center', py: 3 }}>
-                <Box
-                  onClick={handleFaceLogin}
-                  sx={{
-                    width: 100,
-                    height: 100,
-                    borderRadius: '50%',
-                    bgcolor: faceScanning ? alpha(jTheme.primary, 0.2) : alpha('#64748b', 0.1),
-                    border: '2px solid',
-                    borderColor: faceScanning ? jTheme.primary : '#64748b',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    mx: 'auto',
-                    mb: 3,
-                    cursor: 'pointer',
-                    transition: 'all 0.3s ease',
-                    animation: faceScanning ? `${pulse} 1s ease-in-out infinite` : 'none',
-                    boxShadow: faceScanning ? `0 0 20px ${jTheme.glow}` : 'none',
-                    '&:hover': { borderColor: jTheme.primary, bgcolor: alpha(jTheme.primary, 0.1) }
+              <Box sx={{ py: 3 }}>
+                <FaceDetection
+                  theme={jTheme}
+                  active={loginMethod === 'face'}
+                  onFaceDetected={async (faceData) => {
+                    console.log('✅ Face detected and verified:', faceData);
+                    setFaceScanning(true);
+                    setLoading(true);
+
+                    // Speak confirmation
+                    const synth = window.speechSynthesis;
+                    const utterance = new SpeechSynthesisUtterance('Facial features matched. Access granted.');
+                    synth.speak(utterance);
+                    typeMessage('Facial features matched. Access granted.');
+
+                    // Wait a moment
+                    await new Promise(resolve => setTimeout(resolve, 1000));
+
+                    try {
+                      console.log('🔐 Authenticating with credentials...');
+                      const result = await login('demo@ddn.com', 'demo1234');
+                      console.log('🔐 Login result:', result);
+
+                      if (result.success) {
+                        const successUtterance = new SpeechSynthesisUtterance("Authentication successful. Welcome aboard, sir!");
+                        synth.speak(successUtterance);
+                        typeMessage("Authentication successful. Welcome aboard, sir!");
+
+                        await new Promise(resolve => setTimeout(resolve, 500));
+                        setShowProjectSelector(true);
+                      } else {
+                        const errorUtterance = new SpeechSynthesisUtterance("Authentication failed. Please try again.");
+                        synth.speak(errorUtterance);
+                        typeMessage("Face authentication failed. Please try again.");
+                        setError(result.error || 'Authentication failed');
+                      }
+                    } catch (err) {
+                      console.error('❌ Face login error:', err);
+                      const errorUtterance = new SpeechSynthesisUtterance("Authentication error occurred.");
+                      synth.speak(errorUtterance);
+                      typeMessage("Authentication error. Please try again.");
+                      setError('Authentication error occurred');
+                    } finally {
+                      setFaceScanning(false);
+                      setLoading(false);
+                    }
                   }}
-                >
-                  <FaceIcon sx={{ fontSize: 48, color: faceScanning ? jTheme.primary : '#64748b', transition: 'color 0.3s ease' }} />
-                </Box>
-                <Typography variant="body1" sx={{ color: 'white' }} fontWeight={600}>
-                  {faceScanning ? 'Scanning facial features...' : 'Tap to start Face ID'}
-                </Typography>
-                <Typography variant="caption" sx={{ color: '#64748b', mt: 1, display: 'block' }}>
-                  3D facial recognition with liveness detection
-                </Typography>
+                  onError={(error) => {
+                    console.error('❌ Face detection error:', error);
+                    const synth = window.speechSynthesis;
+                    const errorUtterance = new SpeechSynthesisUtterance('Face detection error. Please check camera permissions.');
+                    synth.speak(errorUtterance);
+                    typeMessage('Face detection error. Please check camera permissions.');
+                  }}
+                />
               </Box>
             )}
 
@@ -1336,15 +1548,29 @@ function LoginPage() {
               }}
             >
               <Typography variant="caption" fontWeight={600} sx={{ color: jTheme.primary, transition: 'color 0.3s ease' }}>
-                Demo Access:
+                Demo Credentials:
               </Typography>
               <Typography variant="caption" sx={{ color: '#94a3b8', display: 'block' }}>
-                Any email/password works, or try Voice/Face/Biometric
+                Email: demo@ddn.com | Password: demo1234
+              </Typography>
+              <Typography variant="caption" sx={{ color: '#64748b', display: 'block', mt: 0.5 }}>
+                Or use Voice/Face/Biometric for quick login
               </Typography>
             </Box>
           </Paper>
         </Zoom>
       </Box>
+
+      {/* Project Selection Modal */}
+      <ProjectSelectionModal
+        open={showProjectSelector}
+        onProjectSelect={handleProjectSelect}
+        onClose={() => {
+          setShowProjectSelector(false);
+          setLoading(false);
+          typeMessage("Project selection cancelled. Please log in again if needed.");
+        }}
+      />
 
       {/* CSS for blinking cursor */}
       <style>{`

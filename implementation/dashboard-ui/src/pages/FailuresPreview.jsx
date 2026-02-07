@@ -20,7 +20,7 @@ import Alert from '@mui/material/Alert';
 import Tooltip from '@mui/material/Tooltip';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useColorTheme } from '../theme/ThemeContext';
-import { failuresAPI, monitoringAPI, ragApprovalAPI } from '../services/api';
+import { failuresAPI, monitoringAPI, ragApprovalAPI, exportAPI } from '../services/api';
 
 const ERROR_CATEGORIES = [
     { value: '', label: 'All Categories' },
@@ -167,6 +167,26 @@ const FailuresPreview = () => {
         fetchFailures();
     };
 
+    const handleExport = async () => {
+        try {
+            const header = 'Build ID,Test Name,Job,Timestamp,Category,Status,Root Cause\n'
+            const csvContent = failures.map(f =>
+                `"${f.build_id || f.buildId || ''}","${f.test_name || f.testName || ''}","${f.job_name || f.jobName || ''}","${f.timestamp || ''}","${f.classification || f.analysis?.classification || ''}","${f.validation_status || f.status || ''}","${(f.error_message || f.stack_trace || '').replace(/"/g, '""').replace(/\n/g, ' ')}"`
+            ).join('\n')
+            const blob = new Blob([header + csvContent], { type: 'text/csv;charset=utf-8;' })
+            const url = URL.createObjectURL(blob)
+            const link = document.createElement('a')
+            link.href = url
+            link.download = `failures_export_${new Date().toISOString().split('T')[0]}.csv`
+            document.body.appendChild(link)
+            link.click()
+            document.body.removeChild(link)
+            URL.revokeObjectURL(url)
+        } catch (err) {
+            console.error('Export failed:', err)
+        }
+    };
+
     // Calculate aging days from timestamp
     const getAgingDays = (timestamp) => {
         if (!timestamp) return 0;
@@ -205,6 +225,7 @@ const FailuresPreview = () => {
                             <Button
                                 variant="contained"
                                 startIcon={<DownloadIcon />}
+                                onClick={handleExport}
                                 sx={{ bgcolor: 'rgba(255,255,255,0.15)', '&:hover': { bgcolor: 'rgba(255,255,255,0.25)' } }}
                             >
                                 Export

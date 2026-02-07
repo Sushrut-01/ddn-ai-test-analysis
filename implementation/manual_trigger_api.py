@@ -28,6 +28,38 @@ import anthropic
 # Google Gemini SDK for AI analysis
 import google.generativeai as genai
 
+# ============================================================================
+# RLS CONTEXT HELPER (Added by add_rls_context_to_existing_services.py)
+# ============================================================================
+
+def set_rls_context(cursor, project_id):
+    """
+    Set PostgreSQL Row-Level Security context for project
+
+    Call this after creating a cursor to enable automatic project filtering.
+
+    Args:
+        cursor: PostgreSQL cursor
+        project_id: Project ID to set context for
+
+    Example:
+        conn = get_db_connection()
+        cur = conn.cursor()
+        set_rls_context(cur, project_id)  # Enable RLS for this project
+        cur.execute("SELECT * FROM failure_analysis")  # Automatically filtered
+    """
+    if project_id:
+        try:
+            cursor.execute("SELECT set_project_context(%s)", (project_id,))
+        except Exception as e:
+            # Graceful fallback if RLS function doesn't exist
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.warning(f"Could not set RLS context: {e}")
+
+# ============================================================================
+
+
 # Load environment
 load_dotenv()
 
@@ -353,26 +385,54 @@ def get_rag_solution(classification: dict, build_data: dict) -> dict:
     }
 
 
-def run_agentic_trigger(build_id: str, triggered_by: str) -> dict:
+def run_agentic_trigger(build_id: str, triggered_by: str, project_id: int = 1,
+                        project_slug: str = 'ddn', project_config: dict = None) -> dict:
     """
     DDN AgenticTrigger - Complete Python implementation (no n8n)
+    NOW WITH MULTI-PROJECT SUPPORT
 
     Flow:
-    1. Get build context from MongoDB Atlas
-    2. Call LangGraph /classify-error
-    3. OPTION C routing: CODE_ERROR → Claude, others → RAG
-    4. Store result via Dashboard API
+    1. Get build context from MongoDB Atlas (project-specific collection)
+    2. Call LangGraph /classify-error (with project context)
+    3. OPTION C routing: CODE_ERROR → Claude, others → RAG (project-scoped)
+    4. Store result via Dashboard API (with project_id)
     5. Return result
-    """
-    logger.info(f"🎯 AgenticTrigger: Starting analysis for build {build_id}")
 
-    # Step 1: Get build context from MongoDB Atlas
+    Args:
+        build_id: Jenkins build ID
+        triggered_by: User who triggered the analysis
+        project_id: Project ID (default: 1 for DDN)
+        project_slug: Project slug (default: 'ddn')
+        project_config: Project configuration dict (optional)
+    """
+    logger.info(f"🎯 AgenticTrigger: Starting analysis for build {build_id}, Project: {project_slug} (ID: {project_id})")
+
+    # Step 1: Get build context from MongoDB Atlas (project-specific collections)
     try:
         mongo_db = get_mongodb_client()
-        build_data = mongo_db.builds.find_one({"build_id": build_id})
+
+        # Get collection prefix from project config
+        if project_config:
+            collection_prefix = project_config.get('mongodb_collection_prefix', f'{project_slug}_')
+        else:
+            collection_prefix = f'{project_slug}_'
+
+        # Try project-specific build_results collection first
+        build_results_collection = f'{collection_prefix}build_results'
+        test_failures_collection = f'{collection_prefix}test_failures'
+
+        logger.info(f"📦 Looking in MongoDB collections: {build_results_collection}, {test_failures_collection}")
+
+        build_data = mongo_db[build_results_collection].find_one({"build_id": build_id})
 
         if not build_data:
-            build_data = mongo_db.test_failures.find_one({"build_id": build_id})
+            build_data = mongo_db[test_failures_collection].find_one({"build_id": build_id})
+
+        # Fallback to legacy collections for DDN (backward compatibility)
+        if not build_data and project_slug == 'ddn':
+            build_data = mongo_db.builds.find_one({"build_id": build_id})
+            if not build_data:
+                build_data = mongo_db.test_failures.find_one({"build_id": build_id})
 
         if not build_data:
             return {
@@ -400,16 +460,21 @@ def run_agentic_trigger(build_id: str, triggered_by: str) -> dict:
             "build_id": build_id
         }
 
-    # Step 2: Call LangGraph /classify-error
+    # Step 2: Call LangGraph /classify-error (with project context)
     classification = {}
     try:
         langgraph_response = requests.post(
             f"{LANGGRAPH_URL}/classify-error",
             json={
                 "build_id": build_id,
+                "project_id": project_id,
+                "project_slug": project_slug,
                 "error_log": build_data.get('error_log', ''),
+                "error_message": build_data.get('error_message', ''),
                 "stack_trace": build_data.get('stack_trace', ''),
                 "job_name": build_data.get('job_name', ''),
+                "platform": build_data.get('platform', 'Unknown'),
+                "test_type": build_data.get('test_type', 'Unknown'),
                 "trigger_type": "MANUAL"
             },
             timeout=30
@@ -450,15 +515,19 @@ def run_agentic_trigger(build_id: str, triggered_by: str) -> dict:
     if analysis_result.get('error_category') and analysis_result.get('error_category') != 'UNKNOWN':
         error_category = analysis_result.get('error_category')
 
-    # Step 4: STORE ANALYSIS RESULT via Dashboard API
+    # Step 4: STORE ANALYSIS RESULT via Dashboard API (with project_id)
     storage_id = None
     try:
         store_response = requests.post(
             f"{DASHBOARD_API_URL}/api/analysis/store",
             json={
                 "build_id": build_id,
+                "project_id": project_id,
                 "job_name": build_data.get('job_name', ''),
                 "test_suite": build_data.get('test_suite', build_data.get('suite_name', '')),
+                "test_name": build_data.get('test_name', ''),
+                "platform": build_data.get('platform', 'Unknown'),
+                "test_type": build_data.get('test_type', 'Unknown'),
                 "error_category": error_category,
                 "root_cause": analysis_result.get('root_cause', ''),
                 "fix_recommendation": analysis_result.get('fix_recommendation', ''),
@@ -729,13 +798,21 @@ def health_check():
 @app.route('/api/trigger-analysis', methods=['POST'])
 def trigger_manual_analysis():
     """
-    Manually trigger AI analysis for a specific build
+    Manually trigger AI analysis for a specific build (MULTI-PROJECT SUPPORT)
+
+    Universal test failure handler with multi-project support.
+    Replaces n8n webhook - Pure Python implementation using LangGraph.
 
     Request:
     {
         "build_id": "12345",
+        "project_id": 2,                              // NEW: Project ID
+        "project_slug": "guruttava",                  // NEW: Project slug
         "triggered_by_user": "john.doe@company.com",
-        "reason": "Critical production issue"
+        "reason": "Critical production issue",
+        "job_name": "Guruttava-Android-Tests",        // Optional
+        "platform": "Android",                        // Optional (for Robot Framework)
+        "test_type": "Smoke"                          // Optional (for Robot Framework)
     }
 
     Response:
@@ -744,6 +821,14 @@ def trigger_manual_analysis():
         "message": "Analysis triggered successfully",
         "trigger_id": 123,
         "build_id": "12345",
+        "project": {
+            "id": 2,
+            "slug": "guruttava",
+            "name": "Guruttava"
+        },
+        "classification": "ELEMENT_NOT_FOUND",
+        "confidence": 0.85,
+        "analysis_type": "GEMINI_DEEP_ANALYSIS",
         "webhook_response": {...}
     }
     """
@@ -757,39 +842,78 @@ def trigger_manual_analysis():
             }), 400
 
         build_id = data['build_id']
+
+        # STEP 1: Extract and validate project context (MULTI-PROJECT SUPPORT)
+        project_id = data.get('project_id')
+        project_slug = data.get('project_slug', 'ddn')  # Default to DDN for backward compatibility
+
+        # Try to infer project from build_id if not provided
+        if not project_id:
+            if 'Guruttava' in build_id or 'GURU' in build_id:
+                project_id = 2
+                project_slug = 'guruttava'
+            else:
+                project_id = 1  # Default to DDN
+                project_slug = 'ddn'
+
+        logger.info(f"📥 Received trigger for Project: {project_slug} (ID: {project_id}), Build: {build_id}")
+
         triggered_by_user = data.get('triggered_by_user', 'anonymous')
         reason = data.get('reason', 'Manual trigger from dashboard')
         trigger_source = data.get('trigger_source', 'dashboard')
 
         logger.info(f"🎯 Manual trigger requested for build: {build_id} by {triggered_by_user}")
 
-        # Get current consecutive failures count from PostgreSQL
+        # STEP 2: Get project configuration from database (MULTI-PROJECT SUPPORT)
         conn = get_db_connection()
         cursor = conn.cursor(cursor_factory=RealDictCursor)
 
         cursor.execute("""
+            SELECT p.*, pc.*
+            FROM projects p
+            LEFT JOIN project_configurations pc ON p.id = pc.project_id
+            WHERE p.id = %s
+        """, (project_id,))
+
+        project_config = cursor.fetchone()
+
+        if not project_config:
+            cursor.close()
+            conn.close()
+            logger.error(f"❌ Project {project_id} not found")
+            return jsonify({
+                'error': f'Project {project_id} not found',
+                'project_id': project_id
+            }), 404
+
+        logger.info(f"✅ Project config loaded: {project_config['name']}")
+
+        # Get current consecutive failures count from PostgreSQL (with project filter)
+
+        cursor.execute("""
             SELECT consecutive_failures
             FROM failure_analysis
-            WHERE build_id = %s
+            WHERE build_id = %s AND project_id = %s
             ORDER BY timestamp DESC
             LIMIT 1
-        """, (build_id,))
+        """, (build_id, project_id))
 
         result = cursor.fetchone()
         consecutive_failures = result['consecutive_failures'] if result else 1
 
-        # Log manual trigger in database
+        # Log manual trigger in database (with project_id for multi-project support)
         cursor.execute("""
             INSERT INTO manual_trigger_log (
                 build_id,
+                project_id,
                 triggered_by_user,
                 trigger_source,
                 consecutive_failures_at_trigger,
                 reason,
                 triggered_at
-            ) VALUES (%s, %s, %s, %s, %s, NOW())
+            ) VALUES (%s, %s, %s, %s, %s, %s, NOW())
             RETURNING id
-        """, (build_id, triggered_by_user, trigger_source, consecutive_failures, reason))
+        """, (build_id, project_id, triggered_by_user, trigger_source, consecutive_failures, reason))
 
         trigger_id = cursor.fetchone()['id']
         conn.commit()
@@ -799,10 +923,16 @@ def trigger_manual_analysis():
         # =====================================================================
         # Pure Python AgenticTrigger (no n8n dependency)
         # =====================================================================
-        logger.info(f"🐍 Using Python AgenticTrigger")
+        logger.info(f"🐍 Using Python AgenticTrigger with multi-project support")
 
         try:
-            analysis_result = run_agentic_trigger(build_id, triggered_by_user)
+            analysis_result = run_agentic_trigger(
+                build_id,
+                triggered_by_user,
+                project_id=project_id,
+                project_slug=project_slug,
+                project_config=dict(project_config) if project_config else None
+            )
 
             # Get analysis_id from the stored result
             analysis_id = analysis_result.get('storage_id')
@@ -833,7 +963,15 @@ def trigger_manual_analysis():
                 "message": "Analysis triggered successfully (AgenticTrigger)",
                 "trigger_id": trigger_id,
                 "build_id": build_id,
+                "project": {
+                    "id": project_id,
+                    "slug": project_slug,
+                    "name": project_config['name']
+                },
                 "consecutive_failures": consecutive_failures,
+                "classification": analysis_result.get('error_category'),
+                "confidence": analysis_result.get('confidence_score'),
+                "analysis_type": analysis_result.get('analysis_type'),
                 "analysis_result": analysis_result
             }), 200
 

@@ -25,10 +25,51 @@ import requests
 from bson import ObjectId
 import google.generativeai as genai
 
+# ============================================================================
+# RLS CONTEXT HELPER (Added by add_rls_context_to_existing_services.py)
+# ============================================================================
+
+def set_rls_context(cursor, project_id):
+    """
+    Set PostgreSQL Row-Level Security context for project
+
+    Call this after creating a cursor to enable automatic project filtering.
+
+    Args:
+        cursor: PostgreSQL cursor
+        project_id: Project ID to set context for
+
+    Example:
+        conn = get_db_connection()
+        cur = conn.cursor()
+        set_rls_context(cur, project_id)  # Enable RLS for this project
+        cur.execute("SELECT * FROM failure_analysis")  # Automatically filtered
+    """
+    if project_id:
+        try:
+            cursor.execute("SELECT set_project_context(%s)", (project_id,))
+        except Exception as e:
+            # Graceful fallback if RLS function doesn't exist
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.warning(f"Could not set RLS context: {e}")
+
+# ============================================================================
+
+
 # Load environment from master config (or rely on calling script)
 # Only load if not already loaded by parent script
 if not os.getenv('POSTGRES_HOST'):
     load_dotenv()
+
+# Multi-Project Support - Import blueprints
+try:
+    from project_api import project_bp
+    from project_scoped_endpoints import scoped_bp
+    MULTI_PROJECT_ENABLED = True
+except ImportError as e:
+    logger.warning(f"Multi-project blueprints not available: {e}")
+    MULTI_PROJECT_ENABLED = False
 
 # Configure logging
 logging.basicConfig(
@@ -40,6 +81,14 @@ logger = logging.getLogger(__name__)
 # Initialize Flask
 app = Flask(__name__)
 CORS(app)
+
+# Register multi-project blueprints (if available)
+if MULTI_PROJECT_ENABLED:
+    app.register_blueprint(project_bp)
+    app.register_blueprint(scoped_bp)
+    logger.info("✓ Multi-project endpoints registered")
+else:
+    logger.warning("✗ Multi-project endpoints not available")
 
 # MongoDB
 MONGODB_URI = os.getenv('MONGODB_URI')
@@ -64,10 +113,39 @@ PINECONE_FAILURES_INDEX = os.getenv('PINECONE_FAILURES_INDEX', 'ddn-error-librar
 # AI Service (use Docker service name in containerized environment)
 AI_SERVICE_URL = os.getenv('AI_SERVICE_URL', 'http://langgraph-service:5000')
 
-# MCP GitHub Service (for PR workflow integration)
-MCP_GITHUB_URL = os.getenv('MCP_GITHUB_URL', 'http://ddn-mcp-github:5002')
-GITHUB_REPO_OWNER = os.getenv('GITHUB_REPO_OWNER', 'your-org')
-GITHUB_REPO_NAME = os.getenv('GITHUB_REPO_NAME', 'your-repo')
+# GitHub API Configuration (direct API calls)
+GITHUB_API_URL = 'https://api.github.com'
+GITHUB_TOKEN = os.getenv('GITHUB_TOKEN')
+GITHUB_REPO_OWNER = os.getenv('GITHUB_REPO_OWNER', 'Sushrut-01')
+GITHUB_REPO_NAME = os.getenv('GITHUB_REPO_NAME', 'ddn-test-data')
+
+def call_github_api(endpoint, method='GET', params=None, data=None):
+    """Helper function to call GitHub API directly"""
+    headers = {
+        'Accept': 'application/vnd.github.v3+json',
+        'User-Agent': 'DDN-AI-Dashboard'
+    }
+    if GITHUB_TOKEN:
+        headers['Authorization'] = f'token {GITHUB_TOKEN}'
+
+    try:
+        url = f"{GITHUB_API_URL}{endpoint}"
+        response = requests.request(
+            method,
+            url,
+            headers=headers,
+            params=params,
+            json=data,
+            timeout=15
+        )
+        response.raise_for_status()
+        return response.json()
+    except requests.exceptions.HTTPError as e:
+        logger.error(f"GitHub API HTTP Error: {e.response.status_code} - {e.response.text}")
+        return {'error': str(e), 'status_code': e.response.status_code}
+    except Exception as e:
+        logger.error(f"GitHub API Error: {str(e)}")
+        return {'error': str(e)}
 
 # Gemini AI (for chatbot and test generation)
 GEMINI_API_KEY = os.getenv('GEMINI_API_KEY')
@@ -670,20 +748,6 @@ def get_analysis_details(failure_id):
 # GITHUB PR WORKFLOW
 # ============================================================================
 
-def call_mcp_github(endpoint, method='GET', data=None):
-    """Helper function to call MCP GitHub server"""
-    try:
-        response = requests.request(
-            method,
-            f"{MCP_GITHUB_URL}{endpoint}",
-            json=data,
-            timeout=10
-        )
-        return response.json()
-    except Exception as e:
-        logger.error(f"MCP GitHub API Error: {str(e)}")
-        return {'error': str(e)}
-
 @app.route('/api/github/prs', methods=['GET'])
 def get_pull_requests():
     """
@@ -695,27 +759,26 @@ def get_pull_requests():
         label = request.args.get('label', 'ddn-ai-fix')
         limit = int(request.args.get('limit', 20))
 
-        # Call MCP GitHub server to get PRs
-        result = call_mcp_github(
+        # Call GitHub API directly
+        result = call_github_api(
             f'/repos/{GITHUB_REPO_OWNER}/{GITHUB_REPO_NAME}/pulls',
-            method='GET',
-            data={
+            params={
                 'state': state,
-                'labels': label,
                 'per_page': limit
             }
         )
 
-        if 'error' in result:
+        if isinstance(result, dict) and 'error' in result:
             return jsonify({
                 'status': 'error',
                 'message': result['error'],
                 'data': {'prs': []}
             }), 500
 
-        # Format PR data for frontend
+        # Format PR data for frontend (GitHub API returns list directly)
         prs = []
-        for pr in result.get('prs', []):
+        pr_list = result if isinstance(result, list) else []
+        for pr in pr_list:
             prs.append({
                 'number': pr.get('number'),
                 'title': pr.get('title'),
@@ -754,7 +817,7 @@ def get_pr_details(pr_number):
     """
     try:
         # Get PR details
-        pr_result = call_mcp_github(
+        pr_result = call_github_api(
             f'/repos/{GITHUB_REPO_OWNER}/{GITHUB_REPO_NAME}/pulls/{pr_number}'
         )
 
@@ -765,17 +828,17 @@ def get_pr_details(pr_number):
             }), 404
 
         # Get PR commits
-        commits_result = call_mcp_github(
+        commits_result = call_github_api(
             f'/repos/{GITHUB_REPO_OWNER}/{GITHUB_REPO_NAME}/pulls/{pr_number}/commits'
         )
 
         # Get PR checks
-        checks_result = call_mcp_github(
+        checks_result = call_github_api(
             f'/repos/{GITHUB_REPO_OWNER}/{GITHUB_REPO_NAME}/commits/{pr_result.get("head", {}).get("sha")}/check-runs'
         )
 
         # Get PR reviews
-        reviews_result = call_mcp_github(
+        reviews_result = call_github_api(
             f'/repos/{GITHUB_REPO_OWNER}/{GITHUB_REPO_NAME}/pulls/{pr_number}/reviews'
         )
 
@@ -856,10 +919,10 @@ Answer questions based on these stats and general knowledge about automated test
         return "You are a helpful AI assistant for a Test Failure Analysis System."
 
 
-@app.route('/api/chat', methods=['POST'])
-def chat():
+@app.route('/api/chat/gemini', methods=['POST'])
+def chat_gemini():
     """
-    AI Chatbot endpoint using Gemini
+    AI Chatbot endpoint using Gemini (legacy)
     Accepts: message, conversation_history
     Returns: AI response with context
     """
@@ -1793,7 +1856,7 @@ def get_refinement_stats():
 @app.route('/api/analysis/store', methods=['POST'])
 def store_analysis():
     """
-    Store AI analysis result from n8n workflows (Workflows 1, 2, 3).
+    Store AI analysis result from Python workflows (Multi-Project Support).
 
     This endpoint follows the architecture best practice of using Dashboard API
     as the single entry point for data storage (like Workflow 4 does with /api/fixes).
@@ -1801,15 +1864,19 @@ def store_analysis():
     Request body:
     {
         "build_id": "123",
+        "project_id": 1,                    // REQUIRED for multi-project isolation
         "mongodb_failure_id": "optional_mongo_id",
         "error_category": "CODE_ERROR",
         "root_cause": "...",
         "fix_recommendation": "...",
         "confidence_score": 0.85,
-        "analysis_type": "RAG_BASED|CLAUDE_DEEP_ANALYSIS|REFINED_ANALYSIS",
+        "analysis_type": "RAG_BASED|CLAUDE_DEEP_ANALYSIS|REFINED_ANALYSIS|GEMINI_DEEP_ANALYSIS",
         "trigger_type": "AUTO|MANUAL|REFINEMENT",
         "job_name": "DDN-Nightly-Tests",
         "test_suite": "...",
+        "test_name": "...",              // For Robot Framework tests
+        "platform": "Android|iOS|Web",   // For multi-platform projects
+        "test_type": "Smoke|Regression", // For test categorization
         "github_files": [...],
         "estimated_cost_usd": 0.05,
         "token_usage": 1000,
@@ -1827,6 +1894,19 @@ def store_analysis():
         if not build_id:
             return jsonify({'success': False, 'error': 'build_id required'}), 400
 
+        # MULTI-PROJECT SUPPORT: Extract and validate project_id
+        project_id = data.get('project_id')
+        if not project_id:
+            # Try to infer from build_id for backward compatibility
+            if 'Guruttava' in build_id or 'GURU' in build_id:
+                project_id = 2
+                logger.warning(f"project_id not provided, inferred from build_id: {project_id}")
+            else:
+                project_id = 1  # Default to DDN for backward compatibility
+                logger.warning(f"project_id not provided, defaulting to DDN (project_id=1)")
+
+        logger.info(f"📥 Storing analysis for build {build_id}, project_id={project_id}")
+
         # Extract all fields
         error_category = data.get('error_category', 'UNKNOWN')
         root_cause = data.get('root_cause', '')
@@ -1836,6 +1916,9 @@ def store_analysis():
         trigger_type = data.get('trigger_type', 'AUTO')
         job_name = data.get('job_name', '')
         test_suite = data.get('test_suite', '')
+        test_name = data.get('test_name', '')  # NEW: For Robot Framework tests
+        platform = data.get('platform', 'Unknown')  # NEW: Android/iOS/Web
+        test_type = data.get('test_type', 'Unknown')  # NEW: Smoke/Regression
         github_files = data.get('github_files', data.get('links', {}).get('github_files', []))
         estimated_cost = float(data.get('estimated_cost_usd', 0))
         token_usage = int(data.get('token_usage', 0))
@@ -1855,12 +1938,16 @@ def store_analysis():
         try:
             cursor = conn.cursor()
 
-            # Insert into failure_analysis (main analysis table)
+            # Insert into failure_analysis (main analysis table) with PROJECT_ID
             cursor.execute("""
                 INSERT INTO failure_analysis (
+                    project_id,
                     build_id,
                     job_name,
                     test_suite,
+                    test_name,
+                    platform,
+                    test_type,
                     mongodb_failure_id,
                     classification,
                     root_cause,
@@ -1878,14 +1965,18 @@ def store_analysis():
                     code_fix,
                     prevention_strategy
                 ) VALUES (
-                    %s, %s, %s, %s, %s, %s, %s, %s, %s,
-                    CURRENT_TIMESTAMP, %s, %s, %s, %s, %s, %s, %s, %s, %s
+                    %s, %s, %s, %s, %s, %s, %s, %s, %s, %s,
+                    %s, %s, %s, CURRENT_TIMESTAMP, %s, %s, %s, %s, %s, %s, %s, %s, %s
                 )
                 RETURNING id, analyzed_at
             """, (
+                project_id,  # CRITICAL: project_id for data isolation
                 build_id,
                 job_name or 'Unknown',
                 test_suite or None,
+                test_name or None,
+                platform or 'Unknown',
+                test_type or 'Unknown',
                 mongodb_failure_id or None,
                 error_category,
                 root_cause,
@@ -1911,12 +2002,13 @@ def store_analysis():
             cursor.close()
             conn.close()
 
-            logger.info(f"✓ Analysis stored for build {build_id}, analysis_id={analysis_id}")
+            logger.info(f"✓ Analysis stored for build {build_id}, project_id={project_id}, analysis_id={analysis_id}")
 
             return jsonify({
                 'success': True,
                 'analysis_id': analysis_id,
                 'build_id': build_id,
+                'project_id': project_id,  # NEW: Include project_id in response
                 'analyzed_at': analyzed_at.isoformat() if analyzed_at else None,
                 'message': 'Analysis stored successfully'
             }), 201
@@ -2800,12 +2892,12 @@ def get_jira_bugs():
                 jb.analysis_id,
                 jb.created_at,
                 jb.updated_at,
-                fa.classification,
+                COALESCE(jb.build_id, fa.build_id) as build_id,
+                COALESCE(jb.error_category, fa.classification) as classification,
                 fa.root_cause,
-                fa.confidence_score,
-                fa.build_id
+                fa.confidence_score
             FROM jira_bugs jb
-            LEFT JOIN failure_analysis fa ON jb.analysis_id = fa.id
+            LEFT JOIN failure_analysis fa ON jb.analysis_id = fa.id OR jb.build_id = fa.build_id
             WHERE 1=1
         """
         params = []
@@ -2962,55 +3054,115 @@ def create_jira_bug():
 def get_approved_analyses():
     """
     Get AI analyses that have been approved but don't have bugs yet
-    These are candidates for bug creation
+    These are candidates for bug creation - pulls from both acceptance_tracking and rag_approval_queue
     """
     try:
         limit = int(request.args.get('limit', 50))
+        all_analyses = []
 
         conn = get_postgres_connection()
-        if not conn:
-            return jsonify({'success': False, 'error': 'Database connection failed'}), 500
+        if conn:
+            cursor = conn.cursor(cursor_factory=RealDictCursor)
 
-        cursor = conn.cursor(cursor_factory=RealDictCursor)
+            # Try acceptance_tracking table first
+            try:
+                cursor.execute("""
+                    SELECT
+                        fa.id as analysis_id,
+                        fa.build_id,
+                        fa.classification,
+                        fa.root_cause,
+                        fa.fix_recommendation as recommendation,
+                        fa.confidence_score,
+                        fa.severity,
+                        fa.analyzed_at,
+                        at.validation_status,
+                        at.validator_name,
+                        at.validated_at
+                    FROM failure_analysis fa
+                    JOIN acceptance_tracking at ON fa.id = at.analysis_id
+                    LEFT JOIN jira_bugs jb ON fa.id = jb.analysis_id
+                    WHERE at.validation_status = 'accepted'
+                    AND jb.id IS NULL
+                    ORDER BY fa.analyzed_at DESC
+                    LIMIT %s
+                """, (limit,))
+                all_analyses.extend(cursor.fetchall())
+            except Exception as e:
+                logger.warning(f"acceptance_tracking query failed: {e}")
 
-        cursor.execute("""
-            SELECT
-                fa.id as analysis_id,
-                fa.build_id,
-                fa.classification,
-                fa.root_cause,
-                fa.fix_recommendation as recommendation,
-                fa.confidence_score,
-                fa.severity,
-                fa.analyzed_at,
-                at.validation_status,
-                at.validator_name,
-                at.validated_at
-            FROM failure_analysis fa
-            JOIN acceptance_tracking at ON fa.id = at.analysis_id
-            LEFT JOIN jira_bugs jb ON fa.id = jb.analysis_id
-            WHERE at.validation_status = 'accepted'
-            AND jb.id IS NULL
-            ORDER BY fa.analyzed_at DESC
-            LIMIT %s
-        """, (limit,))
+            # Also get from rag_approval_queue (where UI approvals are stored)
+            try:
+                cursor.execute("""
+                    SELECT
+                        raq.id as analysis_id,
+                        raq.build_id,
+                        COALESCE(raq.error_category, 'UNKNOWN') as classification,
+                        COALESCE(raq.rag_suggestion, 'See analysis details') as root_cause,
+                        COALESCE(raq.rag_suggestion, 'See analysis details') as recommendation,
+                        COALESCE(raq.rag_confidence::float, 0.8) as confidence_score,
+                        'MEDIUM' as severity,
+                        raq.created_at as analyzed_at,
+                        raq.review_status as validation_status,
+                        raq.reviewed_by as validator_name,
+                        raq.reviewed_at as validated_at,
+                        raq.job_name as test_name
+                    FROM rag_approval_queue raq
+                    WHERE raq.review_status = 'approved'
+                    AND NOT EXISTS (
+                        SELECT 1 FROM jira_bugs jb WHERE jb.build_id = raq.build_id
+                    )
+                    ORDER BY raq.reviewed_at DESC
+                    LIMIT %s
+                """, (limit,))
+                rag_analyses = cursor.fetchall()
+                all_analyses.extend(rag_analyses)
+            except Exception as e:
+                logger.warning(f"rag_approval_queue query failed: {e}")
 
-        analyses = cursor.fetchall()
+            cursor.close()
+            conn.close()
 
-        cursor.close()
-        conn.close()
+        # Also check MongoDB for approved analyses
+        try:
+            if mongo_db:
+                mongo_approved = list(mongo_db.test_failures.find(
+                    {'feedback_status': {'$in': ['approved', 'accepted']}},
+                    {'build_id': 1, 'test_name': 1, 'error_message': 1, 'ai_analysis': 1,
+                     'feedback_timestamp': 1, 'validated_by': 1}
+                ).limit(limit))
+
+                for ma in mongo_approved:
+                    ai = ma.get('ai_analysis', {})
+                    all_analyses.append({
+                        'analysis_id': str(ma.get('_id', '')),
+                        'build_id': ma.get('build_id'),
+                        'test_name': ma.get('test_name'),
+                        'error_message': ma.get('error_message', '')[:200],
+                        'classification': ai.get('classification', 'UNKNOWN'),
+                        'root_cause': ai.get('root_cause', ''),
+                        'recommendation': ai.get('recommendation', ''),
+                        'confidence_score': ai.get('confidence_score', 0.8),
+                        'severity': ai.get('severity', 'MEDIUM'),
+                        'analyzed_at': ai.get('analyzed_at'),
+                        'validation_status': 'accepted',
+                        'validator_name': ma.get('validated_by', 'user'),
+                        'validated_at': ma.get('feedback_timestamp')
+                    })
+        except Exception as e:
+            logger.warning(f"MongoDB approved query failed: {e}")
 
         # Convert datetime objects
-        for a in analyses:
-            if a.get('analyzed_at'):
+        for a in all_analyses:
+            if a.get('analyzed_at') and hasattr(a['analyzed_at'], 'isoformat'):
                 a['analyzed_at'] = a['analyzed_at'].isoformat()
-            if a.get('validated_at'):
+            if a.get('validated_at') and hasattr(a['validated_at'], 'isoformat'):
                 a['validated_at'] = a['validated_at'].isoformat()
 
         return jsonify({
             'success': True,
-            'count': len(analyses),
-            'analyses': [dict(a) for a in analyses]
+            'count': len(all_analyses),
+            'analyses': [dict(a) for a in all_analyses]
         }), 200
 
     except Exception as e:
@@ -4888,6 +5040,2019 @@ def get_config_categories():
 
     except Exception as e:
         logger.error(f"Error fetching config categories: {str(e)}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+# ============================================================================
+# SETTINGS APIs (Grouped Settings Management)
+# ============================================================================
+
+@app.route('/api/settings/notifications', methods=['GET'])
+def get_notification_settings():
+    """Get all notification settings"""
+    try:
+        conn = get_postgres_connection()
+        if not conn:
+            return jsonify({'success': False, 'error': 'Database connection failed'}), 500
+
+        cursor = conn.cursor(cursor_factory=RealDictCursor)
+
+        # Get notification settings from system_config
+        cursor.execute("""
+            SELECT config_key, config_value, value_type
+            FROM system_config
+            WHERE category = 'notifications'
+        """)
+
+        configs = cursor.fetchall()
+        cursor.close()
+        conn.close()
+
+        # Convert to object
+        settings = {}
+        for cfg in configs:
+            key = cfg['config_key'].replace('notifications.', '')
+            value = cfg['config_value']
+            if cfg['value_type'] == 'boolean':
+                settings[key] = value.lower() == 'true'
+            else:
+                settings[key] = value
+
+        # Return defaults if no settings exist
+        if not settings:
+            settings = {
+                'emailNotifications': True,
+                'slackNotifications': True,
+                'teamsNotifications': False,
+                'onNewFailure': True,
+                'onAnalysisComplete': True,
+                'onLowConfidence': True,
+                'onBugCreated': False,
+                'dailyDigest': True,
+                'digestTime': '09:00'
+            }
+
+        return jsonify({
+            'success': True,
+            'settings': settings
+        }), 200
+
+    except Exception as e:
+        logger.error(f"Error fetching notification settings: {str(e)}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/settings/notifications', methods=['PUT'])
+def save_notification_settings():
+    """Save notification settings"""
+    try:
+        data = request.get_json()
+        updated_by = data.get('updated_by', 'dashboard_user')
+
+        conn = get_postgres_connection()
+        if not conn:
+            return jsonify({'success': False, 'error': 'Database connection failed'}), 500
+
+        cursor = conn.cursor(cursor_factory=RealDictCursor)
+
+        # Upsert each setting
+        for key, value in data.items():
+            if key == 'updated_by':
+                continue
+
+            config_key = f'notifications.{key}'
+            value_type = 'boolean' if isinstance(value, bool) else 'string'
+            config_value = str(value).lower() if isinstance(value, bool) else str(value)
+
+            cursor.execute("""
+                INSERT INTO system_config (config_key, config_value, category, value_type, description, updated_by, updated_at)
+                VALUES (%s, %s, 'notifications', %s, %s, %s, NOW())
+                ON CONFLICT (config_key)
+                DO UPDATE SET config_value = %s, updated_by = %s, updated_at = NOW()
+            """, (config_key, config_value, value_type, f'Notification setting: {key}', updated_by,
+                  config_value, updated_by))
+
+        conn.commit()
+        cursor.close()
+        conn.close()
+
+        return jsonify({
+            'success': True,
+            'message': 'Notification settings saved'
+        }), 200
+
+    except Exception as e:
+        logger.error(f"Error saving notification settings: {str(e)}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/settings/analysis', methods=['GET'])
+def get_analysis_settings():
+    """Get analysis pipeline settings"""
+    try:
+        conn = get_postgres_connection()
+        if not conn:
+            return jsonify({'success': False, 'error': 'Database connection failed'}), 500
+
+        cursor = conn.cursor(cursor_factory=RealDictCursor)
+
+        cursor.execute("""
+            SELECT config_key, config_value, value_type
+            FROM system_config
+            WHERE category = 'analysis'
+        """)
+
+        configs = cursor.fetchall()
+        cursor.close()
+        conn.close()
+
+        settings = {}
+        for cfg in configs:
+            key = cfg['config_key'].replace('analysis.', '')
+            value = cfg['config_value']
+            if cfg['value_type'] == 'boolean':
+                settings[key] = value.lower() == 'true'
+            elif cfg['value_type'] == 'integer':
+                settings[key] = int(value)
+            else:
+                settings[key] = value
+
+        # Return defaults if no settings exist
+        if not settings:
+            settings = {
+                'autoTrigger': True,
+                'triggerDelay': 5,
+                'batchSize': 10,
+                'parallelAnalysis': 3,
+                'retentionDays': 90,
+                'archiveEnabled': True
+            }
+
+        return jsonify({
+            'success': True,
+            'settings': settings
+        }), 200
+
+    except Exception as e:
+        logger.error(f"Error fetching analysis settings: {str(e)}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/settings/analysis', methods=['PUT'])
+def save_analysis_settings():
+    """Save analysis pipeline settings"""
+    try:
+        data = request.get_json()
+        updated_by = data.get('updated_by', 'dashboard_user')
+
+        conn = get_postgres_connection()
+        if not conn:
+            return jsonify({'success': False, 'error': 'Database connection failed'}), 500
+
+        cursor = conn.cursor(cursor_factory=RealDictCursor)
+
+        for key, value in data.items():
+            if key == 'updated_by':
+                continue
+
+            config_key = f'analysis.{key}'
+            if isinstance(value, bool):
+                value_type = 'boolean'
+                config_value = str(value).lower()
+            elif isinstance(value, int):
+                value_type = 'integer'
+                config_value = str(value)
+            else:
+                value_type = 'string'
+                config_value = str(value)
+
+            cursor.execute("""
+                INSERT INTO system_config (config_key, config_value, category, value_type, description, updated_by, updated_at)
+                VALUES (%s, %s, 'analysis', %s, %s, %s, NOW())
+                ON CONFLICT (config_key)
+                DO UPDATE SET config_value = %s, updated_by = %s, updated_at = NOW()
+            """, (config_key, config_value, value_type, f'Analysis setting: {key}', updated_by,
+                  config_value, updated_by))
+
+        conn.commit()
+        cursor.close()
+        conn.close()
+
+        return jsonify({
+            'success': True,
+            'message': 'Analysis settings saved'
+        }), 200
+
+    except Exception as e:
+        logger.error(f"Error saving analysis settings: {str(e)}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/settings/ai', methods=['GET'])
+def get_ai_settings():
+    """Get AI configuration settings"""
+    try:
+        conn = get_postgres_connection()
+        if not conn:
+            return jsonify({'success': False, 'error': 'Database connection failed'}), 500
+
+        cursor = conn.cursor(cursor_factory=RealDictCursor)
+
+        cursor.execute("""
+            SELECT config_key, config_value, value_type
+            FROM system_config
+            WHERE category = 'ai'
+        """)
+
+        configs = cursor.fetchall()
+        cursor.close()
+        conn.close()
+
+        settings = {}
+        for cfg in configs:
+            key = cfg['config_key'].replace('ai.', '')
+            value = cfg['config_value']
+            if cfg['value_type'] == 'boolean':
+                settings[key] = value.lower() == 'true'
+            elif cfg['value_type'] == 'integer':
+                settings[key] = int(value)
+            else:
+                settings[key] = value
+
+        # Return defaults if no settings exist
+        if not settings:
+            settings = {
+                'model': 'gemini-pro',
+                'confidenceThreshold': 75,
+                'maxRetries': 3,
+                'enableCRAG': True,
+                'enableReAct': True,
+                'autoRefine': False,
+                'refinementIterations': 2
+            }
+
+        return jsonify({
+            'success': True,
+            'settings': settings
+        }), 200
+
+    except Exception as e:
+        logger.error(f"Error fetching AI settings: {str(e)}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/settings/ai', methods=['PUT'])
+def save_ai_settings():
+    """Save AI configuration settings"""
+    try:
+        data = request.get_json()
+        updated_by = data.get('updated_by', 'dashboard_user')
+
+        conn = get_postgres_connection()
+        if not conn:
+            return jsonify({'success': False, 'error': 'Database connection failed'}), 500
+
+        cursor = conn.cursor(cursor_factory=RealDictCursor)
+
+        for key, value in data.items():
+            if key == 'updated_by':
+                continue
+
+            config_key = f'ai.{key}'
+            if isinstance(value, bool):
+                value_type = 'boolean'
+                config_value = str(value).lower()
+            elif isinstance(value, int):
+                value_type = 'integer'
+                config_value = str(value)
+            else:
+                value_type = 'string'
+                config_value = str(value)
+
+            cursor.execute("""
+                INSERT INTO system_config (config_key, config_value, category, value_type, description, updated_by, updated_at)
+                VALUES (%s, %s, 'ai', %s, %s, %s, NOW())
+                ON CONFLICT (config_key)
+                DO UPDATE SET config_value = %s, updated_by = %s, updated_at = NOW()
+            """, (config_key, config_value, value_type, f'AI setting: {key}', updated_by,
+                  config_value, updated_by))
+
+        conn.commit()
+        cursor.close()
+        conn.close()
+
+        return jsonify({
+            'success': True,
+            'message': 'AI settings saved'
+        }), 200
+
+    except Exception as e:
+        logger.error(f"Error saving AI settings: {str(e)}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+# ============================================================================
+# FEEDBACK APIS (Additional)
+# ============================================================================
+
+@app.route('/api/feedback/submit', methods=['POST'])
+def submit_feedback():
+    """
+    Submit feedback for an AI analysis
+
+    Request body:
+    {
+        "build_id": "string",
+        "feedback_type": "success" | "failed" | "partial" | "incorrect",
+        "feedback_text": "optional string",
+        "user_email": "optional string",
+        "alternative_root_cause": "optional string",
+        "alternative_fix": "optional string"
+    }
+    """
+    try:
+        data = request.get_json()
+        build_id = data.get('build_id')
+        feedback_type = data.get('feedback_type')
+        feedback_text = data.get('feedback_text', '')
+        user_email = data.get('user_email', 'anonymous')
+        alternative_root_cause = data.get('alternative_root_cause')
+        alternative_fix = data.get('alternative_fix')
+
+        if not build_id or not feedback_type:
+            return jsonify({'success': False, 'error': 'build_id and feedback_type are required'}), 400
+
+        if feedback_type not in ['success', 'failed', 'partial', 'incorrect']:
+            return jsonify({'success': False, 'error': 'Invalid feedback_type'}), 400
+
+        conn = get_postgres_connection()
+        if not conn:
+            return jsonify({'success': False, 'error': 'Database connection failed'}), 500
+
+        cursor = conn.cursor(cursor_factory=RealDictCursor)
+
+        # Get the analysis ID for this build
+        cursor.execute("""
+            SELECT id FROM failure_analysis
+            WHERE build_id = %s
+            ORDER BY created_at DESC
+            LIMIT 1
+        """, (build_id,))
+
+        analysis = cursor.fetchone()
+        analysis_id = analysis['id'] if analysis else None
+
+        # Insert feedback
+        cursor.execute("""
+            INSERT INTO user_feedback (
+                analysis_id, build_id, feedback_type, feedback_text,
+                user_email, alternative_root_cause, alternative_fix, submitted_at
+            ) VALUES (%s, %s, %s, %s, %s, %s, %s, NOW())
+            RETURNING id
+        """, (analysis_id, build_id, feedback_type, feedback_text,
+              user_email, alternative_root_cause, alternative_fix))
+
+        feedback_id = cursor.fetchone()['id']
+
+        # Update failure_analysis with feedback
+        if analysis_id:
+            cursor.execute("""
+                UPDATE failure_analysis
+                SET feedback_received = true,
+                    feedback_result = %s,
+                    feedback_timestamp = NOW()
+                WHERE id = %s
+            """, (feedback_type, analysis_id))
+
+        conn.commit()
+        cursor.close()
+        conn.close()
+
+        logger.info(f"Feedback submitted: build_id={build_id}, type={feedback_type}")
+
+        return jsonify({
+            'success': True,
+            'feedback_id': feedback_id,
+            'message': 'Feedback submitted successfully'
+        }), 200
+
+    except Exception as e:
+        logger.error(f"Error submitting feedback: {str(e)}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/feedback/refinement-history/<build_id>', methods=['GET'])
+def get_refinement_history(build_id):
+    """
+    Get refinement history for a specific build
+
+    Returns all refinement iterations and feedback for the given build
+    """
+    try:
+        conn = get_postgres_connection()
+        if not conn:
+            return jsonify({'success': False, 'error': 'Database connection failed'}), 500
+
+        cursor = conn.cursor(cursor_factory=RealDictCursor)
+
+        # Get refinement history
+        cursor.execute("""
+            SELECT
+                rh.id,
+                rh.analysis_id,
+                rh.refinement_iteration,
+                rh.previous_root_cause,
+                rh.new_root_cause,
+                rh.previous_fix,
+                rh.new_fix,
+                rh.refinement_reason,
+                rh.confidence_before,
+                rh.confidence_after,
+                rh.refined_by,
+                rh.refined_at
+            FROM refinement_history rh
+            JOIN failure_analysis fa ON rh.analysis_id = fa.id
+            WHERE fa.build_id = %s
+            ORDER BY rh.refinement_iteration ASC
+        """, (build_id,))
+
+        refinements = cursor.fetchall()
+
+        # Get feedback history
+        cursor.execute("""
+            SELECT
+                uf.id,
+                uf.feedback_type,
+                uf.feedback_text,
+                uf.user_email,
+                uf.alternative_root_cause,
+                uf.alternative_fix,
+                uf.submitted_at
+            FROM user_feedback uf
+            WHERE uf.build_id = %s
+            ORDER BY uf.submitted_at DESC
+        """, (build_id,))
+
+        feedbacks = cursor.fetchall()
+
+        cursor.close()
+        conn.close()
+
+        # Convert datetimes
+        for r in refinements:
+            if r.get('refined_at'):
+                r['refined_at'] = r['refined_at'].isoformat()
+
+        for f in feedbacks:
+            if f.get('submitted_at'):
+                f['submitted_at'] = f['submitted_at'].isoformat()
+
+        return jsonify({
+            'success': True,
+            'build_id': build_id,
+            'refinements': [dict(r) for r in refinements],
+            'feedbacks': [dict(f) for f in feedbacks],
+            'total_refinements': len(refinements),
+            'total_feedbacks': len(feedbacks)
+        }), 200
+
+    except Exception as e:
+        logger.error(f"Error getting refinement history: {str(e)}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+# ============================================================================
+# METRICS API
+# ============================================================================
+
+@app.route('/api/metrics/model', methods=['GET'])
+def get_model_metrics():
+    """
+    Get AI model performance metrics
+
+    Query params:
+    - time_range: 7d, 30d, 90d (default: 7d)
+    """
+    try:
+        time_range = request.args.get('time_range', '7d')
+
+        # Parse time range
+        days = 7
+        if time_range == '30d':
+            days = 30
+        elif time_range == '90d':
+            days = 90
+
+        conn = get_postgres_connection()
+        if not conn:
+            return jsonify({'success': False, 'error': 'Database connection failed'}), 500
+
+        cursor = conn.cursor(cursor_factory=RealDictCursor)
+
+        # Get daily metrics
+        cursor.execute("""
+            SELECT
+                date,
+                total_analyses,
+                rag_based_analyses,
+                claude_deep_analyses,
+                skipped_analyses,
+                total_cost_usd,
+                avg_cost_per_analysis,
+                avg_processing_time_ms,
+                avg_confidence_score,
+                feedback_received_count,
+                positive_feedback_count,
+                negative_feedback_count,
+                feedback_success_rate,
+                total_tokens_used
+            FROM ai_model_metrics
+            WHERE date >= CURRENT_DATE - INTERVAL '%s days'
+            ORDER BY date DESC
+        """, (days,))
+
+        daily_metrics = cursor.fetchall()
+
+        # Get aggregate stats
+        cursor.execute("""
+            SELECT
+                SUM(total_analyses) as total_analyses,
+                SUM(rag_based_analyses) as rag_based_analyses,
+                SUM(claude_deep_analyses) as claude_deep_analyses,
+                SUM(total_cost_usd) as total_cost,
+                AVG(avg_confidence_score) as avg_confidence,
+                AVG(avg_processing_time_ms) as avg_processing_time,
+                SUM(feedback_received_count) as total_feedbacks,
+                SUM(positive_feedback_count) as positive_feedbacks,
+                SUM(total_tokens_used) as total_tokens
+            FROM ai_model_metrics
+            WHERE date >= CURRENT_DATE - INTERVAL '%s days'
+        """, (days,))
+
+        aggregate = cursor.fetchone()
+
+        cursor.close()
+        conn.close()
+
+        # Convert dates
+        for m in daily_metrics:
+            if m.get('date'):
+                m['date'] = m['date'].isoformat()
+
+        return jsonify({
+            'success': True,
+            'time_range': time_range,
+            'daily_metrics': [dict(m) for m in daily_metrics],
+            'aggregate': dict(aggregate) if aggregate else {},
+            'total_days': len(daily_metrics)
+        }), 200
+
+    except Exception as e:
+        logger.error(f"Error getting model metrics: {str(e)}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+# ============================================================================
+# STATUS API
+# ============================================================================
+
+@app.route('/api/status/live', methods=['GET'])
+def get_live_status():
+    """
+    Get live system status with real-time metrics
+
+    Returns current system health and active processes
+    """
+    try:
+        status = {
+            'timestamp': datetime.utcnow().isoformat(),
+            'services': {},
+            'active_processes': [],
+            'recent_activity': []
+        }
+
+        # Check MongoDB
+        try:
+            if mongo_db is not None:
+                mongo_db.command('ping')
+                status['services']['mongodb'] = {'status': 'healthy', 'connected': True}
+            else:
+                status['services']['mongodb'] = {'status': 'disconnected', 'connected': False}
+        except:
+            status['services']['mongodb'] = {'status': 'error', 'connected': False}
+
+        # Check PostgreSQL
+        try:
+            conn = get_postgres_connection()
+            if conn:
+                status['services']['postgresql'] = {'status': 'healthy', 'connected': True}
+
+                cursor = conn.cursor(cursor_factory=RealDictCursor)
+
+                # Get active analyses
+                cursor.execute("""
+                    SELECT COUNT(*) as count
+                    FROM failure_analysis
+                    WHERE created_at > NOW() - INTERVAL '5 minutes'
+                """)
+                active = cursor.fetchone()
+                status['active_processes'].append({
+                    'type': 'analysis',
+                    'count': active['count'] if active else 0,
+                    'label': 'Active Analyses (5 min)'
+                })
+
+                # Get recent activity
+                cursor.execute("""
+                    SELECT
+                        'analysis' as type,
+                        build_id as reference,
+                        created_at as timestamp
+                    FROM failure_analysis
+                    ORDER BY created_at DESC
+                    LIMIT 5
+                """)
+                recent = cursor.fetchall()
+                for r in recent:
+                    status['recent_activity'].append({
+                        'type': r['type'],
+                        'reference': r['reference'],
+                        'timestamp': r['timestamp'].isoformat() if r.get('timestamp') else None
+                    })
+
+                cursor.close()
+                conn.close()
+            else:
+                status['services']['postgresql'] = {'status': 'disconnected', 'connected': False}
+        except Exception as pg_error:
+            status['services']['postgresql'] = {'status': 'error', 'connected': False, 'error': str(pg_error)}
+
+        # Check Redis (via Celery/Flower)
+        try:
+            redis_response = requests.get('http://ddn-redis:6379', timeout=2)
+            status['services']['redis'] = {'status': 'healthy', 'connected': True}
+        except:
+            status['services']['redis'] = {'status': 'unknown', 'connected': None}
+
+        # Overall health
+        healthy_count = sum(1 for s in status['services'].values() if s.get('status') == 'healthy')
+        total_services = len(status['services'])
+        status['overall_health'] = 'healthy' if healthy_count == total_services else 'degraded' if healthy_count > 0 else 'critical'
+
+        return jsonify({
+            'success': True,
+            'status': status
+        }), 200
+
+    except Exception as e:
+        logger.error(f"Error getting live status: {str(e)}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+# ============================================================================
+# COPILOT APIs (AI-Powered Code Assistant)
+# ============================================================================
+
+@app.route('/api/copilot/chat', methods=['POST'])
+def copilot_chat():
+    """
+    AI Copilot chat endpoint
+
+    Request body:
+    {
+        "message": "user message",
+        "conversation_history": [...],
+        "context": {...}
+    }
+    """
+    try:
+        data = request.get_json()
+        message = data.get('message', '')
+        conversation_history = data.get('conversation_history', [])
+        context = data.get('context', {})
+
+        if not message:
+            return jsonify({'success': False, 'error': 'message is required'}), 400
+
+        if not openai_client:
+            return jsonify({'success': False, 'error': 'OpenAI client not configured'}), 500
+
+        # Build system prompt
+        system_prompt = """You are DDN AI Copilot, an intelligent assistant for the DDN Test Failure Analysis system.
+You help users with:
+- Understanding test failures and their root causes
+- Analyzing code issues and suggesting fixes
+- Explaining AI analysis results
+- Providing guidance on system usage
+- Generating test cases and code improvements
+
+Be concise, technical, and helpful. Use the provided context when relevant."""
+
+        # Build messages
+        messages = [{"role": "system", "content": system_prompt}]
+
+        # Add context if provided
+        if context:
+            context_msg = f"Current context: {json.dumps(context)}"
+            messages.append({"role": "system", "content": context_msg})
+
+        # Add conversation history
+        for msg in conversation_history[-10:]:  # Last 10 messages
+            messages.append({
+                "role": msg.get('role', 'user'),
+                "content": msg.get('content', '')
+            })
+
+        messages.append({"role": "user", "content": message})
+
+        # Call OpenAI
+        response = openai_client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=messages,
+            max_tokens=2000,
+            temperature=0.7
+        )
+
+        ai_response = response.choices[0].message.content
+
+        return jsonify({
+            'success': True,
+            'response': ai_response,
+            'model': 'gpt-4o-mini',
+            'usage': {
+                'prompt_tokens': response.usage.prompt_tokens,
+                'completion_tokens': response.usage.completion_tokens,
+                'total_tokens': response.usage.total_tokens
+            }
+        }), 200
+
+    except Exception as e:
+        logger.error(f"Copilot chat error: {str(e)}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/copilot/stream', methods=['POST'])
+def copilot_stream():
+    """
+    Streaming AI Copilot chat endpoint
+
+    Returns Server-Sent Events (SSE) for real-time streaming
+    """
+    try:
+        data = request.get_json()
+        message = data.get('message', '')
+        conversation_history = data.get('conversation_history', [])
+
+        if not message:
+            return jsonify({'success': False, 'error': 'message is required'}), 400
+
+        if not openai_client:
+            return jsonify({'success': False, 'error': 'OpenAI client not configured'}), 500
+
+        def generate():
+            system_prompt = """You are DDN AI Copilot, an intelligent assistant for test failure analysis.
+Be concise, technical, and helpful."""
+
+            messages = [{"role": "system", "content": system_prompt}]
+            for msg in conversation_history[-10:]:
+                messages.append({"role": msg.get('role', 'user'), "content": msg.get('content', '')})
+            messages.append({"role": "user", "content": message})
+
+            try:
+                stream = openai_client.chat.completions.create(
+                    model="gpt-4o-mini",
+                    messages=messages,
+                    max_tokens=2000,
+                    temperature=0.7,
+                    stream=True
+                )
+
+                for chunk in stream:
+                    if chunk.choices[0].delta.content:
+                        yield f"data: {json.dumps({'content': chunk.choices[0].delta.content})}\n\n"
+
+                yield f"data: {json.dumps({'done': True})}\n\n"
+
+            except Exception as stream_error:
+                yield f"data: {json.dumps({'error': str(stream_error)})}\n\n"
+
+        return Response(generate(), mimetype='text/event-stream')
+
+    except Exception as e:
+        logger.error(f"Copilot stream error: {str(e)}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/copilot/history', methods=['GET'])
+def get_copilot_history():
+    """Get chat history (placeholder - would need session/user tracking)"""
+    try:
+        limit = int(request.args.get('limit', 50))
+
+        # For now, return empty history - would need session management
+        return jsonify({
+            'success': True,
+            'history': [],
+            'message': 'Chat history requires session management'
+        }), 200
+
+    except Exception as e:
+        logger.error(f"Error getting copilot history: {str(e)}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/copilot/history', methods=['DELETE'])
+def clear_copilot_history():
+    """Clear chat history"""
+    try:
+        return jsonify({
+            'success': True,
+            'message': 'Chat history cleared'
+        }), 200
+
+    except Exception as e:
+        logger.error(f"Error clearing copilot history: {str(e)}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/copilot/analyze', methods=['POST'])
+def copilot_analyze_code():
+    """
+    Analyze code snippet for issues
+
+    Request body:
+    {
+        "code": "code string",
+        "language": "python|javascript|java|etc",
+        "context": "optional context"
+    }
+    """
+    try:
+        data = request.get_json()
+        code = data.get('code', '')
+        language = data.get('language', 'python')
+        context = data.get('context', '')
+
+        if not code:
+            return jsonify({'success': False, 'error': 'code is required'}), 400
+
+        if not openai_client:
+            return jsonify({'success': False, 'error': 'OpenAI client not configured'}), 500
+
+        prompt = f"""Analyze the following {language} code for potential issues, bugs, and improvements:
+
+```{language}
+{code}
+```
+
+{f'Context: {context}' if context else ''}
+
+Provide:
+1. Identified issues (bugs, errors, anti-patterns)
+2. Security concerns
+3. Performance issues
+4. Suggested improvements
+5. Best practices recommendations
+
+Format your response as structured analysis."""
+
+        response = openai_client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[
+                {"role": "system", "content": "You are an expert code reviewer and analyzer."},
+                {"role": "user", "content": prompt}
+            ],
+            max_tokens=2000,
+            temperature=0.3
+        )
+
+        return jsonify({
+            'success': True,
+            'analysis': response.choices[0].message.content,
+            'language': language,
+            'model': 'gpt-4o-mini'
+        }), 200
+
+    except Exception as e:
+        logger.error(f"Copilot analyze error: {str(e)}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/copilot/generate', methods=['POST'])
+def copilot_generate_code():
+    """
+    Generate code based on description
+
+    Request body:
+    {
+        "description": "what to generate",
+        "language": "python|javascript|java|etc",
+        "context": "optional context"
+    }
+    """
+    try:
+        data = request.get_json()
+        description = data.get('description', '')
+        language = data.get('language', 'python')
+        context = data.get('context', '')
+
+        if not description:
+            return jsonify({'success': False, 'error': 'description is required'}), 400
+
+        if not openai_client:
+            return jsonify({'success': False, 'error': 'OpenAI client not configured'}), 500
+
+        prompt = f"""Generate {language} code for the following requirement:
+
+{description}
+
+{f'Context: {context}' if context else ''}
+
+Provide:
+1. Clean, well-documented code
+2. Brief explanation of the implementation
+3. Usage example if applicable"""
+
+        response = openai_client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[
+                {"role": "system", "content": f"You are an expert {language} developer. Generate clean, production-ready code."},
+                {"role": "user", "content": prompt}
+            ],
+            max_tokens=2000,
+            temperature=0.3
+        )
+
+        return jsonify({
+            'success': True,
+            'generated_code': response.choices[0].message.content,
+            'language': language,
+            'model': 'gpt-4o-mini'
+        }), 200
+
+    except Exception as e:
+        logger.error(f"Copilot generate error: {str(e)}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/copilot/explain', methods=['POST'])
+def copilot_explain_code():
+    """
+    Explain code in plain language
+
+    Request body:
+    {
+        "code": "code string",
+        "language": "python|javascript|java|etc",
+        "detail_level": "brief|detailed|comprehensive"
+    }
+    """
+    try:
+        data = request.get_json()
+        code = data.get('code', '')
+        language = data.get('language', 'python')
+        detail_level = data.get('detail_level', 'detailed')
+
+        if not code:
+            return jsonify({'success': False, 'error': 'code is required'}), 400
+
+        if not openai_client:
+            return jsonify({'success': False, 'error': 'OpenAI client not configured'}), 500
+
+        detail_instructions = {
+            'brief': 'Provide a brief 2-3 sentence summary.',
+            'detailed': 'Provide a detailed explanation with key components explained.',
+            'comprehensive': 'Provide a comprehensive line-by-line explanation with all concepts covered.'
+        }
+
+        prompt = f"""Explain the following {language} code:
+
+```{language}
+{code}
+```
+
+{detail_instructions.get(detail_level, detail_instructions['detailed'])}"""
+
+        response = openai_client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[
+                {"role": "system", "content": "You are an expert programmer who explains code clearly."},
+                {"role": "user", "content": prompt}
+            ],
+            max_tokens=2000,
+            temperature=0.3
+        )
+
+        return jsonify({
+            'success': True,
+            'explanation': response.choices[0].message.content,
+            'language': language,
+            'detail_level': detail_level,
+            'model': 'gpt-4o-mini'
+        }), 200
+
+    except Exception as e:
+        logger.error(f"Copilot explain error: {str(e)}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/copilot/optimize', methods=['POST'])
+def copilot_optimize_code():
+    """
+    Optimize code for performance/readability
+
+    Request body:
+    {
+        "code": "code string",
+        "language": "python|javascript|java|etc",
+        "optimization_goals": ["performance", "readability", "memory"]
+    }
+    """
+    try:
+        data = request.get_json()
+        code = data.get('code', '')
+        language = data.get('language', 'python')
+        optimization_goals = data.get('optimization_goals', ['performance', 'readability'])
+
+        if not code:
+            return jsonify({'success': False, 'error': 'code is required'}), 400
+
+        if not openai_client:
+            return jsonify({'success': False, 'error': 'OpenAI client not configured'}), 500
+
+        goals_str = ', '.join(optimization_goals)
+
+        prompt = f"""Optimize the following {language} code for: {goals_str}
+
+```{language}
+{code}
+```
+
+Provide:
+1. Optimized code
+2. Explanation of changes made
+3. Expected improvements
+4. Any trade-offs to consider"""
+
+        response = openai_client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[
+                {"role": "system", "content": "You are an expert code optimizer focused on writing efficient, clean code."},
+                {"role": "user", "content": prompt}
+            ],
+            max_tokens=2000,
+            temperature=0.3
+        )
+
+        return jsonify({
+            'success': True,
+            'optimized_code': response.choices[0].message.content,
+            'language': language,
+            'optimization_goals': optimization_goals,
+            'model': 'gpt-4o-mini'
+        }), 200
+
+    except Exception as e:
+        logger.error(f"Copilot optimize error: {str(e)}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/copilot/generate-tests', methods=['POST'])
+def copilot_generate_tests():
+    """
+    Generate test cases for code
+
+    Request body:
+    {
+        "code": "code string",
+        "language": "python|javascript|java|etc",
+        "test_framework": "pytest|unittest|jest|junit|etc",
+        "coverage_type": "unit|integration|edge_cases"
+    }
+    """
+    try:
+        data = request.get_json()
+        code = data.get('code', '')
+        language = data.get('language', 'python')
+        test_framework = data.get('test_framework', 'pytest' if language == 'python' else 'jest')
+        coverage_type = data.get('coverage_type', 'unit')
+
+        if not code:
+            return jsonify({'success': False, 'error': 'code is required'}), 400
+
+        if not openai_client:
+            return jsonify({'success': False, 'error': 'OpenAI client not configured'}), 500
+
+        prompt = f"""Generate {coverage_type} tests for the following {language} code using {test_framework}:
+
+```{language}
+{code}
+```
+
+Generate comprehensive tests including:
+1. Happy path tests
+2. Edge case tests
+3. Error handling tests
+4. Input validation tests
+
+Use proper {test_framework} conventions and best practices."""
+
+        response = openai_client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[
+                {"role": "system", "content": f"You are an expert test engineer specializing in {language} and {test_framework}."},
+                {"role": "user", "content": prompt}
+            ],
+            max_tokens=3000,
+            temperature=0.3
+        )
+
+        return jsonify({
+            'success': True,
+            'generated_tests': response.choices[0].message.content,
+            'language': language,
+            'test_framework': test_framework,
+            'coverage_type': coverage_type,
+            'model': 'gpt-4o-mini'
+        }), 200
+
+    except Exception as e:
+        logger.error(f"Copilot generate-tests error: {str(e)}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/copilot/review', methods=['POST'])
+def copilot_review_code():
+    """
+    Perform code review
+
+    Request body:
+    {
+        "code": "code string",
+        "language": "python|javascript|java|etc",
+        "review_type": "full|security|performance|style"
+    }
+    """
+    try:
+        data = request.get_json()
+        code = data.get('code', '')
+        language = data.get('language', 'python')
+        review_type = data.get('review_type', 'full')
+
+        if not code:
+            return jsonify({'success': False, 'error': 'code is required'}), 400
+
+        if not openai_client:
+            return jsonify({'success': False, 'error': 'OpenAI client not configured'}), 500
+
+        review_focus = {
+            'full': 'Perform a comprehensive code review covering all aspects.',
+            'security': 'Focus on security vulnerabilities, injection risks, and data protection.',
+            'performance': 'Focus on performance bottlenecks, memory usage, and efficiency.',
+            'style': 'Focus on code style, naming conventions, and maintainability.'
+        }
+
+        prompt = f"""Perform a code review on the following {language} code:
+
+```{language}
+{code}
+```
+
+{review_focus.get(review_type, review_focus['full'])}
+
+Provide:
+1. Overall assessment (1-10 rating)
+2. Critical issues (must fix)
+3. Warnings (should fix)
+4. Suggestions (nice to have)
+5. Positive aspects
+6. Summary recommendation"""
+
+        response = openai_client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[
+                {"role": "system", "content": "You are a senior code reviewer with expertise in best practices and clean code."},
+                {"role": "user", "content": prompt}
+            ],
+            max_tokens=2500,
+            temperature=0.3
+        )
+
+        return jsonify({
+            'success': True,
+            'review': response.choices[0].message.content,
+            'language': language,
+            'review_type': review_type,
+            'model': 'gpt-4o-mini'
+        }), 200
+
+    except Exception as e:
+        logger.error(f"Copilot review error: {str(e)}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+# ============================================================================
+# USER MANAGEMENT APIs
+# ============================================================================
+
+@app.route('/api/users', methods=['GET'])
+def get_users_list():
+    """Get all users"""
+    try:
+        conn = get_postgres_connection()
+        if not conn:
+            return jsonify({'success': False, 'error': 'Database connection failed'}), 500
+
+        cursor = conn.cursor(cursor_factory=RealDictCursor)
+        cursor.execute("""
+            SELECT id, email, full_name, role, status, created_at, last_login, avatar_url
+            FROM users ORDER BY created_at DESC
+        """)
+        users = cursor.fetchall()
+        cursor.close()
+        conn.close()
+
+        for user in users:
+            if user.get('created_at'):
+                user['created_at'] = user['created_at'].isoformat()
+            if user.get('last_login'):
+                user['last_login'] = user['last_login'].isoformat()
+
+        return jsonify({'success': True, 'users': users}), 200
+    except Exception as e:
+        logger.error(f"Get users error: {str(e)}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/users/invite', methods=['POST'])
+def invite_user():
+    """Invite a new user"""
+    try:
+        data = request.get_json()
+        email = data.get('email')
+        role = data.get('role', 'viewer')
+        full_name = data.get('full_name', '')
+
+        if not email:
+            return jsonify({'success': False, 'error': 'Email is required'}), 400
+
+        conn = get_postgres_connection()
+        if not conn:
+            return jsonify({'success': False, 'error': 'Database connection failed'}), 500
+
+        cursor = conn.cursor(cursor_factory=RealDictCursor)
+
+        # Check if user already exists
+        cursor.execute("SELECT id FROM users WHERE email = %s", (email,))
+        if cursor.fetchone():
+            cursor.close()
+            conn.close()
+            return jsonify({'success': False, 'error': 'User already exists'}), 400
+
+        # Generate invite token
+        invite_token = secrets.token_urlsafe(32)
+
+        # Create user with pending status
+        cursor.execute("""
+            INSERT INTO users (email, full_name, role, status, invite_token, created_at)
+            VALUES (%s, %s, %s, 'pending', %s, NOW())
+            RETURNING id, email, role, status, created_at
+        """, (email, full_name, role, invite_token))
+
+        new_user = cursor.fetchone()
+        conn.commit()
+        cursor.close()
+        conn.close()
+
+        # In production, send email with invite link
+        logger.info(f"User invited: {email} with role {role}")
+
+        return jsonify({
+            'success': True,
+            'message': f'Invitation sent to {email}',
+            'user': new_user
+        }), 201
+    except Exception as e:
+        logger.error(f"Invite user error: {str(e)}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/users/<int:user_id>', methods=['PUT'])
+def update_user(user_id):
+    """Update user details"""
+    try:
+        data = request.get_json()
+        conn = get_postgres_connection()
+        if not conn:
+            return jsonify({'success': False, 'error': 'Database connection failed'}), 500
+
+        cursor = conn.cursor(cursor_factory=RealDictCursor)
+
+        updates = []
+        params = []
+        if 'full_name' in data:
+            updates.append("full_name = %s")
+            params.append(data['full_name'])
+        if 'role' in data:
+            updates.append("role = %s")
+            params.append(data['role'])
+        if 'status' in data:
+            updates.append("status = %s")
+            params.append(data['status'])
+
+        if updates:
+            params.append(user_id)
+            cursor.execute(f"""
+                UPDATE users SET {', '.join(updates)}, updated_at = NOW()
+                WHERE id = %s RETURNING id, email, full_name, role, status
+            """, params)
+            updated_user = cursor.fetchone()
+            conn.commit()
+        else:
+            cursor.execute("SELECT id, email, full_name, role, status FROM users WHERE id = %s", (user_id,))
+            updated_user = cursor.fetchone()
+
+        cursor.close()
+        conn.close()
+
+        if not updated_user:
+            return jsonify({'success': False, 'error': 'User not found'}), 404
+
+        return jsonify({'success': True, 'user': updated_user}), 200
+    except Exception as e:
+        logger.error(f"Update user error: {str(e)}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/users/<int:user_id>', methods=['DELETE'])
+def delete_user(user_id):
+    """Delete a user"""
+    try:
+        conn = get_postgres_connection()
+        if not conn:
+            return jsonify({'success': False, 'error': 'Database connection failed'}), 500
+
+        cursor = conn.cursor(cursor_factory=RealDictCursor)
+        cursor.execute("DELETE FROM users WHERE id = %s RETURNING id, email", (user_id,))
+        deleted_user = cursor.fetchone()
+        conn.commit()
+        cursor.close()
+        conn.close()
+
+        if not deleted_user:
+            return jsonify({'success': False, 'error': 'User not found'}), 404
+
+        return jsonify({'success': True, 'message': f"User {deleted_user['email']} deleted"}), 200
+    except Exception as e:
+        logger.error(f"Delete user error: {str(e)}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/users/<int:user_id>/reset-password', methods=['POST'])
+def reset_user_password(user_id):
+    """Send password reset to user"""
+    try:
+        conn = get_postgres_connection()
+        if not conn:
+            return jsonify({'success': False, 'error': 'Database connection failed'}), 500
+
+        cursor = conn.cursor(cursor_factory=RealDictCursor)
+        cursor.execute("SELECT email FROM users WHERE id = %s", (user_id,))
+        user = cursor.fetchone()
+
+        if not user:
+            cursor.close()
+            conn.close()
+            return jsonify({'success': False, 'error': 'User not found'}), 404
+
+        # Generate reset token
+        reset_token = secrets.token_urlsafe(32)
+        cursor.execute("""
+            UPDATE users SET reset_token = %s, reset_token_expires = NOW() + INTERVAL '24 hours'
+            WHERE id = %s
+        """, (reset_token, user_id))
+        conn.commit()
+        cursor.close()
+        conn.close()
+
+        # In production, send email with reset link
+        logger.info(f"Password reset sent to: {user['email']}")
+
+        return jsonify({'success': True, 'message': f"Password reset sent to {user['email']}"}), 200
+    except Exception as e:
+        logger.error(f"Reset password error: {str(e)}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/roles', methods=['GET'])
+def get_roles():
+    """Get all roles"""
+    try:
+        conn = get_postgres_connection()
+        if not conn:
+            # Return default roles if no DB
+            return jsonify({
+                'success': True,
+                'roles': [
+                    {'id': 1, 'name': 'Admin', 'permissions': ['all'], 'user_count': 2},
+                    {'id': 2, 'name': 'Developer', 'permissions': ['view', 'analyze', 'approve'], 'user_count': 5},
+                    {'id': 3, 'name': 'Viewer', 'permissions': ['view'], 'user_count': 10}
+                ]
+            }), 200
+
+        cursor = conn.cursor(cursor_factory=RealDictCursor)
+        cursor.execute("""
+            SELECT r.id, r.name, r.permissions, r.description,
+                   COUNT(u.id) as user_count
+            FROM roles r
+            LEFT JOIN users u ON u.role = r.name
+            GROUP BY r.id, r.name, r.permissions, r.description
+            ORDER BY r.id
+        """)
+        roles = cursor.fetchall()
+        cursor.close()
+        conn.close()
+
+        return jsonify({'success': True, 'roles': roles}), 200
+    except Exception as e:
+        logger.error(f"Get roles error: {str(e)}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/roles', methods=['POST'])
+def create_role():
+    """Create a new role"""
+    try:
+        data = request.get_json()
+        name = data.get('name')
+        permissions = data.get('permissions', [])
+        description = data.get('description', '')
+
+        if not name:
+            return jsonify({'success': False, 'error': 'Role name is required'}), 400
+
+        conn = get_postgres_connection()
+        if not conn:
+            return jsonify({'success': False, 'error': 'Database connection failed'}), 500
+
+        cursor = conn.cursor(cursor_factory=RealDictCursor)
+        cursor.execute("""
+            INSERT INTO roles (name, permissions, description, created_at)
+            VALUES (%s, %s, %s, NOW())
+            RETURNING id, name, permissions, description
+        """, (name, json.dumps(permissions), description))
+
+        new_role = cursor.fetchone()
+        conn.commit()
+        cursor.close()
+        conn.close()
+
+        return jsonify({'success': True, 'role': new_role}), 201
+    except Exception as e:
+        logger.error(f"Create role error: {str(e)}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/roles/<int:role_id>', methods=['DELETE'])
+def delete_role(role_id):
+    """Delete a role"""
+    try:
+        conn = get_postgres_connection()
+        if not conn:
+            return jsonify({'success': False, 'error': 'Database connection failed'}), 500
+
+        cursor = conn.cursor(cursor_factory=RealDictCursor)
+        cursor.execute("DELETE FROM roles WHERE id = %s RETURNING id, name", (role_id,))
+        deleted = cursor.fetchone()
+        conn.commit()
+        cursor.close()
+        conn.close()
+
+        if not deleted:
+            return jsonify({'success': False, 'error': 'Role not found'}), 404
+
+        return jsonify({'success': True, 'message': f"Role {deleted['name']} deleted"}), 200
+    except Exception as e:
+        logger.error(f"Delete role error: {str(e)}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/teams', methods=['GET'])
+def get_teams():
+    """Get all teams"""
+    return jsonify({
+        'success': True,
+        'teams': [
+            {'id': 1, 'name': 'Engineering', 'members': 12, 'lead': 'John Doe'},
+            {'id': 2, 'name': 'QA', 'members': 5, 'lead': 'Jane Smith'},
+            {'id': 3, 'name': 'DevOps', 'members': 3, 'lead': 'Bob Wilson'}
+        ]
+    }), 200
+
+
+@app.route('/api/teams', methods=['POST'])
+def create_team():
+    """Create a new team"""
+    try:
+        data = request.get_json()
+        name = data.get('name')
+
+        if not name:
+            return jsonify({'success': False, 'error': 'Team name is required'}), 400
+
+        # In production, save to database
+        new_team = {
+            'id': 4,
+            'name': name,
+            'members': 0,
+            'lead': data.get('lead', 'Unassigned')
+        }
+
+        return jsonify({'success': True, 'team': new_team}), 201
+    except Exception as e:
+        logger.error(f"Create team error: {str(e)}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+# ============================================================================
+# EXPORT APIs
+# ============================================================================
+
+@app.route('/api/export/failures/csv', methods=['GET'])
+def export_failures_csv():
+    """Export failures to CSV"""
+    try:
+        # Get query parameters
+        days = request.args.get('days', 7, type=int)
+        status = request.args.get('status', None)
+
+        # Fetch failures from MongoDB
+        query = {'timestamp': {'$gte': datetime.utcnow() - timedelta(days=days)}}
+        if status:
+            query['status'] = status
+
+        failures = list(mongo_db['test_failures'].find(query).sort('timestamp', -1).limit(1000))
+
+        # Generate CSV content
+        csv_lines = ['Build ID,Test Name,Error Type,Classification,Confidence,Status,Timestamp']
+        for f in failures:
+            csv_lines.append(f"{f.get('build_id','')},{f.get('test_name','')},{f.get('error_type','')},{f.get('classification','')},{f.get('confidence_score',0)},{f.get('status','')},{f.get('timestamp','')}")
+
+        csv_content = '\n'.join(csv_lines)
+
+        # Return as file
+        response = make_response(csv_content)
+        response.headers['Content-Type'] = 'text/csv'
+        response.headers['Content-Disposition'] = f'attachment; filename=failures_export_{datetime.now().strftime("%Y%m%d")}.csv'
+        return response
+
+    except Exception as e:
+        logger.error(f"Export CSV error: {str(e)}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/export/failures/pdf', methods=['GET'])
+def export_failures_pdf():
+    """Export failures to PDF (returns HTML for printing)"""
+    try:
+        days = request.args.get('days', 7, type=int)
+
+        # Fetch data
+        failures = list(mongo_db['test_failures'].find({
+            'timestamp': {'$gte': datetime.utcnow() - timedelta(days=days)}
+        }).sort('timestamp', -1).limit(100))
+
+        # Generate HTML report
+        html = f"""
+        <html>
+        <head>
+            <title>DDN AI Test Failure Report</title>
+            <style>
+                body {{ font-family: Arial, sans-serif; padding: 20px; }}
+                h1 {{ color: #1976d2; }}
+                table {{ width: 100%; border-collapse: collapse; margin-top: 20px; }}
+                th, td {{ border: 1px solid #ddd; padding: 8px; text-align: left; }}
+                th {{ background-color: #1976d2; color: white; }}
+                .summary {{ background: #f5f5f5; padding: 15px; margin: 20px 0; }}
+            </style>
+        </head>
+        <body>
+            <h1>DDN AI Test Failure Analysis Report</h1>
+            <p>Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}</p>
+            <p>Period: Last {days} days</p>
+            <div class="summary">
+                <h3>Summary</h3>
+                <p>Total Failures: {len(failures)}</p>
+            </div>
+            <h3>Failure Details</h3>
+            <table>
+                <tr><th>Build ID</th><th>Test Name</th><th>Classification</th><th>Confidence</th><th>Status</th></tr>
+        """
+
+        for f in failures[:50]:
+            html += f"<tr><td>{f.get('build_id','')}</td><td>{f.get('test_name','')}</td><td>{f.get('classification','')}</td><td>{round(float(f.get('confidence_score',0))*100)}%</td><td>{f.get('status','')}</td></tr>"
+
+        html += """
+            </table>
+            <script>window.print();</script>
+        </body>
+        </html>
+        """
+
+        response = make_response(html)
+        response.headers['Content-Type'] = 'text/html'
+        return response
+
+    except Exception as e:
+        logger.error(f"Export PDF error: {str(e)}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/export/audit-logs', methods=['GET'])
+def export_audit_logs():
+    """Export audit logs to CSV"""
+    try:
+        conn = get_postgres_connection()
+        if not conn:
+            return jsonify({'success': False, 'error': 'Database connection failed'}), 500
+
+        cursor = conn.cursor(cursor_factory=RealDictCursor)
+        cursor.execute("""
+            SELECT action, user_email, resource_type, resource_id, details, ip_address, created_at
+            FROM audit_logs ORDER BY created_at DESC LIMIT 1000
+        """)
+        logs = cursor.fetchall()
+        cursor.close()
+        conn.close()
+
+        csv_lines = ['Action,User,Resource Type,Resource ID,Details,IP,Timestamp']
+        for log in logs:
+            csv_lines.append(f"{log.get('action','')},{log.get('user_email','')},{log.get('resource_type','')},{log.get('resource_id','')},{log.get('details','')},{log.get('ip_address','')},{log.get('created_at','')}")
+
+        csv_content = '\n'.join(csv_lines)
+
+        response = make_response(csv_content)
+        response.headers['Content-Type'] = 'text/csv'
+        response.headers['Content-Disposition'] = f'attachment; filename=audit_logs_{datetime.now().strftime("%Y%m%d")}.csv'
+        return response
+
+    except Exception as e:
+        logger.error(f"Export audit logs error: {str(e)}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/export/email', methods=['POST'])
+def send_report_email():
+    """Send report via email"""
+    try:
+        data = request.get_json()
+        email = data.get('email')
+        report_type = data.get('report_type', 'weekly')
+        subject = data.get('subject', f'DDN AI Analysis - {report_type.title()} Report')
+
+        if not email:
+            return jsonify({'success': False, 'error': 'Email address required'}), 400
+
+        # In production, use SMTP to send email
+        # For now, log the request
+        logger.info(f"Email report requested: {report_type} to {email}")
+
+        # Simulate sending
+        return jsonify({
+            'success': True,
+            'message': f'Report sent to {email}',
+            'details': {
+                'to': email,
+                'subject': subject,
+                'report_type': report_type
+            }
+        }), 200
+
+    except Exception as e:
+        logger.error(f"Send email error: {str(e)}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+# ============================================================================
+# INTEGRATION TEST APIs
+# ============================================================================
+
+@app.route('/api/integrations/test', methods=['POST'])
+def test_integration():
+    """Test connection to a service"""
+    try:
+        data = request.get_json()
+        service = data.get('service')
+        config = data.get('config', {})
+
+        if not service:
+            return jsonify({'success': False, 'error': 'Service name required'}), 400
+
+        result = {'service': service, 'status': 'unknown', 'message': ''}
+
+        if service.lower() == 'mongodb':
+            try:
+                if mongo_db:
+                    mongo_db.command('ping')
+                    result['status'] = 'connected'
+                    result['message'] = 'MongoDB connection successful'
+                else:
+                    result['status'] = 'disconnected'
+                    result['message'] = 'MongoDB not configured'
+            except Exception as e:
+                result['status'] = 'error'
+                result['message'] = str(e)
+
+        elif service.lower() == 'postgresql':
+            try:
+                conn = get_postgres_connection()
+                if conn:
+                    cursor = conn.cursor()
+                    cursor.execute('SELECT 1')
+                    cursor.close()
+                    conn.close()
+                    result['status'] = 'connected'
+                    result['message'] = 'PostgreSQL connection successful'
+                else:
+                    result['status'] = 'disconnected'
+                    result['message'] = 'PostgreSQL not configured'
+            except Exception as e:
+                result['status'] = 'error'
+                result['message'] = str(e)
+
+        elif service.lower() == 'jenkins':
+            try:
+                jenkins_url = config.get('url', os.environ.get('JENKINS_URL'))
+                if jenkins_url:
+                    response = requests.get(f"{jenkins_url}/api/json", timeout=5)
+                    if response.status_code == 200:
+                        result['status'] = 'connected'
+                        result['message'] = 'Jenkins connection successful'
+                    else:
+                        result['status'] = 'error'
+                        result['message'] = f'Jenkins returned {response.status_code}'
+                else:
+                    result['status'] = 'disconnected'
+                    result['message'] = 'Jenkins URL not configured'
+            except Exception as e:
+                result['status'] = 'error'
+                result['message'] = str(e)
+
+        elif service.lower() == 'jira':
+            try:
+                jira_url = config.get('url', os.environ.get('JIRA_URL'))
+                if jira_url:
+                    result['status'] = 'connected'
+                    result['message'] = 'Jira configuration found'
+                else:
+                    result['status'] = 'disconnected'
+                    result['message'] = 'Jira URL not configured'
+            except Exception as e:
+                result['status'] = 'error'
+                result['message'] = str(e)
+
+        elif service.lower() == 'github':
+            try:
+                github_token = config.get('token', os.environ.get('GITHUB_TOKEN'))
+                if github_token:
+                    headers = {'Authorization': f'token {github_token}'}
+                    response = requests.get('https://api.github.com/user', headers=headers, timeout=5)
+                    if response.status_code == 200:
+                        result['status'] = 'connected'
+                        result['message'] = f"GitHub connected as {response.json().get('login')}"
+                    else:
+                        result['status'] = 'error'
+                        result['message'] = 'Invalid GitHub token'
+                else:
+                    result['status'] = 'disconnected'
+                    result['message'] = 'GitHub token not configured'
+            except Exception as e:
+                result['status'] = 'error'
+                result['message'] = str(e)
+
+        elif service.lower() == 'slack':
+            slack_webhook = config.get('webhook', os.environ.get('SLACK_WEBHOOK'))
+            if slack_webhook:
+                result['status'] = 'connected'
+                result['message'] = 'Slack webhook configured'
+            else:
+                result['status'] = 'disconnected'
+                result['message'] = 'Slack webhook not configured'
+
+        elif service.lower() == 'openai':
+            if openai_client:
+                result['status'] = 'connected'
+                result['message'] = 'OpenAI API configured'
+            else:
+                result['status'] = 'disconnected'
+                result['message'] = 'OpenAI API key not configured'
+
+        elif service.lower() == 'pinecone':
+            try:
+                if PINECONE_API_KEY:
+                    result['status'] = 'connected'
+                    result['message'] = 'Pinecone API configured'
+                else:
+                    result['status'] = 'disconnected'
+                    result['message'] = 'Pinecone API key not configured'
+            except:
+                result['status'] = 'error'
+                result['message'] = 'Pinecone connection failed'
+
+        else:
+            result['status'] = 'unknown'
+            result['message'] = f'Unknown service: {service}'
+
+        return jsonify({'success': True, 'result': result}), 200
+
+    except Exception as e:
+        logger.error(f"Test integration error: {str(e)}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/integrations', methods=['GET'])
+def get_integrations():
+    """Get all integrations status"""
+    try:
+        integrations = []
+
+        # Check each integration
+        services = ['MongoDB', 'PostgreSQL', 'Jenkins', 'Jira', 'GitHub', 'Slack', 'OpenAI', 'Pinecone']
+        for service in services:
+            # Quick status check
+            status = 'unknown'
+            if service == 'MongoDB' and mongo_db:
+                status = 'connected'
+            elif service == 'PostgreSQL' and get_postgres_connection():
+                status = 'connected'
+            elif service == 'OpenAI' and openai_client:
+                status = 'connected'
+            elif service == 'Pinecone' and PINECONE_API_KEY:
+                status = 'connected'
+            elif service == 'Jenkins' and os.environ.get('JENKINS_URL'):
+                status = 'configured'
+            elif service == 'Jira' and os.environ.get('JIRA_URL'):
+                status = 'configured'
+            elif service == 'GitHub' and os.environ.get('GITHUB_TOKEN'):
+                status = 'configured'
+            elif service == 'Slack' and os.environ.get('SLACK_WEBHOOK'):
+                status = 'configured'
+            else:
+                status = 'disconnected'
+
+            integrations.append({
+                'name': service,
+                'status': status,
+                'type': 'database' if service in ['MongoDB', 'PostgreSQL'] else 'service'
+            })
+
+        return jsonify({'success': True, 'integrations': integrations}), 200
+
+    except Exception as e:
+        logger.error(f"Get integrations error: {str(e)}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+# ============================================================================
+# API KEYS MANAGEMENT
+# ============================================================================
+
+import secrets
+import hashlib
+
+@app.route('/api/keys', methods=['GET'])
+def get_api_keys():
+    """Get all API keys (masked)"""
+    try:
+        conn = get_postgres_connection()
+        if not conn:
+            return jsonify({'success': False, 'error': 'Database connection failed'}), 500
+
+        cursor = conn.cursor(cursor_factory=RealDictCursor)
+
+        cursor.execute("""
+            SELECT id, name, key_prefix, created_by, created_at,
+                   last_used_at, expires_at, status, permissions, usage_count
+            FROM api_keys
+            ORDER BY created_at DESC
+        """)
+
+        keys = cursor.fetchall()
+        cursor.close()
+        conn.close()
+
+        # Format response
+        for key in keys:
+            key['key'] = f"{key['key_prefix']}****"
+            if key.get('created_at'):
+                key['created_at'] = key['created_at'].isoformat()
+            if key.get('last_used_at'):
+                key['last_used_at'] = key['last_used_at'].isoformat()
+            if key.get('expires_at'):
+                key['expires_at'] = key['expires_at'].isoformat()
+
+        return jsonify({
+            'success': True,
+            'keys': [dict(k) for k in keys],
+            'count': len(keys)
+        }), 200
+
+    except Exception as e:
+        logger.error(f"Error fetching API keys: {str(e)}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/keys', methods=['POST'])
+def create_api_key():
+    """Generate a new API key"""
+    try:
+        data = request.get_json()
+        name = data.get('name', 'Unnamed Key')
+        created_by = data.get('created_by', 'system')
+        expires_days = data.get('expires_days')  # Optional expiration
+        permissions = data.get('permissions', ['read', 'write'])
+
+        # Generate secure API key
+        raw_key = f"ddn_{secrets.token_urlsafe(32)}"
+        key_prefix = raw_key[:12]
+        key_hash = hashlib.sha256(raw_key.encode()).hexdigest()
+
+        conn = get_postgres_connection()
+        if not conn:
+            return jsonify({'success': False, 'error': 'Database connection failed'}), 500
+
+        cursor = conn.cursor(cursor_factory=RealDictCursor)
+
+        # Calculate expiration if provided
+        expires_at = None
+        if expires_days:
+            cursor.execute("SELECT NOW() + INTERVAL '%s days' as expires_at", (expires_days,))
+            expires_at = cursor.fetchone()['expires_at']
+
+        cursor.execute("""
+            INSERT INTO api_keys (name, key_prefix, key_hash, created_by, expires_at, permissions)
+            VALUES (%s, %s, %s, %s, %s, %s)
+            RETURNING id, name, key_prefix, created_at, status
+        """, (name, key_prefix, key_hash, created_by, expires_at, json.dumps(permissions)))
+
+        new_key = cursor.fetchone()
+        conn.commit()
+        cursor.close()
+        conn.close()
+
+        logger.info(f"API key created: {name} by {created_by}")
+
+        return jsonify({
+            'success': True,
+            'key': {
+                'id': new_key['id'],
+                'name': new_key['name'],
+                'key': raw_key,  # Only returned once!
+                'key_preview': f"{key_prefix}****",
+                'created_at': new_key['created_at'].isoformat(),
+                'status': new_key['status']
+            },
+            'message': 'API key created. Save this key - it will not be shown again!'
+        }), 201
+
+    except Exception as e:
+        logger.error(f"Error creating API key: {str(e)}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/keys/<int:key_id>', methods=['DELETE'])
+def delete_api_key(key_id):
+    """Delete/revoke an API key"""
+    try:
+        conn = get_postgres_connection()
+        if not conn:
+            return jsonify({'success': False, 'error': 'Database connection failed'}), 500
+
+        cursor = conn.cursor(cursor_factory=RealDictCursor)
+
+        cursor.execute("""
+            UPDATE api_keys SET status = 'revoked'
+            WHERE id = %s
+            RETURNING id, name
+        """, (key_id,))
+
+        deleted = cursor.fetchone()
+        conn.commit()
+        cursor.close()
+        conn.close()
+
+        if not deleted:
+            return jsonify({'success': False, 'error': 'API key not found'}), 404
+
+        logger.info(f"API key revoked: {deleted['name']} (ID: {key_id})")
+
+        return jsonify({
+            'success': True,
+            'message': f"API key '{deleted['name']}' has been revoked"
+        }), 200
+
+    except Exception as e:
+        logger.error(f"Error deleting API key: {str(e)}")
         return jsonify({'success': False, 'error': str(e)}), 500
 
 

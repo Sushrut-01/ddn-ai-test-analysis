@@ -316,7 +316,7 @@ const ServicesMonitoringPreview = () => {
             {/* Header */}
             <Box
                 sx={{
-                    background: 'linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)',
+                    background: 'linear-gradient(135deg, #10b981, #14b8a6)',
                     pt: 4,
                     pb: 8,
                     px: 3,
@@ -367,8 +367,8 @@ const ServicesMonitoringPreview = () => {
                 {/* Quick Stats */}
                 <Grid container spacing={3} mb={4}>
                     {[
-                        { label: 'Total Components', value: loading ? '-' : allServices.length, icon: <SettingsIcon />, color: '#6366f1' },
-                        { label: 'Total Failures', value: loading ? '-' : (stats?.total_failures || 0).toLocaleString(), icon: <TimelineIcon />, color: '#3b82f6' },
+                        { label: 'Total Components', value: loading ? '-' : allServices.length, icon: <SettingsIcon />, color: '#10b981' },
+                        { label: 'Total Failures', value: loading ? '-' : (stats?.total_failures || 0).toLocaleString(), icon: <TimelineIcon />, color: '#14b8a6' },
                         { label: 'Analyzed', value: loading ? '-' : (stats?.total_analyzed || 0).toLocaleString(), icon: <TaskAltIcon />, color: '#10b981' },
                         { label: 'System Status', value: loading ? '-' : (systemStatus?.overall_status || 'unknown').toUpperCase(), icon: <SpeedIcon />, color: systemStatus?.overall_status === 'healthy' ? '#10b981' : '#f59e0b' },
                     ].map((stat, idx) => (
@@ -422,7 +422,7 @@ const ServicesMonitoringPreview = () => {
                                             <TableRow key={idx} sx={{ '&:hover': { bgcolor: '#f8fafc' } }}>
                                                 <TableCell>
                                                     <Box display="flex" alignItems="center" gap={1.5}>
-                                                        <Avatar sx={{ width: 32, height: 32, bgcolor: alpha('#6366f1', 0.1), color: '#6366f1' }}>
+                                                        <Avatar sx={{ width: 32, height: 32, bgcolor: alpha('#10b981', 0.1), color: '#10b981' }}>
                                                             {service.icon}
                                                         </Avatar>
                                                         <Typography variant="body2" fontWeight={600}>{service.name}</Typography>
@@ -446,7 +446,7 @@ const ServicesMonitoringPreview = () => {
                                                             <IconButton
                                                                 size="small"
                                                                 onClick={() => window.open(service.url, '_blank')}
-                                                                sx={{ color: '#3b82f6' }}
+                                                                sx={{ color: '#10b981' }}
                                                             >
                                                                 <OpenInNewIcon fontSize="small" />
                                                             </IconButton>
@@ -469,10 +469,10 @@ const ServicesMonitoringPreview = () => {
                                 <Grid item xs={12}>
                                     <Grid container spacing={2}>
                                         {[
-                                            { label: 'Total Traces', value: langfuseData.totalTraces.toLocaleString(), icon: <TimelineIcon />, color: '#3b82f6' },
+                                            { label: 'Total Traces', value: langfuseData.totalTraces.toLocaleString(), icon: <TimelineIcon />, color: '#14b8a6' },
                                             { label: 'Generations', value: langfuseData.totalGenerations.toLocaleString(), icon: <SmartToyIcon />, color: '#10b981' },
                                             { label: 'Avg Latency', value: `${langfuseData.avgLatency}ms`, icon: <SpeedIcon />, color: '#f59e0b' },
-                                            { label: 'Total Tokens', value: `${(langfuseData.totalTokens / 1000000).toFixed(1)}M`, icon: <DataObjectIcon />, color: '#8b5cf6' },
+                                            { label: 'Total Tokens', value: `${(langfuseData.totalTokens / 1000000).toFixed(1)}M`, icon: <DataObjectIcon />, color: '#10b981' },
                                             { label: 'Total Cost', value: `$${langfuseData.totalCost.toFixed(2)}`, icon: <MonetizationOnIcon />, color: '#ef4444' },
                                             { label: 'Success Rate', value: `${langfuseData.successRate}%`, icon: <CheckCircleIcon />, color: '#059669' },
                                         ].map((stat, idx) => (
@@ -530,7 +530,7 @@ const ServicesMonitoringPreview = () => {
                                                 <XAxis dataKey="time" />
                                                 <YAxis />
                                                 <RechartsTooltip />
-                                                <Area type="monotone" dataKey="latency" stroke="#3b82f6" fill={alpha('#3b82f6', 0.2)} />
+                                                <Area type="monotone" dataKey="latency" stroke="#10b981" fill={alpha('#10b981', 0.2)} />
                                             </AreaChart>
                                         </ResponsiveContainer>
                                     </Paper>
@@ -587,12 +587,12 @@ const ServicesMonitoringPreview = () => {
                                 <Grid item xs={12}>
                                     <Grid container spacing={2}>
                                         {[
-                                            { label: 'Active Workers', value: celeryData.activeWorkers, icon: <WorkIcon />, color: '#3b82f6' },
-                                            { label: 'Tasks Processed', value: celeryData.tasksProcessed, icon: <TaskAltIcon />, color: '#10b981' },
+                                            { label: 'Active Workers', value: celeryData.activeWorkers, icon: <WorkIcon />, color: '#10b981' },
+                                            { label: 'Tasks Processed', value: celeryData.tasksProcessed, icon: <TaskAltIcon />, color: '#14b8a6' },
                                             { label: 'Tasks Queued', value: celeryData.tasksQueued, icon: <PendingActionsIcon />, color: '#f59e0b' },
                                             { label: 'Success Rate', value: `${celeryData.successRate}%`, icon: <CheckCircleIcon />, color: '#059669' },
                                             { label: 'Failed', value: celeryData.tasksFailed, icon: <ErrorIcon />, color: '#ef4444' },
-                                            { label: 'Avg Time', value: `${(celeryData.avgProcessingTime / 1000).toFixed(1)}s`, icon: <SpeedIcon />, color: '#8b5cf6' },
+                                            { label: 'Avg Time', value: `${(celeryData.avgProcessingTime / 1000).toFixed(1)}s`, icon: <SpeedIcon />, color: '#10b981' },
                                         ].map((stat, idx) => (
                                             <Grid item xs={6} md={2} key={idx}>
                                                 <Paper sx={{ p: 2, borderRadius: 3, textAlign: 'center', bgcolor: alpha(stat.color, 0.05) }}>
@@ -699,11 +699,11 @@ const ServicesMonitoringPreview = () => {
                                 <Grid item xs={12}>
                                     <Grid container spacing={2}>
                                         {[
-                                            { label: 'Memory Used', value: redisData.usedMemory, icon: <MemoryIcon />, color: '#3b82f6' },
-                                            { label: 'Total Keys', value: redisData.totalKeys.toLocaleString(), icon: <StorageIcon />, color: '#10b981' },
+                                            { label: 'Memory Used', value: redisData.usedMemory, icon: <MemoryIcon />, color: '#10b981' },
+                                            { label: 'Total Keys', value: redisData.totalKeys.toLocaleString(), icon: <StorageIcon />, color: '#14b8a6' },
                                             { label: 'Hit Rate', value: `${redisData.hitRate}%`, icon: <CheckCircleIcon />, color: '#059669' },
                                             { label: 'Ops/sec', value: redisData.opsPerSec.toLocaleString(), icon: <SpeedIcon />, color: '#f59e0b' },
-                                            { label: 'Connected Clients', value: redisData.connectedClients, icon: <WorkIcon />, color: '#8b5cf6' },
+                                            { label: 'Connected Clients', value: redisData.connectedClients, icon: <WorkIcon />, color: '#10b981' },
                                             { label: 'Queue Length', value: redisData.queueLength, icon: <PendingActionsIcon />, color: '#ef4444' },
                                         ].map((stat, idx) => (
                                             <Grid item xs={6} md={2} key={idx}>
@@ -790,9 +790,9 @@ const ServicesMonitoringPreview = () => {
                                 <Grid item xs={12}>
                                     <Grid container spacing={2}>
                                         {[
-                                            { label: 'Total Workflows', value: n8nData.totalWorkflows, icon: <AccountTreeIcon />, color: '#3b82f6' },
-                                            { label: 'Active', value: n8nData.activeWorkflows, icon: <PlayCircleIcon />, color: '#10b981' },
-                                            { label: 'Executions (30d)', value: n8nData.totalExecutions, icon: <TaskAltIcon />, color: '#8b5cf6' },
+                                            { label: 'Total Workflows', value: n8nData.totalWorkflows, icon: <AccountTreeIcon />, color: '#10b981' },
+                                            { label: 'Active', value: n8nData.activeWorkflows, icon: <PlayCircleIcon />, color: '#14b8a6' },
+                                            { label: 'Executions (30d)', value: n8nData.totalExecutions, icon: <TaskAltIcon />, color: '#10b981' },
                                             { label: 'Success Rate', value: `${n8nData.successRate}%`, icon: <CheckCircleIcon />, color: '#059669' },
                                         ].map((stat, idx) => (
                                             <Grid item xs={6} md={3} key={idx}>
@@ -829,7 +829,7 @@ const ServicesMonitoringPreview = () => {
                                                         <TableRow key={idx} sx={{ '&:hover': { bgcolor: '#f8fafc' } }}>
                                                             <TableCell>
                                                                 <Box display="flex" alignItems="center" gap={1}>
-                                                                    <AccountTreeIcon sx={{ color: '#6366f1', fontSize: 20 }} />
+                                                                    <AccountTreeIcon sx={{ color: '#10b981', fontSize: 20 }} />
                                                                     <Box>
                                                                         <Typography variant="body2" fontWeight={600}>{wf.name}</Typography>
                                                                         {wf.description && (
@@ -845,10 +845,10 @@ const ServicesMonitoringPreview = () => {
                                                                     label={wf.type?.replace('_', ' ').toUpperCase() || 'COMPLETE'}
                                                                     size="small"
                                                                     sx={{
-                                                                        bgcolor: wf.type === 'manual_trigger' ? '#dbeafe' :
+                                                                        bgcolor: wf.type === 'manual_trigger' ? alpha('#10b981', 0.1) :
                                                                                  wf.type === 'refinement' ? '#fef3c7' :
                                                                                  wf.type === 'auto_fix' ? '#dcfce7' : '#f1f5f9',
-                                                                        color: wf.type === 'manual_trigger' ? '#1e40af' :
+                                                                        color: wf.type === 'manual_trigger' ? '#10b981' :
                                                                                wf.type === 'refinement' ? '#92400e' :
                                                                                wf.type === 'auto_fix' ? '#166534' : '#475569',
                                                                         fontSize: '0.7rem'

@@ -68,6 +68,70 @@ jiraApiClient.interceptors.response.use(
   }
 )
 
+// ============================================
+// PROJECT CONTEXT HELPERS
+// ============================================
+
+/**
+ * Get current project ID from localStorage
+ * @returns {number} Current project ID (defaults to 1 if not set)
+ */
+export const getCurrentProjectId = () => {
+  const projectId = localStorage.getItem('current_project_id')
+  if (!projectId) {
+    // Set default project ID to 1 (DDN project) until multi-project API is integrated
+    console.warn('getCurrentProjectId: No project selected, using default project ID: 1')
+    localStorage.setItem('current_project_id', '1')
+    localStorage.setItem('current_project_slug', 'ddn')
+    return 1
+  }
+  return parseInt(projectId)
+}
+
+/**
+ * Get current project slug from localStorage
+ * @returns {string} Current project slug
+ */
+export const getCurrentProjectSlug = () => {
+  return localStorage.getItem('current_project_slug') || ''
+}
+
+/**
+ * Check if a project is currently selected
+ * @returns {boolean} True if project is selected
+ */
+export const hasProjectSelected = () => {
+  return !!localStorage.getItem('current_project_id')
+}
+
+/**
+ * Clear current project selection
+ */
+export const clearProjectSelection = () => {
+  localStorage.removeItem('current_project_id')
+  localStorage.removeItem('current_project_slug')
+}
+
+// Add project ID to request headers for all API clients
+const addProjectIdInterceptor = (client) => {
+  client.interceptors.request.use(
+    config => {
+      const projectId = localStorage.getItem('current_project_id')
+      if (projectId) {
+        config.headers['X-Project-ID'] = projectId
+      }
+      return config
+    },
+    error => Promise.reject(error)
+  )
+}
+
+// Apply project ID interceptor to all API clients
+addProjectIdInterceptor(api)
+addProjectIdInterceptor(knowledgeApiClient)
+addProjectIdInterceptor(triggerApiClient)
+addProjectIdInterceptor(jiraApiClient)
+
 // JWT Token Management
 let isRefreshing = false
 let failedQueue = []
@@ -199,33 +263,108 @@ addJWTInterceptor(triggerApiClient)
 addJWTInterceptor(jiraApiClient)
 addJWTInterceptor(serviceManagerClient)
 
-// Analytics APIs
-export const analyticsAPI = {
-  getSummary: (timeRange = '7d') =>
-    api.get(`/api/analytics/summary?time_range=${timeRange}`),
+// ============================================
+// PROJECT MANAGEMENT APIs
+// ============================================
 
-  getTrends: (timeRange = '30d', aggregation = 'daily') =>
-    api.get(`/api/analytics/trends?time_range=${timeRange}&aggregation=${aggregation}`),
+export const projectAPI = {
+  // Get all projects accessible to current user
+  getAll: () => api.get('/api/projects'),
 
-  getPatterns: () =>
-    api.get('/api/analytics/patterns'),
+  // Get specific project details
+  getDetails: (projectId) => api.get(`/api/projects/${projectId}`),
 
-  getAcceptanceRate: (timeRange = '30d') =>
-    api.get(`/api/analytics/acceptance-rate?time_range=${timeRange}`),
+  // Create new project (admin only)
+  create: (data) => api.post('/api/projects', data),
 
-  getRefinementStats: (timeRange = '30d') =>
-    api.get(`/api/analytics/refinement-stats?time_range=${timeRange}`)
+  // Update project
+  update: (projectId, data) => api.put(`/api/projects/${projectId}`, data),
+
+  // Delete project (admin only)
+  delete: (projectId) => api.delete(`/api/projects/${projectId}`),
+
+  // Get project configuration
+  getConfig: (projectId) => api.get(`/api/projects/${projectId}/config`),
+
+  // Update project configuration
+  updateConfig: (projectId, data) => api.put(`/api/projects/${projectId}/config`, data),
+
+  // Get project team members
+  getTeam: (projectId) => api.get(`/api/projects/${projectId}/team`),
+
+  // Add user to project
+  addMember: (projectId, data) => api.post(`/api/projects/${projectId}/team`, data),
+
+  // Update user role in project
+  updateMemberRole: (projectId, userId, data) =>
+    api.put(`/api/projects/${projectId}/team/${userId}`, data),
+
+  // Remove user from project
+  removeMember: (projectId, userId) =>
+    api.delete(`/api/projects/${projectId}/team/${userId}`),
+
+  // Get project activity log
+  getActivity: (projectId, params = {}) => {
+    const queryString = new URLSearchParams(params).toString()
+    return api.get(`/api/projects/${projectId}/activity${queryString ? '?' + queryString : ''}`)
+  }
 }
 
-// Failures APIs
-export const failuresAPI = {
-  getList: (params = {}) => {
-    const queryString = new URLSearchParams(params).toString()
-    return api.get(`/api/failures?${queryString}`)
+// ============================================
+// PROJECT-SCOPED APIs (Use current project from localStorage)
+// ============================================
+
+// Analytics APIs (Project-scoped)
+export const analyticsAPI = {
+  getSummary: (timeRange = '7d') => {
+    const projectId = getCurrentProjectId()
+    return api.get(`/api/projects/${projectId}/analytics/summary?time_range=${timeRange}`)
   },
 
-  getDetails: (buildId) =>
-    api.get(`/api/failures/${buildId}`)
+  getTrends: (timeRange = '30d', aggregation = 'daily') => {
+    const projectId = getCurrentProjectId()
+    return api.get(`/api/projects/${projectId}/analytics/trends?time_range=${timeRange}&aggregation=${aggregation}`)
+  },
+
+  getPatterns: () => {
+    const projectId = getCurrentProjectId()
+    return api.get(`/api/projects/${projectId}/analytics/patterns`)
+  },
+
+  getAcceptanceRate: (timeRange = '30d') => {
+    const projectId = getCurrentProjectId()
+    return api.get(`/api/projects/${projectId}/analytics/acceptance-rate?time_range=${timeRange}`)
+  },
+
+  getRefinementStats: (timeRange = '30d') => {
+    const projectId = getCurrentProjectId()
+    return api.get(`/api/projects/${projectId}/analytics/refinement-stats?time_range=${timeRange}`)
+  },
+
+  // Get project-specific stats
+  getProjectStats: (timeRange = '30') => {
+    const projectId = getCurrentProjectId()
+    return api.get(`/api/projects/${projectId}/stats?time_range=${timeRange}`)
+  }
+}
+
+// Failures APIs (Project-scoped)
+export const failuresAPI = {
+  getList: (params = {}) => {
+    const projectId = getCurrentProjectId()
+    const queryString = new URLSearchParams(params).toString()
+    return api.get(`/api/projects/${projectId}/failures${queryString ? '?' + queryString : ''}`)
+  },
+
+  getDetails: (failureId) => {
+    const projectId = getCurrentProjectId()
+    return api.get(`/api/projects/${projectId}/failures/${failureId}`)
+  },
+
+  updateFeedback: (failureId, feedback) => {
+    const projectId = getCurrentProjectId()
+    return api.post(`/api/projects/${projectId}/failures/${failureId}/feedback`, feedback)
+  }
 }
 
 // Manual Trigger APIs
@@ -261,26 +400,39 @@ export const statusAPI = {
     api.get('/api/status/live')
 }
 
-// NEW: System Monitoring APIs
+// NEW: System Monitoring APIs (Project-scoped where applicable)
 export const monitoringAPI = {
+  // Global system status
   getSystemStatus: () =>
     api.get('/api/system/status'),
 
-  getPipelineFlow: () =>
-    api.get('/api/pipeline/flow'),
+  // Project-specific pipeline flow
+  getPipelineFlow: () => {
+    const projectId = getCurrentProjectId()
+    return api.get(`/api/projects/${projectId}/pipeline/flow`)
+  },
 
-  getActivity: (limit = 20) =>
-    api.get(`/api/activity?limit=${limit}`),
+  // Project-specific activity
+  getActivity: (limit = 20) => {
+    const projectId = getCurrentProjectId()
+    return api.get(`/api/projects/${projectId}/activity?limit=${limit}`)
+  },
 
-  getStats: () =>
-    api.get('/api/stats'),
+  // Project-specific stats
+  getStats: () => {
+    const projectId = getCurrentProjectId()
+    return api.get(`/api/projects/${projectId}/stats`)
+  },
 
+  // Global health check
   getHealth: () =>
     api.get('/api/health'),
 
-  // Build-level metrics (dual metrics support)
-  getBuildsSummary: () =>
-    api.get('/api/builds/summary')
+  // Project-specific build-level metrics
+  getBuildsSummary: () => {
+    const projectId = getCurrentProjectId()
+    return api.get(`/api/projects/${projectId}/builds/summary`)
+  }
 }
 
 // Service Manager API (port 5007) - All Docker services status
@@ -499,24 +651,26 @@ export const fixAPI = {
     api.get('/api/fixes/analytics')
 }
 
-// Jira Bugs API
+// Jira Bugs API (Project-scoped)
 export const jiraAPI = {
-  // Get list of Jira bugs from Jira service (port 5009)
+  // Get list of Jira bugs for current project
   getBugs: async (params = {}) => {
     try {
+      const projectId = getCurrentProjectId()
       const queryString = new URLSearchParams(params).toString()
-      const response = await jiraApiClient.get(`/api/bugs${queryString ? '?' + queryString : ''}`)
+      const response = await api.get(`/api/projects/${projectId}/jira/bugs${queryString ? '?' + queryString : ''}`)
       return response
     } catch (error) {
       console.error('Failed to fetch Jira bugs:', error)
-      return { status: 'error', data: { issues: [], total: 0 } }
+      return { success: false, bugs: [], count: 0 }
     }
   },
 
-  // Get detailed bug information from Jira service
+  // Get detailed bug information
   getBugDetails: async (issueKey) => {
     try {
-      const response = await jiraApiClient.get(`/api/bugs/${issueKey}`)
+      const projectId = getCurrentProjectId()
+      const response = await api.get(`/api/projects/${projectId}/jira/bugs/${issueKey}`)
       return response
     } catch (error) {
       console.error('Failed to fetch bug details:', error)
@@ -524,20 +678,28 @@ export const jiraAPI = {
     }
   },
 
-  // Create a new Jira bug from analysis
-  createBug: async (data) => {
+  // Create a new Jira issue in project's Jira
+  createIssue: async (data) => {
     try {
-      const response = await jiraApiClient.post('/api/jira/create-issue', data)
+      const projectId = getCurrentProjectId()
+      const response = await api.post(`/api/projects/${projectId}/jira/create-issue`, data)
       return response
     } catch (error) {
-      console.error('Failed to create Jira bug:', error)
+      console.error('Failed to create Jira issue:', error)
       return { status: 'error', message: error.message }
     }
   },
 
-  // Get approved analyses ready for bug creation (from dashboard API)
-  getApprovedAnalyses: (limit = 50) =>
-    api.get(`/api/failures?analyzed=true&classification=CODE_ERROR&limit=${limit}`)
+  // Legacy method (for backward compatibility)
+  createBug: async (data) => {
+    return jiraAPI.createIssue(data)
+  },
+
+  // Get approved analyses ready for bug creation
+  getApprovedAnalyses: (limit = 50) => {
+    const projectId = getCurrentProjectId()
+    return api.get(`/api/projects/${projectId}/jira/approved-analyses?limit=${limit}`)
+  }
 }
 
 // GitHub PR API (for PR Workflow page)
@@ -763,6 +925,42 @@ export const configAPI = {
     api.get('/api/config/categories')
 }
 
+// API Keys Management
+export const apiKeysAPI = {
+  // Get all API keys
+  getAll: () =>
+    api.get('/api/keys'),
+
+  // Create new API key
+  create: (data) =>
+    api.post('/api/keys', data),
+
+  // Delete/revoke API key
+  delete: (keyId) =>
+    api.delete(`/api/keys/${keyId}`)
+}
+
+// Settings API - Grouped settings management
+export const settingsAPI = {
+  // Notification settings
+  notifications: {
+    get: () => api.get('/api/settings/notifications'),
+    save: (data) => api.put('/api/settings/notifications', data)
+  },
+
+  // Analysis pipeline settings
+  analysis: {
+    get: () => api.get('/api/settings/analysis'),
+    save: (data) => api.put('/api/settings/analysis', data)
+  },
+
+  // AI configuration settings
+  ai: {
+    get: () => api.get('/api/settings/ai'),
+    save: (data) => api.put('/api/settings/ai', data)
+  }
+}
+
 // Copilot API - AI-powered code assistant
 export const copilotAPI = {
   // Send a chat message and get AI response
@@ -833,6 +1031,134 @@ export const copilotAPI = {
   // Review code
   reviewCode: (data) =>
     api.post('/api/copilot/review', data)
+}
+
+// Test Generator API
+export const testGeneratorAPI = {
+  // Generate test cases from code
+  generate: (data) =>
+    api.post('/api/test-generator/generate', data),
+
+  // Generate test cases from documentation
+  generateFromDocs: (data) =>
+    api.post('/api/copilot/generate-tests', data),
+
+  // Get generated test history
+  getHistory: () =>
+    api.get('/api/test-generator/history'),
+
+  // Save test cases
+  save: (data) =>
+    api.post('/api/test-generator/save', data)
+}
+
+// User Management API
+export const userManagementAPI = {
+  // Get all users
+  getUsers: () =>
+    api.get('/api/users'),
+
+  // Invite new user
+  inviteUser: (data) =>
+    api.post('/api/users/invite', data),
+
+  // Update user
+  updateUser: (userId, data) =>
+    api.put(`/api/users/${userId}`, data),
+
+  // Delete user
+  deleteUser: (userId) =>
+    api.delete(`/api/users/${userId}`),
+
+  // Reset user password
+  resetPassword: (userId) =>
+    api.post(`/api/users/${userId}/reset-password`),
+
+  // Get roles
+  getRoles: () =>
+    api.get('/api/roles'),
+
+  // Create role
+  createRole: (data) =>
+    api.post('/api/roles', data),
+
+  // Update role
+  updateRole: (roleId, data) =>
+    api.put(`/api/roles/${roleId}`, data),
+
+  // Delete role
+  deleteRole: (roleId) =>
+    api.delete(`/api/roles/${roleId}`),
+
+  // Get teams
+  getTeams: () =>
+    api.get('/api/teams'),
+
+  // Create team
+  createTeam: (data) =>
+    api.post('/api/teams', data)
+}
+
+// Export API - for generating reports/exports
+export const exportAPI = {
+  // Export failures to CSV
+  exportFailuresCSV: (params = {}) => {
+    const queryString = new URLSearchParams(params).toString()
+    return api.get(`/api/export/failures/csv${queryString ? '?' + queryString : ''}`, {
+      responseType: 'blob'
+    })
+  },
+
+  // Export failures to PDF
+  exportFailuresPDF: (params = {}) => {
+    const queryString = new URLSearchParams(params).toString()
+    return api.get(`/api/export/failures/pdf${queryString ? '?' + queryString : ''}`, {
+      responseType: 'blob'
+    })
+  },
+
+  // Export audit logs
+  exportAuditLogs: (params = {}) => {
+    const queryString = new URLSearchParams(params).toString()
+    return api.get(`/api/export/audit-logs${queryString ? '?' + queryString : ''}`, {
+      responseType: 'blob'
+    })
+  },
+
+  // Export analytics report
+  exportAnalytics: (params = {}) => {
+    const queryString = new URLSearchParams(params).toString()
+    return api.get(`/api/export/analytics${queryString ? '?' + queryString : ''}`, {
+      responseType: 'blob'
+    })
+  },
+
+  // Send report via email
+  sendReportEmail: (data) =>
+    api.post('/api/export/email', data)
+}
+
+// Integration API - for testing and managing integrations
+export const integrationAPI = {
+  // Test connection to a service
+  testConnection: (service, config = {}) =>
+    api.post('/api/integrations/test', { service, config }),
+
+  // Get all integrations
+  getAll: () =>
+    api.get('/api/integrations'),
+
+  // Add integration
+  add: (data) =>
+    api.post('/api/integrations', data),
+
+  // Update integration
+  update: (integrationId, data) =>
+    api.put(`/api/integrations/${integrationId}`, data),
+
+  // Delete integration
+  delete: (integrationId) =>
+    api.delete(`/api/integrations/${integrationId}`)
 }
 
 export default api

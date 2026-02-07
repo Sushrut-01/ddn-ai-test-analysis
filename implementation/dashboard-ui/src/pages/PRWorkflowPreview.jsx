@@ -47,10 +47,10 @@ const getStatusColor = (status) => {
     switch (status) {
         case 'merged': return { bg: '#dcfce7', color: '#166534', label: 'Merged' };
         case 'review': return { bg: '#fef3c7', color: '#92400e', label: 'In Review' };
-        case 'ci_running': return { bg: '#dbeafe', color: '#1e40af', label: 'CI Running' };
+        case 'ci_running': return { bg: alpha('#10b981', 0.1), color: '#10b981', label: 'CI Running' };
         case 'failed': return { bg: '#fee2e2', color: '#991b1b', label: 'CI Failed' };
         case 'closed': return { bg: '#f1f5f9', color: '#64748b', label: 'Closed' };
-        default: return { bg: '#e0e7ff', color: '#4338ca', label: 'Open' };
+        default: return { bg: alpha('#10b981', 0.15), color: '#10b981', label: 'Open' };
     }
 };
 
@@ -58,7 +58,7 @@ const getCIStatusIcon = (status) => {
     switch (status) {
         case 'passed': return <CheckCircleIcon sx={{ color: '#10b981', fontSize: 20 }} />;
         case 'failed': return <ErrorIcon sx={{ color: '#ef4444', fontSize: 20 }} />;
-        case 'running': return <HourglassEmptyIcon sx={{ color: '#3b82f6', fontSize: 20 }} />;
+        case 'running': return <HourglassEmptyIcon sx={{ color: '#10b981', fontSize: 20 }} />;
         default: return <HourglassEmptyIcon sx={{ color: '#94a3b8', fontSize: 20 }} />;
     }
 };
@@ -66,7 +66,7 @@ const getCIStatusIcon = (status) => {
 const StageStatusIcon = ({ status }) => {
     switch (status) {
         case 'completed': return <CheckCircleIcon sx={{ color: '#10b981', fontSize: 20 }} />;
-        case 'in_progress': return <HourglassEmptyIcon sx={{ color: '#3b82f6', fontSize: 20 }} />;
+        case 'in_progress': return <HourglassEmptyIcon sx={{ color: '#10b981', fontSize: 20 }} />;
         case 'failed': return <ErrorIcon sx={{ color: '#ef4444', fontSize: 20 }} />;
         default: return <HourglassEmptyIcon sx={{ color: '#94a3b8', fontSize: 20 }} />;
     }
@@ -85,53 +85,103 @@ const PRWorkflowPreview = () => {
 
     const fetchPRData = async () => {
         try {
+            console.log('Fetching PR workflow data...');
             const response = await fixAPI.getHistory({ limit: 50 });
+            console.log('PR workflow response:', response);
+
             const data = response?.data || response;
 
-            if (data?.success) {
+            if (data?.success && data?.fixes && Array.isArray(data.fixes)) {
+                console.log(`Found ${data.fixes.length} PRs/fixes`);
+
                 // Transform API data to PR format
-                const transformedPRs = (data.fixes || []).map((fix, idx) => ({
-                    id: `PR-${fix.pr_number || fix.id}`,
-                    prNumber: fix.pr_number || fix.id,
-                    title: `fix: ${fix.fix_type || 'Code fix'} for ${fix.failure_id || 'failure'}`,
-                    status: fix.status === 'merged' ? 'merged' :
-                            fix.status === 'reverted' ? 'failed' :
-                            fix.status === 'pr_created' ? 'review' : fix.status,
-                    currentStage: fix.status === 'merged' ? 'merged' :
-                                  fix.status === 'pending' ? 'approved' : 'pr_created',
-                    linkedFailure: `#${fix.failure_id || 'N/A'}`,
-                    classification: fix.fix_type?.toUpperCase() || 'CODE_FIX',
-                    branch: fix.branch_name || `fix/auto-${fix.id}`,
-                    author: 'AI Auto-Fix',
-                    approvedBy: fix.applied_by || 'system',
-                    createdAt: fix.applied_at,
-                    mergedAt: fix.merged_at,
-                    aiConfidence: 0.85,
-                    filesChanged: 1,
-                    additions: 10,
-                    deletions: 2,
-                    ciStatus: fix.status === 'merged' ? 'passed' :
-                              fix.status === 'reverted' ? 'failed' : 'running',
-                    reviewers: [],
-                    githubUrl: fix.pr_url || '#',
-                    stages: {
-                        approved: { status: 'completed', timestamp: fix.applied_at },
-                        branch: { status: 'completed', timestamp: fix.applied_at },
-                        commit: { status: 'completed', timestamp: fix.applied_at },
-                        pr_created: { status: fix.pr_number ? 'completed' : 'pending', timestamp: fix.applied_at },
-                        ci_running: { status: fix.status === 'merged' ? 'completed' : 'in_progress' },
-                        review: { status: fix.status === 'merged' ? 'completed' : 'pending' },
-                        merged: { status: fix.status === 'merged' ? 'completed' : 'pending', timestamp: fix.merged_at },
+                const transformedPRs = data.fixes.map((fix, idx) => {
+                    const prNumber = fix.pr_number || fix.id || idx + 1;
+                    const fixType = fix.fix_type || 'code_fix';
+                    const failureId = fix.failure_id || fix.build_id || 'unknown';
+
+                    // Determine current status and stage
+                    let status = 'open';
+                    let currentStage = 'approved';
+
+                    if (fix.status === 'merged') {
+                        status = 'merged';
+                        currentStage = 'merged';
+                    } else if (fix.status === 'reverted' || fix.rollback_at) {
+                        status = 'failed';
+                        currentStage = 'ci_running';
+                    } else if (fix.pr_number && fix.pr_url) {
+                        status = 'review';
+                        currentStage = 'review';
+                    } else if (fix.status === 'pr_created') {
+                        status = 'review';
+                        currentStage = 'pr_created';
+                    } else if (fix.status === 'pending') {
+                        status = 'open';
+                        currentStage = 'approved';
                     }
-                }));
+
+                    return {
+                        id: `PR-${prNumber}`,
+                        prNumber: prNumber,
+                        title: `fix: ${fixType.replace('_', ' ')} for failure #${failureId}`,
+                        status: status,
+                        currentStage: currentStage,
+                        linkedFailure: `#${failureId}`,
+                        classification: fixType.toUpperCase().replace('_', ' '),
+                        branch: fix.branch_name || `fix/auto-${fix.id || prNumber}`,
+                        author: 'AI Auto-Fix',
+                        approvedBy: fix.applied_by || 'system',
+                        createdAt: fix.applied_at ? new Date(fix.applied_at).toLocaleString() : 'N/A',
+                        mergedAt: fix.merged_at ? new Date(fix.merged_at).toLocaleString() : null,
+                        aiConfidence: 0.85,
+                        filesChanged: 1,
+                        additions: 10,
+                        deletions: 2,
+                        ciStatus: status === 'merged' ? 'passed' :
+                                  status === 'failed' ? 'failed' : 'running',
+                        reviewers: [],
+                        githubUrl: fix.pr_url || '#',
+                        ciError: status === 'failed' ? 'CI checks failed or PR was reverted' : null,
+                        stages: {
+                            approved: { status: 'completed', timestamp: fix.applied_at },
+                            branch: { status: 'completed', timestamp: fix.applied_at },
+                            commit: { status: 'completed', timestamp: fix.applied_at },
+                            pr_created: {
+                                status: fix.pr_number ? 'completed' : 'pending',
+                                timestamp: fix.applied_at
+                            },
+                            ci_running: {
+                                status: status === 'merged' ? 'completed' :
+                                        status === 'failed' ? 'failed' : 'in_progress',
+                                timestamp: null
+                            },
+                            review: {
+                                status: status === 'merged' ? 'completed' :
+                                        status === 'review' ? 'in_progress' : 'pending',
+                                timestamp: null
+                            },
+                            merged: {
+                                status: status === 'merged' ? 'completed' : 'pending',
+                                timestamp: fix.merged_at
+                            },
+                        }
+                    };
+                });
+
                 setPrList(transformedPRs);
                 setError(null);
             } else {
+                console.log('No PR data found or invalid response format');
                 setPrList([]);
+                setError(null); // Clear error if response is valid but empty
             }
         } catch (err) {
             console.error('Error fetching PR data:', err);
-            setError(err.message?.includes('Network') ? 'No connection to server' : err.message);
+            const errorMessage = err.message?.includes('Network') || err.message?.includes('ECONNREFUSED')
+                ? 'Cannot connect to server. Please ensure the backend is running.'
+                : err.message || 'Failed to fetch PR data';
+            setError(errorMessage);
             setPrList([]);
         } finally {
             setLoading(false);
@@ -174,7 +224,7 @@ const PRWorkflowPreview = () => {
             {/* Header */}
             <Box
                 sx={{
-                    background: 'linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%)',
+                    background: 'linear-gradient(135deg, #10b981, #14b8a6)',
                     pt: 4,
                     pb: 8,
                     px: 3,
@@ -231,7 +281,7 @@ const PRWorkflowPreview = () => {
                 {/* Stats Cards */}
                 <Grid container spacing={3} mb={4}>
                     {[
-                        { label: 'Total PRs', value: stats.total, icon: <CallMergeIcon />, color: '#7c3aed' },
+                        { label: 'Total PRs', value: stats.total, icon: <CallMergeIcon />, color: '#10b981' },
                         { label: 'Merged', value: stats.merged, icon: <MergeIcon />, color: '#10b981' },
                         { label: 'In Progress', value: stats.inProgress, icon: <HourglassEmptyIcon />, color: '#f59e0b' },
                         { label: 'Failed CI', value: stats.failed, icon: <ErrorIcon />, color: '#ef4444' },
@@ -260,7 +310,7 @@ const PRWorkflowPreview = () => {
                             <Step key={stage.id} completed={false}>
                                 <StepLabel
                                     StepIconComponent={() => (
-                                        <Avatar sx={{ bgcolor: alpha('#7c3aed', 0.1), color: '#7c3aed', width: 40, height: 40 }}>
+                                        <Avatar sx={{ bgcolor: alpha('#10b981', 0.1), color: '#10b981', width: 40, height: 40 }}>
                                             {stage.icon}
                                         </Avatar>
                                     )}
@@ -333,7 +383,7 @@ const PRWorkflowPreview = () => {
                                 {/* PR Header */}
                                 <Box display="flex" justifyContent="space-between" alignItems="flex-start" mb={2}>
                                     <Box display="flex" alignItems="flex-start" gap={2}>
-                                        <Avatar sx={{ bgcolor: alpha('#7c3aed', 0.1), color: '#7c3aed' }}>
+                                        <Avatar sx={{ bgcolor: alpha('#10b981', 0.1), color: '#10b981' }}>
                                             <GitHubIcon />
                                         </Avatar>
                                         <Box>
@@ -341,14 +391,14 @@ const PRWorkflowPreview = () => {
                                                 <Chip
                                                     label={`#${pr.prNumber}`}
                                                     size="small"
-                                                    sx={{ bgcolor: '#e0e7ff', color: '#4338ca', fontWeight: 600 }}
+                                                    sx={{ bgcolor: alpha('#10b981', 0.1), color: '#10b981', fontWeight: 600 }}
                                                 />
                                                 <Typography variant="h6" fontWeight="bold">{pr.title}</Typography>
                                             </Box>
                                             <Box display="flex" alignItems="center" gap={2} mt={1} flexWrap="wrap">
                                                 <Chip label={statusColors.label} size="small" sx={{ bgcolor: statusColors.bg, color: statusColors.color, fontWeight: 600 }} />
                                                 <Box display="flex" alignItems="center" gap={0.5}>
-                                                    <SmartToyIcon sx={{ color: '#8b5cf6', fontSize: 16 }} />
+                                                    <SmartToyIcon sx={{ color: '#10b981', fontSize: 16 }} />
                                                     <Typography variant="caption">AI Auto-Fix</Typography>
                                                 </Box>
                                                 <Box display="flex" alignItems="center" gap={0.5}>

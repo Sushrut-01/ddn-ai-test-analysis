@@ -1,0 +1,142 @@
+╔════════════════════════════════════════════════════════════════════════════╗
+║           🎯 CONNECT YOUR APP TO REAL DATA RIGHT NOW - 1 MINUTE           ║
+╚════════════════════════════════════════════════════════════════════════════╝
+
+
+THE APP YOU HAVE IS PERFECT!
+============================
+
+You already have the app installed and working.
+It just needs to connect to the Docker backend.
+
+
+SUPER QUICK FIX (30 SECONDS)
+============================
+
+The Docker backend is at:  http://localhost:8005/api
+
+But your Android device can't reach "localhost" from your computer.
+So we need to use your actual computer IP.
+
+STEP 1: Find Your Computer IP (15 seconds)
+-------------------------------------------
+
+On your computer, open CMD and type:
+   ipconfig
+
+Look for the line that says:
+   IPv4 Address. . . . . . . . . . . : XXX.XXX.X.X
+
+WRITE DOWN THIS IP!
+Example: 192.168.1.5
+
+
+STEP 2: Update App (15 seconds)
+-------------------------------
+
+ON YOUR ANDROID DEVICE:
+
+1. Open the DDN AI app
+2. Go to SETTINGS (bottom tab)
+3. Find "API Endpoint" field
+4. Delete the current value
+5. Type: http://[YOUR_IP]:8005/api
+   
+   Replace [YOUR_IP] with the IP from STEP 1
+   Example: http://192.168.1.5:8005/api
+
+
+STEP 3: Save & Restart (30 seconds)
+-----------------------------------
+
+1. Save the settings
+2. Close the app completely
+3. Reopen the app
+4. WAIT 3-5 SECONDS for it to load data
+5. YOU'LL SEE REAL DATA! ✅
+
+
+═════════════════════════════════════════════════════════════════════════════
+
+WHAT WILL HAPPEN:
+
+After you restart the app, you'll see:
+
+✅ Dashboard with REAL test failures
+✅ Real error messages from your backend
+✅ Real analysis from AI
+✅ Real analytics data
+✅ Real chat history
+✅ Real notifications
+✅ Everything working with REAL DATA!
+
+
+═════════════════════════════════════════════════════════════════════════════
+
+IMPORTANT: SAME WIFI NETWORK
+
+Your Android device MUST be on the same WiFi as your computer!
+
+✓ Both on same WiFi: WORKS
+✗ Different networks: WON'T WORK
+✗ Device on mobile data: WON'T WORK
+
+
+═════════════════════════════════════════════════════════════════════════════
+
+EXAMPLE
+
+If your ipconfig shows:
+   IPv4 Address. . . . . . . . . . . : 192.168.1.100
+
+Then in app Settings enter:
+   http://192.168.1.100:8005/api
+
+And BAM! Real data loads!
+
+
+═════════════════════════════════════════════════════════════════════════════
+
+STILL NOT WORKING?
+
+Check:
+   1. Are you on same WiFi network? (CRITICAL!)
+   2. Is Docker backend running? (It should be - it's in background)
+   3. Is IP address typed correctly? (No typos?)
+   4. Is port 8005 correct? (YES - that's Docker backend)
+
+Verify backend is running:
+   On your computer, open browser
+   Go to: http://localhost:8005/api/failures
+   If you see JSON data → backend is RUNNING
+   If error → something's wrong with backend
+
+
+═════════════════════════════════════════════════════════════════════════════
+
+STILL NEED HELP?
+
+If backend returns error:
+   docker ps | grep ddn-dashboard-api
+   Should show "Up" and "Healthy"
+
+If not running, restart:
+   docker-compose restart ddn-dashboard-api
+
+If still issues:
+   docker logs ddn-dashboard-api
+   Shows what's happening in backend
+
+
+═════════════════════════════════════════════════════════════════════════════
+
+QUICK SUMMARY:
+
+1. Open CMD → ipconfig → copy IPv4 Address
+2. Open app → Settings → update endpoint
+3. Close and reopen app
+4. See REAL DATA! 🎉
+
+That's it!
+
+═════════════════════════════════════════════════════════════════════════════

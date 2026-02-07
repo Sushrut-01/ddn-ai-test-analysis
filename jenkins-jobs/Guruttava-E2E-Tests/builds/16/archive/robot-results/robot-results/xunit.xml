@@ -1,0 +1,255 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="Guruttava_Android_E2E_Tests" tests="78" errors="0" failures="78" skipped="0" time="1558.196" timestamp="2026-01-24T06:18:39.425040">
+<testsuite name="E2EAudio" tests="20" errors="0" failures="20" skipped="0" time="527.164" timestamp="2026-01-24T06:18:43.431337">
+<testcase classname="Guruttava_Android_E2E_Tests.E2EAudio" name="End-to-End Integration Create and Publish Music Track in Web CRM and Verify Playback in Mobile App" time="29.508">
+<failure message="NoSuchDriverException: Message: Unable to obtain driver for chrome; For documentation on this error, please visit: https://www.selenium.dev/documentation/webdriver/troubleshooting/errors/driver_location&#10;" type="AssertionError"/>
+</testcase>
+<testcase classname="Guruttava_Android_E2E_Tests.E2EAudio" name="Unpublish Music Track And Validate In Mobile App" time="23.303">
+<failure message="NoSuchDriverException: Message: Unable to obtain driver for chrome; For documentation on this error, please visit: https://www.selenium.dev/documentation/webdriver/troubleshooting/errors/driver_location&#10;" type="AssertionError"/>
+</testcase>
+<testcase classname="Guruttava_Android_E2E_Tests.E2EAudio" name="End-to-End Integration Create and Publish Podcast in Web CRM and Verify Playback in Mobile App" time="22.989">
+<failure message="NoSuchDriverException: Message: Unable to obtain driver for chrome; For documentation on this error, please visit: https://www.selenium.dev/documentation/webdriver/troubleshooting/errors/driver_location&#10;" type="AssertionError"/>
+</testcase>
+<testcase classname="Guruttava_Android_E2E_Tests.E2EAudio" name="Validate that the mobile app does not display unpublished podcast track" time="21.347">
+<failure message="NoSuchDriverException: Message: Unable to obtain driver for chrome; For documentation on this error, please visit: https://www.selenium.dev/documentation/webdriver/troubleshooting/errors/driver_location&#10;" type="AssertionError"/>
+</testcase>
+<testcase classname="Guruttava_Android_E2E_Tests.E2EAudio" name="Validate mobile app does not show deleted Podcast tracks" time="22.980">
+<failure message="NoSuchDriverException: Message: Unable to obtain driver for chrome; For documentation on this error, please visit: https://www.selenium.dev/documentation/webdriver/troubleshooting/errors/driver_location&#10;" type="AssertionError"/>
+</testcase>
+<testcase classname="Guruttava_Android_E2E_Tests.E2EAudio" name="Validate mobile app does not show deleted Music tracks" time="22.591">
+<failure message="NoSuchDriverException: Message: Unable to obtain driver for chrome; For documentation on this error, please visit: https://www.selenium.dev/documentation/webdriver/troubleshooting/errors/driver_location&#10;" type="AssertionError"/>
+</testcase>
+<testcase classname="Guruttava_Android_E2E_Tests.E2EAudio" name="Validate Editing and Publishing of Music Track in Web CMS and Verify in Mobile App" time="22.695">
+<failure message="NoSuchDriverException: Message: Unable to obtain driver for chrome; For documentation on this error, please visit: https://www.selenium.dev/documentation/webdriver/troubleshooting/errors/driver_location&#10;" type="AssertionError"/>
+</testcase>
+<testcase classname="Guruttava_Android_E2E_Tests.E2EAudio" name="Validate Editing and Publishing of Podcast Track in Web CMS and Verify in Mobile App" time="19.652">
+<failure message="NoSuchDriverException: Message: Unable to obtain driver for chrome; For documentation on this error, please visit: https://www.selenium.dev/documentation/webdriver/troubleshooting/errors/driver_location&#10;" type="AssertionError"/>
+</testcase>
+<testcase classname="Guruttava_Android_E2E_Tests.E2EAudio" name="Delete Music Track And Verify Removal From Mobile App" time="17.996">
+<failure message="NoSuchDriverException: Message: Unable to obtain driver for chrome; For documentation on this error, please visit: https://www.selenium.dev/documentation/webdriver/troubleshooting/errors/driver_location&#10;" type="AssertionError"/>
+</testcase>
+<testcase classname="Guruttava_Android_E2E_Tests.E2EAudio" name="Delete Podcast Track And Verify Removal From Mobile App" time="19.158">
+<failure message="NoSuchDriverException: Message: Unable to obtain driver for chrome; For documentation on this error, please visit: https://www.selenium.dev/documentation/webdriver/troubleshooting/errors/driver_location&#10;" type="AssertionError"/>
+</testcase>
+<testcase classname="Guruttava_Android_E2E_Tests.E2EAudio" name="Add Music Track With Same Track And Thumbnail For Both Languages" time="17.876">
+<failure message="NoSuchDriverException: Message: Unable to obtain driver for chrome; For documentation on this error, please visit: https://www.selenium.dev/documentation/webdriver/troubleshooting/errors/driver_location&#10;" type="AssertionError"/>
+</testcase>
+<testcase classname="Guruttava_Android_E2E_Tests.E2EAudio" name="Add Podcast Track With Same Track And Thumbnail For Both Languages" time="22.882">
+<failure message="NoSuchDriverException: Message: Unable to obtain driver for chrome; For documentation on this error, please visit: https://www.selenium.dev/documentation/webdriver/troubleshooting/errors/driver_location&#10;" type="AssertionError"/>
+</testcase>
+<testcase classname="Guruttava_Android_E2E_Tests.E2EAudio" name="Add Music Track Without Author" time="20.036">
+<failure message="NoSuchDriverException: Message: Unable to obtain driver for chrome; For documentation on this error, please visit: https://www.selenium.dev/documentation/webdriver/troubleshooting/errors/driver_location&#10;" type="AssertionError"/>
+</testcase>
+<testcase classname="Guruttava_Android_E2E_Tests.E2EAudio" name="Add Podcast Track Without Speaker Should not be allowed" time="18.980">
+<failure message="NoSuchDriverException: Message: Unable to obtain driver for chrome; For documentation on this error, please visit: https://www.selenium.dev/documentation/webdriver/troubleshooting/errors/driver_location&#10;" type="AssertionError"/>
+</testcase>
+<testcase classname="Guruttava_Android_E2E_Tests.E2EAudio" name="Test Music Different Filter Functionality" time="19.054">
+<failure message="NoSuchDriverException: Message: Unable to obtain driver for chrome; For documentation on this error, please visit: https://www.selenium.dev/documentation/webdriver/troubleshooting/errors/driver_location&#10;" type="AssertionError"/>
+</testcase>
+<testcase classname="Guruttava_Android_E2E_Tests.E2EAudio" name="Test Podcast Different Filter Functionality" time="18.769">
+<failure message="NoSuchDriverException: Message: Unable to obtain driver for chrome; For documentation on this error, please visit: https://www.selenium.dev/documentation/webdriver/troubleshooting/errors/driver_location&#10;" type="AssertionError"/>
+</testcase>
+<testcase classname="Guruttava_Android_E2E_Tests.E2EAudio" name="Test Music Management Refresh Button Functionality" time="17.968">
+<failure message="NoSuchDriverException: Message: Unable to obtain driver for chrome; For documentation on this error, please visit: https://www.selenium.dev/documentation/webdriver/troubleshooting/errors/driver_location&#10;" type="AssertionError"/>
+</testcase>
+<testcase classname="Guruttava_Android_E2E_Tests.E2EAudio" name="Test Podcast Management Refresh Button Functionality" time="18.741">
+<failure message="NoSuchDriverException: Message: Unable to obtain driver for chrome; For documentation on this error, please visit: https://www.selenium.dev/documentation/webdriver/troubleshooting/errors/driver_location&#10;" type="AssertionError"/>
+</testcase>
+<testcase classname="Guruttava_Android_E2E_Tests.E2EAudio" name="Test Multiple Music Tracks Same Category Same Subcategory" time="19.023">
+<failure message="NoSuchDriverException: Message: Unable to obtain driver for chrome; For documentation on this error, please visit: https://www.selenium.dev/documentation/webdriver/troubleshooting/errors/driver_location&#10;" type="AssertionError"/>
+</testcase>
+<testcase classname="Guruttava_Android_E2E_Tests.E2EAudio" name="Add Audio in English language only" time="18.851">
+<failure message="NoSuchDriverException: Message: Unable to obtain driver for chrome; For documentation on this error, please visit: https://www.selenium.dev/documentation/webdriver/troubleshooting/errors/driver_location&#10;" type="AssertionError"/>
+</testcase>
+</testsuite>
+<testsuite name="E2EDhyankendra" tests="8" errors="0" failures="8" skipped="0" time="132.684" timestamp="2026-01-24T06:27:30.596577">
+<testcase classname="Guruttava_Android_E2E_Tests.E2EDhyankendra" name="Test Dhyankendra Different Filter Functionality" time="18.856">
+<failure message="NoSuchDriverException: Message: Unable to obtain driver for chrome; For documentation on this error, please visit: https://www.selenium.dev/documentation/webdriver/troubleshooting/errors/driver_location&#10;" type="AssertionError"/>
+</testcase>
+<testcase classname="Guruttava_Android_E2E_Tests.E2EDhyankendra" name="Test Dhyankendra Management Refresh Button Functionality" time="18.429">
+<failure message="NoSuchDriverException: Message: Unable to obtain driver for chrome; For documentation on this error, please visit: https://www.selenium.dev/documentation/webdriver/troubleshooting/errors/driver_location&#10;" type="AssertionError"/>
+</testcase>
+<testcase classname="Guruttava_Android_E2E_Tests.E2EDhyankendra" name="Sanchalak login to CMS application and as per the role and rights it should have access to left menu. News, Event, Dhyankendra added by own, Dhyansthali" time="17.537">
+<failure message="NoSuchDriverException: Message: Unable to obtain driver for chrome; For documentation on this error, please visit: https://www.selenium.dev/documentation/webdriver/troubleshooting/errors/driver_location&#10;" type="AssertionError"/>
+</testcase>
+<testcase classname="Guruttava_Android_E2E_Tests.E2EDhyankendra" name="Login from Mobile as Sadhak and register for Dhyankendra. Compare all the fields of Mobile with CMS." time="13.008">
+<failure message="MaxRetryError: HTTPConnectionPool(host='localhost', port=4723): Max retries exceeded with url: /session (Caused by NewConnectionError('&lt;urllib3.connection.HTTPConnection object at 0x725cada5ba80&gt;: Failed to establish a new connection: [Errno 111] Connection refused'))" type="AssertionError"/>
+</testcase>
+<testcase classname="Guruttava_Android_E2E_Tests.E2EDhyankendra" name="Sanchalak edits any field of Dhyankendra. Super Admin/ Acharya approves the changes requeted. Check refleciton in Mobile app." time="12.568">
+<failure message="MaxRetryError: HTTPConnectionPool(host='localhost', port=4723): Max retries exceeded with url: /session (Caused by NewConnectionError('&lt;urllib3.connection.HTTPConnection object at 0x725cad5027a0&gt;: Failed to establish a new connection: [Errno 111] Connection refused'))" type="AssertionError"/>
+</testcase>
+<testcase classname="Guruttava_Android_E2E_Tests.E2EDhyankendra" name="Change the Primary Sanchalak from Dhyankendra and add other sanchalak" time="18.302">
+<failure message="NoSuchDriverException: Message: Unable to obtain driver for chrome; For documentation on this error, please visit: https://www.selenium.dev/documentation/webdriver/troubleshooting/errors/driver_location&#10;" type="AssertionError"/>
+</testcase>
+<testcase classname="Guruttava_Android_E2E_Tests.E2EDhyankendra" name="Sanchalak edits any field of Dhyankendra. Super Admin/ Acharya Rejectes the changes requeted. check reflection in mobile app." time="12.582">
+<failure message="MaxRetryError: HTTPConnectionPool(host='localhost', port=4723): Max retries exceeded with url: /session (Caused by NewConnectionError('&lt;urllib3.connection.HTTPConnection object at 0x725cadbf96a0&gt;: Failed to establish a new connection: [Errno 111] Connection refused'))" type="AssertionError"/>
+</testcase>
+<testcase classname="Guruttava_Android_E2E_Tests.E2EDhyankendra" name="Super Admin changes Sanchalak1 of TC67's Dhyankendra to free Vaishali" time="18.819">
+<failure message="NoSuchDriverException: Message: Unable to obtain driver for chrome; For documentation on this error, please visit: https://www.selenium.dev/documentation/webdriver/troubleshooting/errors/driver_location&#10;" type="AssertionError"/>
+</testcase>
+</testsuite>
+<testsuite name="E2EEvents" tests="10" errors="0" failures="10" skipped="0" time="196.358" timestamp="2026-01-24T06:29:43.284361">
+<testcase classname="Guruttava_Android_E2E_Tests.E2EEvents" name="Verify the image upload validation in CMS for Events" time="18.044">
+<failure message="NoSuchDriverException: Message: Unable to obtain driver for chrome; For documentation on this error, please visit: https://www.selenium.dev/documentation/webdriver/troubleshooting/errors/driver_location&#10;" type="AssertionError"/>
+</testcase>
+<testcase classname="Guruttava_Android_E2E_Tests.E2EEvents" name="Verify that user is not able to publish event when publish date is selected after the event dates" time="18.672">
+<failure message="NoSuchDriverException: Message: Unable to obtain driver for chrome; For documentation on this error, please visit: https://www.selenium.dev/documentation/webdriver/troubleshooting/errors/driver_location&#10;" type="AssertionError"/>
+</testcase>
+<testcase classname="Guruttava_Android_E2E_Tests.E2EEvents" name="Verify that the user is able to add a English event, publish it in the CMS, and verify the english event details on the mobile app" time="17.864">
+<failure message="NoSuchDriverException: Message: Unable to obtain driver for chrome; For documentation on this error, please visit: https://www.selenium.dev/documentation/webdriver/troubleshooting/errors/driver_location&#10;" type="AssertionError"/>
+</testcase>
+<testcase classname="Guruttava_Android_E2E_Tests.E2EEvents" name="Verify that the user is able to add a Hindi event, publish it in the CMS, and verify the hindi event details on the mobile app" time="20.775">
+<failure message="NoSuchDriverException: Message: Unable to obtain driver for chrome; For documentation on this error, please visit: https://www.selenium.dev/documentation/webdriver/troubleshooting/errors/driver_location&#10;" type="AssertionError"/>
+</testcase>
+<testcase classname="Guruttava_Android_E2E_Tests.E2EEvents" name="Test Add Event Category from CMS and Add Events under that Category" time="18.761">
+<failure message="NoSuchDriverException: Message: Unable to obtain driver for chrome; For documentation on this error, please visit: https://www.selenium.dev/documentation/webdriver/troubleshooting/errors/driver_location&#10;" type="AssertionError"/>
+</testcase>
+<testcase classname="Guruttava_Android_E2E_Tests.E2EEvents" name="Test Unpublish Event from CMS and Verify in Mobile App" time="19.305">
+<failure message="NoSuchDriverException: Message: Unable to obtain driver for chrome; For documentation on this error, please visit: https://www.selenium.dev/documentation/webdriver/troubleshooting/errors/driver_location&#10;" type="AssertionError"/>
+</testcase>
+<testcase classname="Guruttava_Android_E2E_Tests.E2EEvents" name="Test Event Category Tab In Mobile App" time="22.783">
+<failure message="Could not open Gurutattva App after 3 attempts" type="AssertionError"/>
+</testcase>
+<testcase classname="Guruttava_Android_E2E_Tests.E2EEvents" name="Test Check Local Event Filter Functionality" time="18.930">
+<failure message="NoSuchDriverException: Message: Unable to obtain driver for chrome; For documentation on this error, please visit: https://www.selenium.dev/documentation/webdriver/troubleshooting/errors/driver_location&#10;" type="AssertionError"/>
+</testcase>
+<testcase classname="Guruttava_Android_E2E_Tests.E2EEvents" name="Sanchalak adds local Event, once Acharya/Super Admin Approves it then only that Event is reflected in Mobile app uncer Local Event section." time="19.729">
+<failure message="NoSuchDriverException: Message: Unable to obtain driver for chrome; For documentation on this error, please visit: https://www.selenium.dev/documentation/webdriver/troubleshooting/errors/driver_location&#10;" type="AssertionError"/>
+</testcase>
+<testcase classname="Guruttava_Android_E2E_Tests.E2EEvents" name="Sanchalak adds local event and Acharya/Super Admin Rejects that event." time="18.310">
+<failure message="NoSuchDriverException: Message: Unable to obtain driver for chrome; For documentation on this error, please visit: https://www.selenium.dev/documentation/webdriver/troubleshooting/errors/driver_location&#10;" type="AssertionError"/>
+</testcase>
+</testsuite>
+<testsuite name="E2EHindi" tests="1" errors="0" failures="1" skipped="0" time="33.670" timestamp="2026-01-24T06:32:59.643028">
+<testcase classname="Guruttava_Android_E2E_Tests.E2EHindi" name="Test Mobile Language Change To Hindi" time="30.962">
+<failure message="MaxRetryError: HTTPConnectionPool(host='localhost', port=4723): Max retries exceeded with url: /session (Caused by NewConnectionError('&lt;urllib3.connection.HTTPConnection object at 0x725cad5039b0&gt;: Failed to establish a new connection: [Errno 111] Connection refused'))" type="AssertionError"/>
+</testcase>
+</testsuite>
+<testsuite name="E2ENamkaran" tests="16" errors="0" failures="16" skipped="0" time="206.355" timestamp="2026-01-24T06:33:33.313776">
+<testcase classname="Guruttava_Android_E2E_Tests.E2ENamkaran" name="Verify user is able to add Bride Namkaran with NO Option on the mobile app and verify the details in CSM" time="12.963">
+<failure message="MaxRetryError: HTTPConnectionPool(host='localhost', port=4723): Max retries exceeded with url: /session (Caused by NewConnectionError('&lt;urllib3.connection.HTTPConnection object at 0x725cad501e10&gt;: Failed to establish a new connection: [Errno 111] Connection refused'))" type="AssertionError"/>
+</testcase>
+<testcase classname="Guruttava_Android_E2E_Tests.E2ENamkaran" name="Verify user is able to add Business Namkaran with NO Option on the mobile app and verify the details in CSM" time="12.719">
+<failure message="MaxRetryError: HTTPConnectionPool(host='localhost', port=4723): Max retries exceeded with url: /session (Caused by NewConnectionError('&lt;urllib3.connection.HTTPConnection object at 0x725cadbf9150&gt;: Failed to establish a new connection: [Errno 111] Connection refused'))" type="AssertionError"/>
+</testcase>
+<testcase classname="Guruttava_Android_E2E_Tests.E2ENamkaran" name="Verify user is able to add House Namkaran with NO Option on the mobile app and verify the details in CSM" time="13.047">
+<failure message="MaxRetryError: HTTPConnectionPool(host='localhost', port=4723): Max retries exceeded with url: /session (Caused by NewConnectionError('&lt;urllib3.connection.HTTPConnection object at 0x725cadbf9370&gt;: Failed to establish a new connection: [Errno 111] Connection refused'))" type="AssertionError"/>
+</testcase>
+<testcase classname="Guruttava_Android_E2E_Tests.E2ENamkaran" name="Verify user is able to add Child Namkaran with NO Option on the mobile app and verify the details in CSM" time="13.007">
+<failure message="MaxRetryError: HTTPConnectionPool(host='localhost', port=4723): Max retries exceeded with url: /session (Caused by NewConnectionError('&lt;urllib3.connection.HTTPConnection object at 0x725cadbf89e0&gt;: Failed to establish a new connection: [Errno 111] Connection refused'))" type="AssertionError"/>
+</testcase>
+<testcase classname="Guruttava_Android_E2E_Tests.E2ENamkaran" name="Verify user is able to add Bride Namkaran with YES Option on the mobile app and verify the details in CSM" time="12.658">
+<failure message="MaxRetryError: HTTPConnectionPool(host='localhost', port=4723): Max retries exceeded with url: /session (Caused by NewConnectionError('&lt;urllib3.connection.HTTPConnection object at 0x725cadbf8af0&gt;: Failed to establish a new connection: [Errno 111] Connection refused'))" type="AssertionError"/>
+</testcase>
+<testcase classname="Guruttava_Android_E2E_Tests.E2ENamkaran" name="Verify user is able to add Business Namkaran with YES Option on the mobile app and verify the details in CSM" time="12.562">
+<failure message="MaxRetryError: HTTPConnectionPool(host='localhost', port=4723): Max retries exceeded with url: /session (Caused by NewConnectionError('&lt;urllib3.connection.HTTPConnection object at 0x725cadbf8e20&gt;: Failed to establish a new connection: [Errno 111] Connection refused'))" type="AssertionError"/>
+</testcase>
+<testcase classname="Guruttava_Android_E2E_Tests.E2ENamkaran" name="Verify user is able to add House Namkaran with YES Option on the mobile app and verify the details in CSM" time="12.433">
+<failure message="MaxRetryError: HTTPConnectionPool(host='localhost', port=4723): Max retries exceeded with url: /session (Caused by NewConnectionError('&lt;urllib3.connection.HTTPConnection object at 0x725cadbf9150&gt;: Failed to establish a new connection: [Errno 111] Connection refused'))" type="AssertionError"/>
+</testcase>
+<testcase classname="Guruttava_Android_E2E_Tests.E2ENamkaran" name="Verify user is able to add Child Namkaran with YES Option on the mobile app and verify the details in CSM" time="12.459">
+<failure message="MaxRetryError: HTTPConnectionPool(host='localhost', port=4723): Max retries exceeded with url: /session (Caused by NewConnectionError('&lt;urllib3.connection.HTTPConnection object at 0x725cadbf9370&gt;: Failed to establish a new connection: [Errno 111] Connection refused'))" type="AssertionError"/>
+</testcase>
+<testcase classname="Guruttava_Android_E2E_Tests.E2ENamkaran" name="Verify that admin user is able to approve Bride Namkaran in CMS and verify the details on mobile app" time="12.501">
+<failure message="MaxRetryError: HTTPConnectionPool(host='localhost', port=4723): Max retries exceeded with url: /session (Caused by NewConnectionError('&lt;urllib3.connection.HTTPConnection object at 0x725cadbf89e0&gt;: Failed to establish a new connection: [Errno 111] Connection refused'))" type="AssertionError"/>
+</testcase>
+<testcase classname="Guruttava_Android_E2E_Tests.E2ENamkaran" name="Verify that admin user is able to approve Business Namkaran in CMS and verify the details on mobile app" time="12.456">
+<failure message="MaxRetryError: HTTPConnectionPool(host='localhost', port=4723): Max retries exceeded with url: /session (Caused by NewConnectionError('&lt;urllib3.connection.HTTPConnection object at 0x725caddf5480&gt;: Failed to establish a new connection: [Errno 111] Connection refused'))" type="AssertionError"/>
+</testcase>
+<testcase classname="Guruttava_Android_E2E_Tests.E2ENamkaran" name="Verify that admin user is able to approve House Namkaran in CMS and verify the details on mobile app" time="12.693">
+<failure message="MaxRetryError: HTTPConnectionPool(host='localhost', port=4723): Max retries exceeded with url: /session (Caused by NewConnectionError('&lt;urllib3.connection.HTTPConnection object at 0x725cad5018c0&gt;: Failed to establish a new connection: [Errno 111] Connection refused'))" type="AssertionError"/>
+</testcase>
+<testcase classname="Guruttava_Android_E2E_Tests.E2ENamkaran" name="Verify that admin user is able to approve Child Namkaran in CMS and verify the details on mobile app" time="12.577">
+<failure message="MaxRetryError: HTTPConnectionPool(host='localhost', port=4723): Max retries exceeded with url: /session (Caused by NewConnectionError('&lt;urllib3.connection.HTTPConnection object at 0x725cadbf9480&gt;: Failed to establish a new connection: [Errno 111] Connection refused'))" type="AssertionError"/>
+</testcase>
+<testcase classname="Guruttava_Android_E2E_Tests.E2ENamkaran" name="Verify that admin user is able to reject Bride Namkaran in CMS and verify the details on mobile app" time="12.564">
+<failure message="MaxRetryError: HTTPConnectionPool(host='localhost', port=4723): Max retries exceeded with url: /session (Caused by NewConnectionError('&lt;urllib3.connection.HTTPConnection object at 0x725cad502030&gt;: Failed to establish a new connection: [Errno 111] Connection refused'))" type="AssertionError"/>
+</testcase>
+<testcase classname="Guruttava_Android_E2E_Tests.E2ENamkaran" name="Verify that admin user is able to reject Business Namkaran in CMS and verify the details on mobile app" time="12.457">
+<failure message="MaxRetryError: HTTPConnectionPool(host='localhost', port=4723): Max retries exceeded with url: /session (Caused by NewConnectionError('&lt;urllib3.connection.HTTPConnection object at 0x725cace80af0&gt;: Failed to establish a new connection: [Errno 111] Connection refused'))" type="AssertionError"/>
+</testcase>
+<testcase classname="Guruttava_Android_E2E_Tests.E2ENamkaran" name="Verify that admin user is able to reject House Namkaran in CMS and verify the details on mobile app" time="12.577">
+<failure message="MaxRetryError: HTTPConnectionPool(host='localhost', port=4723): Max retries exceeded with url: /session (Caused by NewConnectionError('&lt;urllib3.connection.HTTPConnection object at 0x725cace828b0&gt;: Failed to establish a new connection: [Errno 111] Connection refused'))" type="AssertionError"/>
+</testcase>
+<testcase classname="Guruttava_Android_E2E_Tests.E2ENamkaran" name="Verify that admin user is able to reject Child Namkaran in CMS and verify the details on mobile app" time="12.650">
+<failure message="MaxRetryError: HTTPConnectionPool(host='localhost', port=4723): Max retries exceeded with url: /session (Caused by NewConnectionError('&lt;urllib3.connection.HTTPConnection object at 0x725cad502e00&gt;: Failed to establish a new connection: [Errno 111] Connection refused'))" type="AssertionError"/>
+</testcase>
+</testsuite>
+<testsuite name="E2ENews" tests="9" errors="0" failures="9" skipped="0" time="240.958" timestamp="2026-01-24T06:36:59.670044">
+<testcase classname="Guruttava_Android_E2E_Tests.E2ENews" name="Verify the image upload validation in CMS" time="18.043">
+<failure message="NoSuchDriverException: Message: Unable to obtain driver for chrome; For documentation on this error, please visit: https://www.selenium.dev/documentation/webdriver/troubleshooting/errors/driver_location&#10;" type="AssertionError"/>
+</testcase>
+<testcase classname="Guruttava_Android_E2E_Tests.E2ENews" name="Verify that the user is able to add a English news, publish it in the CMS, and verify the english news details on the mobile app" time="33.456">
+<failure message="NoSuchDriverException: Message: Unable to obtain driver for chrome; For documentation on this error, please visit: https://www.selenium.dev/documentation/webdriver/troubleshooting/errors/driver_location&#10;" type="AssertionError"/>
+</testcase>
+<testcase classname="Guruttava_Android_E2E_Tests.E2ENews" name="Verify that the user is able to add a Hindi news, publish it in the CMS, and verify the hindi news details on the mobile app" time="44.201">
+<failure message="NoSuchDriverException: Message: Unable to obtain driver for chrome; For documentation on this error, please visit: https://www.selenium.dev/documentation/webdriver/troubleshooting/errors/driver_location&#10;" type="AssertionError"/>
+</testcase>
+<testcase classname="Guruttava_Android_E2E_Tests.E2ENews" name="Test Unpublish News from CMS and Verify in Mobile App" time="19.775">
+<failure message="NoSuchDriverException: Message: Unable to obtain driver for chrome; For documentation on this error, please visit: https://www.selenium.dev/documentation/webdriver/troubleshooting/errors/driver_location&#10;" type="AssertionError"/>
+</testcase>
+<testcase classname="Guruttava_Android_E2E_Tests.E2ENews" name="Test News Category Tab In Mobile App" time="22.685">
+<failure message="Could not open Gurutattva App after 3 attempts" type="AssertionError"/>
+</testcase>
+<testcase classname="Guruttava_Android_E2E_Tests.E2ENews" name="Test Check Local News Filter Functionality" time="22.957">
+<failure message="Could not open Gurutattva App after 3 attempts" type="AssertionError"/>
+</testcase>
+<testcase classname="Guruttava_Android_E2E_Tests.E2ENews" name="Test Sanchalak Adds Local News And Super Admin Approves It" time="24.229">
+<failure message="NoSuchDriverException: Message: Unable to obtain driver for chrome; For documentation on this error, please visit: https://www.selenium.dev/documentation/webdriver/troubleshooting/errors/driver_location&#10;" type="AssertionError"/>
+</testcase>
+<testcase classname="Guruttava_Android_E2E_Tests.E2ENews" name="Test Sanchalak Adds Local News And Super Admin Rejects It" time="28.890">
+<failure message="NoSuchDriverException: Message: Unable to obtain driver for chrome; For documentation on this error, please visit: https://www.selenium.dev/documentation/webdriver/troubleshooting/errors/driver_location&#10;" type="AssertionError"/>
+</testcase>
+<testcase classname="Guruttava_Android_E2E_Tests.E2ENews" name="Add News Category from CMS. Add News uder that category. check list of all categories in the Mobile app under Category tab." time="24.321">
+<failure message="NoSuchDriverException: Message: Unable to obtain driver for chrome; For documentation on this error, please visit: https://www.selenium.dev/documentation/webdriver/troubleshooting/errors/driver_location&#10;" type="AssertionError"/>
+</testcase>
+</testsuite>
+<testsuite name="E2EPrayer" tests="3" errors="0" failures="3" skipped="0" time="41.537" timestamp="2026-01-24T06:41:00.629318">
+<testcase classname="Guruttava_Android_E2E_Tests.E2EPrayer" name="End-to-End Integration: Verify that user is able to add Prayer with Self Option on the mobile app and verify it in CMS" time="12.795">
+<failure message="MaxRetryError: HTTPConnectionPool(host='localhost', port=4723): Max retries exceeded with url: /session (Caused by NewConnectionError('&lt;urllib3.connection.HTTPConnection object at 0x725cad503f00&gt;: Failed to establish a new connection: [Errno 111] Connection refused'))" type="AssertionError"/>
+</testcase>
+<testcase classname="Guruttava_Android_E2E_Tests.E2EPrayer" name="End-to-End Integration:Verify that user is able to add Prayer with Other Option on the mobile app and verify it in CMS" time="12.634">
+<failure message="MaxRetryError: HTTPConnectionPool(host='localhost', port=4723): Max retries exceeded with url: /session (Caused by NewConnectionError('&lt;urllib3.connection.HTTPConnection object at 0x725caddf58c0&gt;: Failed to establish a new connection: [Errno 111] Connection refused'))" type="AssertionError"/>
+</testcase>
+<testcase classname="Guruttava_Android_E2E_Tests.E2EPrayer" name="Verify that user is able to export the Prayer in CMS" time="12.622">
+<failure message="MaxRetryError: HTTPConnectionPool(host='localhost', port=4723): Max retries exceeded with url: /session (Caused by NewConnectionError('&lt;urllib3.connection.HTTPConnection object at 0x725cad501bf0&gt;: Failed to establish a new connection: [Errno 111] Connection refused'))" type="AssertionError"/>
+</testcase>
+</testsuite>
+<testsuite name="E2ERegistration" tests="6" errors="0" failures="6" skipped="0" time="80.645" timestamp="2026-01-24T06:41:42.167852">
+<testcase classname="Guruttava_Android_E2E_Tests.E2ERegistration" name="Verify that quick registration on the mobile app reflects correctly in the CMS and user details are displayed properly in profile and flip card." time="12.632">
+<failure message="MaxRetryError: HTTPConnectionPool(host='localhost', port=4723): Max retries exceeded with url: /session (Caused by NewConnectionError('&lt;urllib3.connection.HTTPConnection object at 0x725caddf4af0&gt;: Failed to establish a new connection: [Errno 111] Connection refused'))" type="AssertionError"/>
+</testcase>
+<testcase classname="Guruttava_Android_E2E_Tests.E2ERegistration" name="Verify user is not able to do quick registration on mobile app with already used email id and phone number" time="12.520">
+<failure message="MaxRetryError: HTTPConnectionPool(host='localhost', port=4723): Max retries exceeded with url: /session (Caused by NewConnectionError('&lt;urllib3.connection.HTTPConnection object at 0x725cace82360&gt;: Failed to establish a new connection: [Errno 111] Connection refused'))" type="AssertionError"/>
+</testcase>
+<testcase classname="Guruttava_Android_E2E_Tests.E2ERegistration" name="Verify that the quick registration user is not able to access Events, Dhyan Kendra, and Podcasts , Home screen on the mobile app, and that a pop-up message is displayed" time="12.531">
+<failure message="MaxRetryError: HTTPConnectionPool(host='localhost', port=4723): Max retries exceeded with url: /session (Caused by NewConnectionError('&lt;urllib3.connection.HTTPConnection object at 0x725cace81590&gt;: Failed to establish a new connection: [Errno 111] Connection refused'))" type="AssertionError"/>
+</testcase>
+<testcase classname="Guruttava_Android_E2E_Tests.E2ERegistration" name="Verify that the quick registration user is able to become a member on the mobile app" time="12.554">
+<failure message="MaxRetryError: HTTPConnectionPool(host='localhost', port=4723): Max retries exceeded with url: /session (Caused by NewConnectionError('&lt;urllib3.connection.HTTPConnection object at 0x725cace80f30&gt;: Failed to establish a new connection: [Errno 111] Connection refused'))" type="AssertionError"/>
+</testcase>
+<testcase classname="Guruttava_Android_E2E_Tests.E2ERegistration" name="Verify that Community registration on the mobile app reflects correctly in the CMS and user details are displayed properly in profile and flip card." time="12.499">
+<failure message="MaxRetryError: HTTPConnectionPool(host='localhost', port=4723): Max retries exceeded with url: /session (Caused by NewConnectionError('&lt;urllib3.connection.HTTPConnection object at 0x725cace82690&gt;: Failed to establish a new connection: [Errno 111] Connection refused'))" type="AssertionError"/>
+</testcase>
+<testcase classname="Guruttava_Android_E2E_Tests.E2ERegistration" name="Verify that the community registered user is able to access Events, Dhyan Kendra, and Podcasts on the mobile app, and ensure that no pop-up message is displayed" time="12.496">
+<failure message="MaxRetryError: HTTPConnectionPool(host='localhost', port=4723): Max retries exceeded with url: /session (Caused by NewConnectionError('&lt;urllib3.connection.HTTPConnection object at 0x725cace806b0&gt;: Failed to establish a new connection: [Errno 111] Connection refused'))" type="AssertionError"/>
+</testcase>
+</testsuite>
+<testsuite name="E2ERoleRight" tests="5" errors="0" failures="5" skipped="0" time="94.806" timestamp="2026-01-24T06:43:02.814330">
+<testcase classname="Guruttava_Android_E2E_Tests.E2ERoleRight" name="Test Prayer Coordinator Role Access" time="19.119">
+<failure message="NoSuchDriverException: Message: Unable to obtain driver for chrome; For documentation on this error, please visit: https://www.selenium.dev/documentation/webdriver/troubleshooting/errors/driver_location&#10;" type="AssertionError"/>
+</testcase>
+<testcase classname="Guruttava_Android_E2E_Tests.E2ERoleRight" name="Test Global Event Coordinator Role Access" time="19.518">
+<failure message="NoSuchDriverException: Message: Unable to obtain driver for chrome; For documentation on this error, please visit: https://www.selenium.dev/documentation/webdriver/troubleshooting/errors/driver_location&#10;" type="AssertionError"/>
+</testcase>
+<testcase classname="Guruttava_Android_E2E_Tests.E2ERoleRight" name="Test Acharya Role Access" time="18.568">
+<failure message="NoSuchDriverException: Message: Unable to obtain driver for chrome; For documentation on this error, please visit: https://www.selenium.dev/documentation/webdriver/troubleshooting/errors/driver_location&#10;" type="AssertionError"/>
+</testcase>
+<testcase classname="Guruttava_Android_E2E_Tests.E2ERoleRight" name="Test Maha Acharya Role Access" time="17.982">
+<failure message="NoSuchDriverException: Message: Unable to obtain driver for chrome; For documentation on this error, please visit: https://www.selenium.dev/documentation/webdriver/troubleshooting/errors/driver_location&#10;" type="AssertionError"/>
+</testcase>
+<testcase classname="Guruttava_Android_E2E_Tests.E2ERoleRight" name="Test Namkaran Coordinator Role Access" time="18.725">
+<failure message="NoSuchDriverException: Message: Unable to obtain driver for chrome; For documentation on this error, please visit: https://www.selenium.dev/documentation/webdriver/troubleshooting/errors/driver_location&#10;" type="AssertionError"/>
+</testcase>
+</testsuite>
+</testsuite>

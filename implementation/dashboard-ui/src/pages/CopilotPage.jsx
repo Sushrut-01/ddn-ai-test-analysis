@@ -16,7 +16,8 @@ import {
   ListItemButton,
   Collapse,
   Alert,
-  Snackbar
+  Snackbar,
+  Tooltip
 } from '@mui/material'
 import {
   Send as SendIcon,
@@ -57,8 +58,94 @@ function CopilotPage() {
   })
   const [error, setError] = useState(null)
   const [snackbarOpen, setSnackbarOpen] = useState(false)
+  const [attachedFile, setAttachedFile] = useState(null)
+  const [isListening, setIsListening] = useState(false)
   const messagesEndRef = useRef(null)
   const chatMessagesRef = useRef(null)
+  const fileInputRef = useRef(null)
+  const recognitionRef = useRef(null)
+
+  // Initialize Speech Recognition
+  useEffect(() => {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition
+    if (SpeechRecognition) {
+      recognitionRef.current = new SpeechRecognition()
+      recognitionRef.current.continuous = false
+      recognitionRef.current.interimResults = false
+      recognitionRef.current.lang = 'en-US'
+
+      recognitionRef.current.onresult = (event) => {
+        const transcript = event.results[0][0].transcript
+        setInputValue(prev => prev + ' ' + transcript)
+        setIsListening(false)
+      }
+
+      recognitionRef.current.onerror = (event) => {
+        console.error('Speech recognition error:', event.error)
+        setIsListening(false)
+        if (event.error === 'not-allowed') {
+          setError('Microphone access denied. Please enable it in browser settings.')
+        } else {
+          setError('Voice input failed. Please try again.')
+        }
+        setSnackbarOpen(true)
+      }
+
+      recognitionRef.current.onend = () => {
+        setIsListening(false)
+      }
+    }
+
+    return () => {
+      if (recognitionRef.current) {
+        recognitionRef.current.abort()
+      }
+    }
+  }, [])
+
+  // Handle voice input toggle
+  const handleVoiceInput = () => {
+    if (!recognitionRef.current) {
+      setError('Voice input is not supported in this browser. Try Chrome or Edge.')
+      setSnackbarOpen(true)
+      return
+    }
+
+    if (isListening) {
+      recognitionRef.current.stop()
+      setIsListening(false)
+    } else {
+      try {
+        recognitionRef.current.start()
+        setIsListening(true)
+      } catch (err) {
+        console.error('Voice start error:', err)
+        setError('Could not start voice input. Please try again.')
+        setSnackbarOpen(true)
+      }
+    }
+  }
+
+  // Handle file attachment
+  const handleFileSelect = (event) => {
+    const file = event.target.files[0]
+    if (file) {
+      // Check file size (max 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        setError('File size must be less than 5MB')
+        setSnackbarOpen(true)
+        return
+      }
+      setAttachedFile(file)
+    }
+  }
+
+  const handleRemoveFile = () => {
+    setAttachedFile(null)
+    if (fileInputRef.current) {
+      fileInputRef.current.value = ''
+    }
+  }
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -68,26 +155,44 @@ function CopilotPage() {
     scrollToBottom()
   }, [messages])
 
-  const handleSendMessage = async () => {
-    if (!inputValue.trim()) return
+  const handleSendMessage = async (directMessage = null) => {
+    const messageToSend = directMessage || inputValue
+    if (!messageToSend.trim() && !attachedFile) return
+
+    // Read attached file if present
+    let fileContent = ''
+    let displayMessage = messageToSend
+    if (attachedFile) {
+      try {
+        fileContent = await attachedFile.text()
+        displayMessage = `${messageToSend}\n\n📎 Attached: ${attachedFile.name}`
+      } catch (e) {
+        console.error('Error reading file:', e)
+      }
+    }
 
     const userMessage = {
       id: Date.now(),
       role: 'user',
-      content: inputValue,
+      content: displayMessage,
       timestamp: new Date()
     }
 
-    const currentInput = inputValue
+    const currentInput = attachedFile
+      ? `${messageToSend}\n\nFile: ${attachedFile.name}\n\`\`\`\n${fileContent}\n\`\`\``
+      : messageToSend
     setMessages(prev => [...prev, userMessage])
     setInputValue('')
+    setAttachedFile(null)
+    if (fileInputRef.current) fileInputRef.current.value = ''
     setIsThinking(true)
     setError(null)
 
     try {
       // Get conversation history for context
+      // Map 'ai' role to 'assistant' for OpenAI API compatibility
       const conversationHistory = messages.map(msg => ({
-        role: msg.role,
+        role: msg.role === 'ai' ? 'assistant' : msg.role,
         content: msg.content
       }))
 
@@ -97,7 +202,8 @@ function CopilotPage() {
         conversation_history: conversationHistory,
         context: {
           project: 'DDN AI Test Analysis',
-          capabilities: ['test_analysis', 'code_debugging', 'test_generation']
+          capabilities: ['test_analysis', 'code_debugging', 'test_generation'],
+          has_attachment: !!attachedFile
         }
       })
 
@@ -186,13 +292,11 @@ function CopilotPage() {
   }
 
   const handleQuickAction = (action) => {
-    setInputValue(action)
-    setTimeout(() => handleSendMessage(), 100)
+    handleSendMessage(action)
   }
 
   const handleToolClick = (toolName) => {
-    setInputValue(`Run ${toolName} on my code`)
-    setTimeout(() => handleSendMessage(), 100)
+    handleSendMessage(`Run ${toolName} on my code`)
   }
 
   const toggleToolSection = (section) => {
@@ -422,12 +526,50 @@ function CopilotPage() {
                 }
               }}
             >
-              <IconButton size="small" sx={{ color: theme.textSecondary }}>
-                <AttachFileIcon fontSize="small" />
-              </IconButton>
-              <IconButton size="small" sx={{ color: theme.textSecondary }}>
-                <MicIcon fontSize="small" />
-              </IconButton>
+              <input
+                type="file"
+                ref={fileInputRef}
+                onChange={handleFileSelect}
+                style={{ display: 'none' }}
+                accept=".txt,.js,.jsx,.ts,.tsx,.py,.java,.json,.md,.log,.csv,.xml,.html,.css"
+              />
+              <Tooltip title="Attach File">
+                <IconButton
+                  size="small"
+                  sx={{ color: attachedFile ? '#667eea' : theme.textSecondary }}
+                  onClick={() => fileInputRef.current?.click()}
+                >
+                  <AttachFileIcon fontSize="small" />
+                </IconButton>
+              </Tooltip>
+              <Tooltip title={isListening ? "Stop listening" : "Voice input"}>
+                <IconButton
+                  size="small"
+                  onClick={handleVoiceInput}
+                  sx={{
+                    color: isListening ? '#ef4444' : theme.textSecondary,
+                    animation: isListening ? 'pulse 1s infinite' : 'none',
+                    '@keyframes pulse': {
+                      '0%, 100%': { transform: 'scale(1)' },
+                      '50%': { transform: 'scale(1.1)' }
+                    }
+                  }}
+                >
+                  <MicIcon fontSize="small" />
+                </IconButton>
+              </Tooltip>
+              {attachedFile && (
+                <Chip
+                  size="small"
+                  label={attachedFile.name}
+                  onDelete={handleRemoveFile}
+                  sx={{
+                    bgcolor: 'rgba(102, 126, 234, 0.1)',
+                    color: '#667eea',
+                    '& .MuiChip-deleteIcon': { color: '#667eea' }
+                  }}
+                />
+              )}
               <TextField
                 fullWidth
                 multiline
@@ -446,10 +588,10 @@ function CopilotPage() {
                 }}
               />
               <IconButton
-                onClick={handleSendMessage}
-                disabled={!inputValue.trim() || isThinking}
+                onClick={() => handleSendMessage()}
+                disabled={(!inputValue.trim() && !attachedFile) || isThinking}
                 sx={{
-                  background: inputValue.trim() && !isThinking
+                  background: (inputValue.trim() || attachedFile) && !isThinking
                     ? 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'
                     : 'transparent',
                   color: 'white',

@@ -109,6 +109,8 @@ services:
     container_name: ddn-flower
     ports:
       - "5555:5555"
+    volumes:
+      - ./implementation:/app  # Auto-reload on code changes
     environment:
       - REDIS_URL=redis://redis:6379/0
     networks:
@@ -150,6 +152,8 @@ services:
       context: ./implementation
       dockerfile: Dockerfile
     container_name: ddn-celery-worker
+    volumes:
+      - ./implementation:/app  # Auto-reload on code changes
     environment:
       - REDIS_URL=redis://redis:6379/0
       - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
@@ -180,6 +184,8 @@ services:
     container_name: ddn-langgraph
     ports:
       - "5000:5000"
+    volumes:
+      - ./implementation:/app  # Auto-reload on code changes
     environment:
       - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
       - OPENAI_API_KEY=${OPENAI_API_KEY}
@@ -223,6 +229,9 @@ services:
     environment:
       - MONGODB_URI=${MONGODB_URI}
       - MONGODB_DB=ddn_tests
+    dns:
+      - 8.8.8.8
+      - 1.1.1.1
     networks:
       - ddn-network
     restart: unless-stopped
@@ -256,6 +265,8 @@ services:
     container_name: ddn-manual-trigger
     ports:
       - "5004:5004"
+    volumes:
+      - ./implementation:/app  # Auto-reload on code changes
     environment:
       - POSTGRES_HOST=postgres
       - POSTGRES_PORT=5432
@@ -293,6 +304,8 @@ services:
     container_name: ddn-dashboard-api
     ports:
       - "5006:5006"  # Dashboard API port
+    volumes:
+      - ./implementation:/app  # Auto-reload on code changes
     environment:
       - POSTGRES_HOST=postgres
       - POSTGRES_PORT=5432
@@ -304,6 +317,8 @@ services:
       - MANUAL_TRIGGER_API=http://manual-trigger-api:5004
       - GITHUB_TOKEN=${GITHUB_TOKEN}
       - GITHUB_REPO=${GITHUB_REPO}
+      - GITHUB_REPO_OWNER=${GITHUB_REPO_OWNER:-Sushrut-01}
+      - GITHUB_REPO_NAME=${GITHUB_REPO_NAME:-ddn-test-data}
       - PINECONE_API_KEY=${PINECONE_API_KEY}
       - PINECONE_INDEX_NAME=${PINECONE_INDEX_NAME}
       - PINECONE_HOST=${PINECONE_HOST}
@@ -311,11 +326,25 @@ services:
       - PINECONE_FAILURES_INDEX=${PINECONE_FAILURES_INDEX}
       # OpenAI for AI Chatbot
       - OPENAI_API_KEY=${OPENAI_API_KEY}
-      # Jira Integration
+      # Jira Integration (DDN Project - Default)
       - JIRA_URL=${JIRA_URL}
       - JIRA_EMAIL=${JIRA_EMAIL}
       - JIRA_API_TOKEN=${JIRA_API_TOKEN}
       - JIRA_PROJECT_KEY=${JIRA_PROJECT_KEY}
+      # Multi-Project Support - Guruttava
+      - GURUTTAVA_GITHUB_REPO_OWNER=${GURUTTAVA_GITHUB_REPO_OWNER:-Guruttava-Org}
+      - GURUTTAVA_GITHUB_REPO_NAME=${GURUTTAVA_GITHUB_REPO_NAME:-guruttava-automation}
+      - GURUTTAVA_JIRA_PROJECT_KEY=${GURUTTAVA_JIRA_PROJECT_KEY:-GURU}
+      - GURUTTAVA_JIRA_URL=${GURUTTAVA_JIRA_URL}
+      - GURUTTAVA_JIRA_EMAIL=${GURUTTAVA_JIRA_EMAIL}
+      - GURUTTAVA_JIRA_TOKEN=${GURUTTAVA_JIRA_TOKEN}
+      - GURUTTAVA_MONGODB_PREFIX=guruttava_
+      - GURUTTAVA_PINECONE_NAMESPACE=guruttava
+      # JWT Authentication
+      - JWT_SECRET_KEY=temp-development-key-please-change-in-production-123456789
+    dns:
+      - 8.8.8.8
+      - 1.1.1.1
     networks:
       - ddn-network
     depends_on:
@@ -336,6 +365,8 @@ services:
     container_name: ddn-jira
     ports:
       - "5009:5009"
+    volumes:
+      - ./implementation:/app  # Auto-reload on code changes
     environment:
       - POSTGRES_HOST=postgres
       - POSTGRES_PORT=5432
@@ -363,6 +394,8 @@ services:
     container_name: ddn-slack
     ports:
       - "5012:5012"
+    volumes:
+      - ./implementation:/app  # Auto-reload on code changes
     environment:
       - POSTGRES_HOST=postgres
       - POSTGRES_PORT=5432
@@ -390,6 +423,8 @@ services:
     container_name: ddn-self-healing
     ports:
       - "5008:5008"
+    volumes:
+      - ./implementation:/app  # Auto-reload on code changes
     environment:
       - POSTGRES_HOST=postgres
       - POSTGRES_PORT=5432
@@ -420,6 +455,8 @@ services:
     container_name: ddn-service-manager
     ports:
       - "5007:5007"
+    volumes:
+      - ./implementation:/app  # Auto-reload on code changes
     environment:
       - POSTGRES_HOST=postgres
       - POSTGRES_PORT=5432
@@ -445,6 +482,8 @@ services:
     container_name: ddn-aging-service
     ports:
       - "5010:5010"
+    volumes:
+      - ./implementation:/app  # Auto-reload on code changes
     environment:
       - POSTGRES_HOST=postgres
       - POSTGRES_PORT=5432
@@ -471,6 +510,8 @@ services:
     container_name: ddn-knowledge-mgmt
     ports:
       - "5015:5015"
+    volumes:
+      - ./implementation:/app  # Auto-reload on code changes
     environment:
       - OPENAI_API_KEY=${OPENAI_API_KEY}
       - PINECONE_API_KEY=${PINECONE_API_KEY}
@@ -491,6 +532,8 @@ services:
     container_name: ddn-reranking
     ports:
       - "5011:5011"
+    volumes:
+      - ./implementation:/app  # Auto-reload on code changes
     environment:
       - RERANKING_SERVICE_PORT=5011
       - RERANKING_MODEL=cross-encoder/ms-marco-MiniLM-L-6-v2
@@ -513,6 +556,8 @@ services:
     container_name: ddn-auth-service
     ports:
       - "5013:5013"
+    volumes:
+      - ./implementation:/app  # Auto-reload on code changes
     environment:
       - POSTGRES_HOST=postgres
       - POSTGRES_PORT=5432
@@ -545,6 +590,8 @@ services:
     container_name: ddn-notifications
     ports:
       - "5014:5014"
+    volumes:
+      - ./implementation:/app  # Auto-reload on code changes
     environment:
       - POSTGRES_HOST=postgres
       - POSTGRES_PORT=5432
@@ -584,6 +631,8 @@ services:
     container_name: ddn-workflow-executions
     ports:
       - "5016:5016"
+    volumes:
+      - ./implementation:/app  # Auto-reload on code changes
     environment:
       - POSTGRES_HOST=postgres
       - POSTGRES_PORT=5432
@@ -682,10 +731,16 @@ services:
       - "50000:50000"
     environment:
       - JENKINS_OPTS=--httpPort=8081
+      - JAVA_OPTS=-Xmx2048m
     volumes:
       - D:/rancher-storage/volumes/jenkins-data:/var/jenkins_home
+      - ./jenkins-jobs:/var/jenkins_home/jobs  # Pre-configured Jenkins jobs
     networks:
       - ddn-network
+    # CRITICAL: Docker Chrome requires these settings (proven from web research)
+    shm_size: 2gb  # Chrome crashes with default 64MB /dev/shm (Chromium bug)
+    cap_add:
+      - SYS_ADMIN  # Chrome requires this capability in Docker containers
     restart: unless-stopped
     healthcheck:
       test: ["CMD-SHELL", "curl -f http://localhost:8081/login || exit 1"]
@@ -693,6 +748,33 @@ services:
       timeout: 10s
       retries: 5
       start_period: 120s
+
+  # Appium Server for Mobile Testing (Guruttava Project)
+  appium:
+    image: appium/appium:latest
+    container_name: guruttava-appium
+    ports:
+      - "4723:4723"
+    volumes:
+      - ./mobile-apps:/apps  # APK/IPA files for testing
+      - ./test-results:/test-results  # Test output
+    environment:
+      - RELAXED_SECURITY=true
+      - APPIUM_LOG_LEVEL=info
+      - ANDROID_HOME=/opt/android
+      # Set timezone
+      - TZ=UTC
+    networks:
+      - ddn-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:4723/wd/hub/status || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    # Note: For real device testing, you'll need privileged mode
+    # privileged: true
 
 # ============================================================================
 # NETWORKS

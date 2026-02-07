@@ -1,0 +1,260 @@
+<?xml version='1.1' encoding='UTF-8'?>
+<project>
+  <actions/>
+  <description>Guruttava E2E Tests - Robot Framework tests for Android, iOS, and Web with MongoDB reporting</description>
+  <keepDependencies>false</keepDependencies>
+  <properties>
+    <jenkins.model.BuildDiscarderProperty>
+      <strategy class="hudson.tasks.LogRotator">
+        <daysToKeep>30</daysToKeep>
+        <numToKeep>50</numToKeep>
+        <artifactDaysToKeep>-1</artifactDaysToKeep>
+        <artifactNumToKeep>-1</artifactNumToKeep>
+        <removeLastBuild>false</removeLastBuild>
+      </strategy>
+    </jenkins.model.BuildDiscarderProperty>
+    <hudson.model.ParametersDefinitionProperty>
+      <parameterDefinitions>
+        <hudson.model.ChoiceParameterDefinition>
+          <name>PLATFORM</name>
+          <description>Select platform to test</description>
+          <choices class="java.util.Arrays$ArrayList">
+            <a class="string-array">
+              <string>Android</string>
+              <string>iOS</string>
+              <string>Web</string>
+              <string>All</string>
+            </a>
+          </choices>
+        </hudson.model.ChoiceParameterDefinition>
+        <hudson.model.ChoiceParameterDefinition>
+          <name>TEST_TYPE</name>
+          <description>Select test type</description>
+          <choices class="java.util.Arrays$ArrayList">
+            <a class="string-array">
+              <string>Smoke</string>
+              <string>Regression</string>
+              <string>Sanity</string>
+              <string>All</string>
+            </a>
+          </choices>
+        </hudson.model.ChoiceParameterDefinition>
+        <hudson.model.BooleanParameterDefinition>
+          <name>SEND_NOTIFICATIONS</name>
+          <description>Send notifications to Teams/Slack on failure</description>
+          <defaultValue>true</defaultValue>
+        </hudson.model.BooleanParameterDefinition>
+      </parameterDefinitions>
+    </hudson.model.ParametersDefinitionProperty>
+  </properties>
+  <scm class="hudson.scm.NullSCM"/>
+  <canRoam>true</canRoam>
+  <disabled>false</disabled>
+  <blockBuildWhenDownstreamBuilding>false</blockBuildWhenDownstreamBuilding>
+  <blockBuildWhenUpstreamBuilding>false</blockBuildWhenUpstreamBuilding>
+  <triggers>
+    <hudson.triggers.TimerTrigger>
+      <spec>H */6 * * *</spec>
+    </hudson.triggers.TimerTrigger>
+  </triggers>
+  <concurrentBuild>false</concurrentBuild>
+  <builders>
+    <hudson.tasks.Shell>
+      <command>#!/bin/bash
+echo "========================================="
+echo "Guruttava E2E Tests (Robot Framework)"
+echo "Build: $BUILD_NUMBER"
+echo "Job: $JOB_NAME"
+echo "Platform: $PLATFORM"
+echo "Test Type: $TEST_TYPE"
+echo "========================================="
+
+# Project Configuration (CRITICAL for multi-project isolation)
+export PROJECT_ID="2"
+export PROJECT_SLUG="guruttava"
+echo "Project ID: $PROJECT_ID | Slug: $PROJECT_SLUG"
+
+# Git checkout from Sushrut-laptop branch
+REPO_URL="https://github.com/Sushrut-01/gurutattva-e2e-automation"
+BRANCH="Sushrut-laptop"
+echo "Checking out code from $REPO_URL (branch: $BRANCH)..."
+if [ -d ".git" ]; then
+    git fetch origin
+    git reset --hard origin/$BRANCH
+    git clean -fd
+else
+    rm -rf * .[^.]*
+    git clone -b $BRANCH "$REPO_URL" .
+fi
+export GIT_COMMIT=$(git rev-parse HEAD)
+export GIT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
+echo "Git Branch: $GIT_BRANCH | Commit: $GIT_COMMIT"
+
+# Install dependencies
+echo "Installing Robot Framework and dependencies..."
+python3 -m pip install --quiet --upgrade pip --break-system-packages 2>/dev/null || python3 -m pip install --quiet --upgrade pip
+python3 -m pip install --quiet --break-system-packages robotframework robotframework-appiumlibrary robotframework-seleniumlibrary pymongo python-dotenv boto3 requests 2>/dev/null || python3 -m pip install --quiet robotframework robotframework-appiumlibrary robotframework-seleniumlibrary pymongo python-dotenv boto3 requests
+
+# MongoDB configuration (Guruttava collection)
+export MONGODB_URI='mongodb+srv://sushrutnistane097_db_user:Sharu%40051220@ddn-cluster.wudcfln.mongodb.net/ddn_tests?retryWrites=true&amp;w=majority'
+export MONGODB_COLLECTION="guruttava_test_failures"
+export JOB_NAME="$JOB_NAME"
+export BUILD_NUMBER="$BUILD_NUMBER"
+export BUILD_URL="$BUILD_URL"
+
+# Create output directory
+mkdir -p robot-results
+
+# PROVEN SOLUTION: Create Robot Framework library wrapper for Docker Chrome
+echo "Creating Docker Chrome library wrapper (proven web solution)..."
+cat &gt; resources/DockerChromeLibrary.py &lt;&lt;'PYEOF'
+from selenium import webdriver
+from selenium.webdriver.chrome.options import Options
+from SeleniumLibrary import SeleniumLibrary
+
+class DockerChromeLibrary(SeleniumLibrary):
+    """Robot Framework library for Chrome in Docker with proper options.
+    Based on proven solutions from web research."""
+
+    def open_chrome_browser(self, url, alias=None):
+        """Opens Chrome browser with Docker-compatible options.
+
+        Args:
+            url: URL to open
+            alias: Optional browser alias
+
+        This uses the proven Create Webdriver approach from web research.
+        """
+        chrome_options = Options()
+
+        # Critical Docker Chrome options (proven from web research)
+        chrome_options.add_argument('--headless')
+        chrome_options.add_argument('--no-sandbox')
+        chrome_options.add_argument('--disable-dev-shm-usage')
+        chrome_options.add_argument('--disable-gpu')
+        chrome_options.add_argument('--remote-debugging-port=9222')
+        chrome_options.add_argument('--user-data-dir=/tmp/chrome-user-data')
+        chrome_options.add_argument('--single-process')
+        chrome_options.add_argument('--window-size=1920,1080')
+        chrome_options.add_argument('--disable-software-rasterizer')
+        chrome_options.add_argument('--disable-extensions')
+
+        # Additional stability options
+        chrome_options.add_argument('--disable-setuid-sandbox')
+        chrome_options.add_argument('--ignore-certificate-errors')
+        chrome_options.add_argument('--disable-notifications')
+
+        # Create webdriver with options (proven pattern)
+        self.create_webdriver('Chrome', alias=alias, options=chrome_options)
+
+        # Navigate to URL
+        self.go_to(url)
+
+        return self.driver
+PYEOF
+
+echo "✅ Docker Chrome library created"
+
+# Run only E2E Robot Framework tests (by filename pattern)
+echo "Running E2E tests from: tests/E2E*.robot"
+
+# Configure Appium connection to host machine
+export APPIUM_SERVER="http://host.docker.internal:4723"
+echo "Appium Server: $APPIUM_SERVER"
+
+# Configure Chrome and ChromeDriver for headless mode
+echo "Configuring Chrome for headless mode in Docker..."
+
+# Install ChromeDriver if not present
+if ! command -v chromedriver &amp;> /dev/null; then
+    echo "Installing ChromeDriver..."
+    apt-get update -qq 2>/dev/null
+    apt-get install -y -qq chromium-driver 2>/dev/null || true
+fi
+
+# Set Chrome binary and driver paths
+export CHROME_BIN=/usr/bin/google-chrome
+export CHROMEDRIVER_PATH=/usr/bin/chromedriver
+export PATH=$PATH:/usr/bin
+
+# Configure Chrome options for headless mode (Docker-compatible)
+export CHROME_OPTIONS="--headless --no-sandbox --disable-dev-shm-usage --disable-gpu --disable-software-rasterizer --disable-extensions --remote-debugging-port=9222 --user-data-dir=/tmp/chrome-user-data --window-size=1920,1080 --single-process"
+
+# Set display for headless operation
+export DISPLAY=:99
+
+echo "Chrome Binary: $CHROME_BIN"
+echo "ChromeDriver: $CHROMEDRIVER_PATH"
+echo "Chrome Options: $CHROME_OPTIONS"
+
+echo "Running $PLATFORM E2E tests"
+echo "Test Type: $TEST_TYPE"
+
+# Run Robot Framework E2E tests (only files starting with E2E)
+echo "Executing Robot Framework E2E tests (E2E* files only)..."
+python3 -m robot \
+    --outputdir robot-results \
+    --xunit robot-results/xunit.xml \
+    --variable PROJECT_ID:$PROJECT_ID \
+    --variable PROJECT_SLUG:$PROJECT_SLUG \
+    --variable TEST_TYPE:$TEST_TYPE \
+    --variable APPIUM_SERVER:$APPIUM_SERVER \
+    --name "Guruttava_${PLATFORM}_E2E_Tests" \
+    tests/E2E*.robot
+
+# Capture Robot Framework exit code
+ROBOT_EXIT_CODE=$?
+echo "Robot Framework exit code: $ROBOT_EXIT_CODE"
+
+# Parse Robot output.xml and upload to platform
+echo "Parsing test results and uploading to platform..."
+if [ -f "robot-results/output.xml" ]; then
+    # Use the robot_framework_parser.py if it exists in the repo
+    if [ -f "implementation/robot_framework_parser.py" ]; then
+        python3 implementation/robot_framework_parser.py \
+            --output-file robot-results/output.xml \
+            --project-id $PROJECT_ID \
+            --project-slug $PROJECT_SLUG \
+            --build-number $BUILD_NUMBER \
+            --job-name "$JOB_NAME"
+    fi
+
+    # Trigger AI analysis
+    echo "Triggering AI analysis for failures..."
+    curl -X POST http://host.docker.internal:5004/api/trigger-analysis \
+        -H "Content-Type: application/json" \
+        -d "{\"project_id\": $PROJECT_ID, \"project_slug\": \"$PROJECT_SLUG\"}" \
+        2>/dev/null || echo "AI analysis trigger failed (non-critical)"
+fi
+
+echo "========================================="
+echo "Guruttava Tests completed!"
+echo "Platform: $PLATFORM"
+echo "Results uploaded to project_id: $PROJECT_ID"
+echo "========================================="
+
+# Exit with the robot exit code to properly mark build as UNSTABLE/FAILURE
+exit $ROBOT_EXIT_CODE
+</command>
+      <configuredLocalRules/>
+    </hudson.tasks.Shell>
+  </builders>
+  <publishers>
+    <hudson.tasks.ArtifactArchiver>
+      <artifacts>robot-results/**/*</artifacts>
+      <allowEmptyArchive>true</allowEmptyArchive>
+      <onlyIfSuccessful>false</onlyIfSuccessful>
+      <fingerprint>false</fingerprint>
+      <defaultExcludes>true</defaultExcludes>
+      <caseSensitive>true</caseSensitive>
+      <followSymlinks>false</followSymlinks>
+    </hudson.tasks.ArtifactArchiver>
+    <hudson.tasks.junit.JUnitResultArchiver>
+      <testResults>robot-results/xunit.xml</testResults>
+      <keepLongStdio>false</keepLongStdio>
+      <healthScaleFactor>1.0</healthScaleFactor>
+      <allowEmptyResults>true</allowEmptyResults>
+    </hudson.tasks.junit.JUnitResultArchiver>
+  </publishers>
+  <buildWrappers/>
+</project>

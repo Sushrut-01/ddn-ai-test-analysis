@@ -27,6 +27,7 @@ import RAGApproval from './pages/RAGApprovalPreview'
 import AIRootCause from './pages/AIRootCausePreview'
 import CodeHealing from './pages/FailuresPendingPreview'
 import CopilotPage from './pages/CopilotPage'
+import ProjectManagement from './pages/ProjectManagement'
 
 // Auth Pages
 import LoginPage from './pages/LoginPage'
@@ -107,6 +108,8 @@ function App() {
                   <Route path="/config" element={<Configuration />} />
                   <Route path="/notifications" element={<Notifications />} />
                   <Route path="/audit-log" element={<AuditLog />} />
+                  <Route path="/projects/manage" element={<ProjectManagement />} />
+                  <Route path="/projects/:id" element={<ProjectManagement />} />
                 </Routes>
               </ErrorBoundary>
             </Layout>

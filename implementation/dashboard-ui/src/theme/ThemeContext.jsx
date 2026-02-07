@@ -406,7 +406,7 @@ const ThemeContext = createContext()
 export const ThemeProvider = ({ children }) => {
   const [currentTheme, setCurrentTheme] = useState(() => {
     const saved = localStorage.getItem('ddn-dashboard-theme')
-    return saved || 'ocean'
+    return saved || 'emeraldDark'
   })
 
   useEffect(() => {

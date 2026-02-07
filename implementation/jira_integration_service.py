@@ -20,6 +20,38 @@ import os
 import json
 from datetime import datetime
 
+# ============================================================================
+# RLS CONTEXT HELPER (Added by add_rls_context_to_existing_services.py)
+# ============================================================================
+
+def set_rls_context(cursor, project_id):
+    """
+    Set PostgreSQL Row-Level Security context for project
+
+    Call this after creating a cursor to enable automatic project filtering.
+
+    Args:
+        cursor: PostgreSQL cursor
+        project_id: Project ID to set context for
+
+    Example:
+        conn = get_db_connection()
+        cur = conn.cursor()
+        set_rls_context(cur, project_id)  # Enable RLS for this project
+        cur.execute("SELECT * FROM failure_analysis")  # Automatically filtered
+    """
+    if project_id:
+        try:
+            cursor.execute("SELECT set_project_context(%s)", (project_id,))
+        except Exception as e:
+            # Graceful fallback if RLS function doesn't exist
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.warning(f"Could not set RLS context: {e}")
+
+# ============================================================================
+
+
 app = Flask(__name__)
 CORS(app)
 
@@ -80,37 +112,87 @@ def get_labels_from_category(error_category):
 @app.route('/api/jira/create-issue', methods=['POST'])
 def create_jira_issue():
     """
-    Create a Jira issue for a test failure
+    Create a Jira issue for a test failure (MULTI-PROJECT SUPPORT)
+
+    Request body:
+    {
+        "build_id": "123",
+        "project_id": 1,              // REQUIRED for multi-project support
+        "job_name": "DDN-Tests",
+        "error_category": "CODE_ERROR",
+        "error_message": "...",
+        "root_cause": "...",
+        "fix_recommendation": "...",
+        "confidence_score": 0.85,
+        "consecutive_failures": 3,
+        "build_url": "...",
+        "github_commit": "..."
+    }
     """
     try:
         data = request.get_json()
 
         build_id = data.get('build_id')
+        project_id = data.get('project_id', 1)  # Default to DDN for backward compatibility
         job_name = data.get('job_name', 'Unknown Job')
-        error_category = data.get('error_category')
-        root_cause = data.get('root_cause')
-        fix_recommendation = data.get('fix_recommendation')
-        confidence_score = data.get('confidence_score', 0)
+        error_category = data.get('error_category', 'UNKNOWN')
+        error_message = data.get('error_message', data.get('ai_analysis', 'Test failure'))
+        root_cause = data.get('root_cause', data.get('ai_analysis', ''))
+        fix_recommendation = data.get('fix_recommendation', '')
+        confidence_score = data.get('confidence_score', 0.8)
         consecutive_failures = data.get('consecutive_failures', 1)
         build_url = data.get('build_url', '')
         github_commit = data.get('github_commit', '')
 
-        # Check if issue already exists
+        # Get project-specific Jira configuration from database
         conn = get_postgres_connection()
         cursor = conn.cursor(cursor_factory=RealDictCursor)
 
         cursor.execute("""
+            SELECT
+                p.slug,
+                p.name,
+                pc.jira_project_key,
+                pc.jira_url,
+                pc.jira_email,
+                pc.jira_api_token_encrypted
+            FROM projects p
+            LEFT JOIN project_configurations pc ON p.id = pc.project_id
+            WHERE p.id = %s
+        """, (project_id,))
+
+        project_config = cursor.fetchone()
+
+        if not project_config or not project_config['jira_project_key']:
+            cursor.close()
+            conn.close()
+            return jsonify({
+                'status': 'error',
+                'message': f'Jira not configured for project_id={project_id}'
+            }), 400
+
+        # Use project-specific Jira configuration
+        project_jira_key = project_config['jira_project_key']
+        project_jira_url = project_config['jira_url'] or JIRA_URL
+        project_jira_email = project_config['jira_email'] or JIRA_EMAIL
+        # Note: In production, decrypt the jira_api_token_encrypted
+        project_jira_token = JIRA_API_TOKEN  # TODO: Decrypt from project_config['jira_api_token_encrypted']
+
+        project_jira_auth = HTTPBasicAuth(project_jira_email, project_jira_token)
+
+        # Check if issue already exists for this build and project
+        cursor.execute("""
             SELECT jira_issue_key FROM failure_analysis
-            WHERE build_id = %s AND jira_issue_key IS NOT NULL
+            WHERE build_id = %s AND project_id = %s AND jira_issue_key IS NOT NULL
             ORDER BY created_at DESC
             LIMIT 1
-        """, (build_id,))
+        """, (build_id, project_id))
 
         existing = cursor.fetchone()
 
         if existing:
             jira_key = existing['jira_issue_key']
-            update_result = update_jira_issue(jira_key, data)
+            update_result = update_jira_issue(jira_key, data, project_jira_auth, project_jira_url)
 
             cursor.close()
             conn.close()
@@ -119,7 +201,9 @@ def create_jira_issue():
                 'status': 'success',
                 'action': 'updated',
                 'jira_issue_key': jira_key,
-                'jira_url': f"{JIRA_URL}/browse/{jira_key}"
+                'jira_url': f"{project_jira_url}/browse/{jira_key}",
+                'project_id': project_id,
+                'project_slug': project_config['slug']
             })
 
         # Create new Jira issue
@@ -168,25 +252,82 @@ _Generated at: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}_
         issue_payload = {
             'fields': {
                 'project': {
-                    'key': JIRA_PROJECT_KEY
+                    'key': project_jira_key  # Use project-specific Jira key (DDN or GURU)
                 },
-                'summary': f'Test Failure: {job_name} - {error_category}',
-                'description': description,
+                'summary': f'[{error_category}] {error_message[:80]}{"..." if len(error_message) > 80 else ""}',
+                'description': {
+                    'type': 'doc',
+                    'version': 1,
+                    'content': [
+                        {
+                            'type': 'heading',
+                            'attrs': {'level': 2},
+                            'content': [{'type': 'text', 'text': 'Test Failure Details'}]
+                        },
+                        {
+                            'type': 'paragraph',
+                            'content': [
+                                {'type': 'text', 'text': 'Build: ', 'marks': [{'type': 'strong'}]},
+                                {'type': 'text', 'text': f'{build_id}\n'},
+                                {'type': 'text', 'text': 'Job: ', 'marks': [{'type': 'strong'}]},
+                                {'type': 'text', 'text': f'{job_name}\n'},
+                                {'type': 'text', 'text': 'Category: ', 'marks': [{'type': 'strong'}]},
+                                {'type': 'text', 'text': f'{error_category}\n'},
+                                {'type': 'text', 'text': 'Consecutive Failures: ', 'marks': [{'type': 'strong'}]},
+                                {'type': 'text', 'text': f'{consecutive_failures}\n'},
+                                {'type': 'text', 'text': 'AI Confidence: ', 'marks': [{'type': 'strong'}]},
+                                {'type': 'text', 'text': f'{int(confidence_score * 100)}%'}
+                            ]
+                        },
+                        {
+                            'type': 'heading',
+                            'attrs': {'level': 3},
+                            'content': [{'type': 'text', 'text': 'Error Message'}]
+                        },
+                        {
+                            'type': 'codeBlock',
+                            'attrs': {'language': 'text'},
+                            'content': [{'type': 'text', 'text': error_message or 'No error message available'}]
+                        },
+                        {
+                            'type': 'heading',
+                            'attrs': {'level': 3},
+                            'content': [{'type': 'text', 'text': 'AI Root Cause Analysis'}]
+                        },
+                        {
+                            'type': 'paragraph',
+                            'content': [{'type': 'text', 'text': root_cause or 'Analysis pending'}]
+                        },
+                        {
+                            'type': 'heading',
+                            'attrs': {'level': 3},
+                            'content': [{'type': 'text', 'text': 'Recommended Fix'}]
+                        },
+                        {
+                            'type': 'paragraph',
+                            'content': [{'type': 'text', 'text': fix_recommendation or 'Review the error details and apply appropriate fix'}]
+                        },
+                        {
+                            'type': 'rule'
+                        },
+                        {
+                            'type': 'paragraph',
+                            'content': [
+                                {'type': 'text', 'text': 'Generated by DDN AI Test Failure Analysis System', 'marks': [{'type': 'em'}]}
+                            ]
+                        }
+                    ]
+                },
                 'issuetype': {
                     'name': 'Bug'
-                },
-                'priority': {
-                    'name': priority
-                },
-                'labels': labels,
-                'customfield_10000': build_id
+                }
             }
         }
 
         response = requests.post(
-            f'{JIRA_URL}/rest/api/3/issue',
+            f'{project_jira_url}/rest/api/3/issue',
             headers=JIRA_HEADERS,
-            auth=JIRA_AUTH,
+            auth=project_jira_auth,  # Use project-specific auth
             data=json.dumps(issue_payload)
         )
 
@@ -200,12 +341,36 @@ _Generated at: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}_
 
         jira_response = response.json()
         jira_key = jira_response['key']
+        jira_url = f"{project_jira_url}/browse/{jira_key}"  # Use project-specific URL
 
+        # Update failure_analysis with Jira link (project-scoped)
         cursor.execute("""
             UPDATE failure_analysis
             SET jira_issue_key = %s, jira_issue_url = %s
-            WHERE build_id = %s
-        """, (jira_key, f"{JIRA_URL}/browse/{jira_key}", build_id))
+            WHERE build_id = %s AND project_id = %s
+        """, (jira_key, jira_url, build_id, project_id))
+
+        # Also save to jira_bugs table for dashboard display (with project_id)
+        cursor.execute("""
+            INSERT INTO jira_bugs (
+                project_id, jira_key, jira_url, summary, description, priority, status,
+                build_id, error_category, created_at
+            ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, NOW())
+            ON CONFLICT (jira_key) DO UPDATE SET
+                summary = EXCLUDED.summary,
+                description = EXCLUDED.description,
+                priority = EXCLUDED.priority
+        """, (
+            project_id,  # CRITICAL: project_id for data isolation
+            jira_key,
+            jira_url,
+            f'[{error_category}] {error_message[:100]}',
+            f'Build: {build_id}\nJob: {job_name}\nCategory: {error_category}\n\nRoot Cause: {root_cause}\n\nRecommendation: {fix_recommendation}',
+            'High' if error_category in ['CODE_ERROR', 'CRITICAL'] else 'Medium',
+            'Open',
+            build_id,
+            error_category
+        ))
 
         conn.commit()
         cursor.close()
@@ -215,7 +380,9 @@ _Generated at: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}_
             'status': 'success',
             'action': 'created',
             'jira_issue_key': jira_key,
-            'jira_url': f"{JIRA_URL}/browse/{jira_key}"
+            'jira_url': f"{project_jira_url}/browse/{jira_key}",  # Use project-specific URL
+            'project_id': project_id,
+            'project_slug': project_config['slug']
         })
 
     except Exception as e:
@@ -225,8 +392,16 @@ _Generated at: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}_
         }), 500
 
 
-def update_jira_issue(jira_key, data):
-    """Update existing Jira issue with new analysis"""
+def update_jira_issue(jira_key, data, jira_auth, jira_url):
+    """
+    Update existing Jira issue with new analysis (multi-project support)
+
+    Args:
+        jira_key: The Jira issue key (e.g., DDN-123, GURU-456)
+        data: Request data with analysis details
+        jira_auth: HTTPBasicAuth object with project-specific credentials
+        jira_url: Project-specific Jira base URL
+    """
     try:
         comment = f"""
 *New AI Analysis - {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}*
@@ -249,9 +424,9 @@ h4. Updated Fix Recommendation
         }
 
         response = requests.post(
-            f'{JIRA_URL}/rest/api/3/issue/{jira_key}/comment',
+            f'{jira_url}/rest/api/3/issue/{jira_key}/comment',
             headers=JIRA_HEADERS,
-            auth=JIRA_AUTH,
+            auth=jira_auth,  # Use project-specific auth
             data=json.dumps(comment_payload)
         )
 
@@ -296,9 +471,9 @@ def update_jira_from_feedback():
             comment = f"*Fix Verified as Successful*\n\n{feedback_text}"
             transition_payload = {'transition': {'id': '31'}}
             requests.post(
-                f'{JIRA_URL}/rest/api/3/issue/{jira_key}/transitions',
+                f'{jira_url}/rest/api/3/issue/{jira_key}/transitions',
                 headers=JIRA_HEADERS,
-                auth=JIRA_AUTH,
+                auth=jira_auth,  # Use project-specific auth
                 data=json.dumps(transition_payload)
             )
         else:
@@ -307,9 +482,9 @@ def update_jira_from_feedback():
         comment_payload = {'body': comment}
 
         response = requests.post(
-            f'{JIRA_URL}/rest/api/3/issue/{jira_key}/comment',
+            f'{jira_url}/rest/api/3/issue/{jira_key}/comment',
             headers=JIRA_HEADERS,
-            auth=JIRA_AUTH,
+            auth=jira_auth,  # Use project-specific auth
             data=json.dumps(comment_payload)
         )
 

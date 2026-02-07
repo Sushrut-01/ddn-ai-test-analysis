@@ -49,14 +49,22 @@ export const AuthProvider = ({ children }) => {
   // Login function
   const login = async (email, password) => {
     try {
+      console.log('🔐 AuthContext.login() called');
+      console.log('🔐 Email:', email);
+      console.log('🔐 API URL:', AUTH_API_URL);
+
       setError(null);
       const response = await axios.post(`${AUTH_API_URL}/api/auth/login`, {
         email,
         password
       });
 
-      if (response.data.success) {
+      console.log('🔐 API Response:', response.data);
+
+      if (response.data.status === 'success' && response.data.data) {
         const { access_token, refresh_token, user: userData } = response.data.data;
+
+        console.log('✅ Login successful, storing tokens...');
 
         // Store tokens
         localStorage.setItem('auth_token', access_token);
@@ -65,12 +73,18 @@ export const AuthProvider = ({ children }) => {
         // Set user
         setUser(userData);
 
+        console.log('✅ User set:', userData);
+
         return { success: true };
       } else {
+        console.error('❌ Login failed:', response.data.message);
         setError(response.data.message || 'Login failed');
         return { success: false, error: response.data.message };
       }
     } catch (error) {
+      console.error('❌ Login error:', error);
+      console.error('❌ Error response:', error.response?.data);
+
       const errorMessage = error.response?.data?.message || 'Login failed. Please try again.';
       setError(errorMessage);
       return { success: false, error: errorMessage };

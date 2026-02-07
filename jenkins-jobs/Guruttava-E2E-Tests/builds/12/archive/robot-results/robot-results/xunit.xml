@@ -1,0 +1,255 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="Guruttava_Android_E2E_Tests" tests="78" errors="0" failures="78" skipped="0" time="1374.048" timestamp="2026-01-23T06:15:43.525142">
+<testsuite name="E2EAudio" tests="20" errors="0" failures="20" skipped="0" time="408.796" timestamp="2026-01-23T06:15:44.350989">
+<testcase classname="Guruttava_Android_E2E_Tests.E2EAudio" name="End-to-End Integration Create and Publish Music Track in Web CRM and Verify Playback in Mobile App" time="23.914">
+<failure message="WebDriverException: Message: Service /var/jenkins_home/.cache/selenium/chromedriver/linux64/144.0.7559.96/chromedriver unexpectedly exited. Status code was: 127&#10;" type="AssertionError"/>
+</testcase>
+<testcase classname="Guruttava_Android_E2E_Tests.E2EAudio" name="Unpublish Music Track And Validate In Mobile App" time="14.451">
+<failure message="WebDriverException: Message: Service /var/jenkins_home/.cache/selenium/chromedriver/linux64/144.0.7559.96/chromedriver unexpectedly exited. Status code was: 127&#10;" type="AssertionError"/>
+</testcase>
+<testcase classname="Guruttava_Android_E2E_Tests.E2EAudio" name="End-to-End Integration Create and Publish Podcast in Web CRM and Verify Playback in Mobile App" time="15.088">
+<failure message="WebDriverException: Message: Service /var/jenkins_home/.cache/selenium/chromedriver/linux64/144.0.7559.96/chromedriver unexpectedly exited. Status code was: 127&#10;" type="AssertionError"/>
+</testcase>
+<testcase classname="Guruttava_Android_E2E_Tests.E2EAudio" name="Validate that the mobile app does not display unpublished podcast track" time="14.374">
+<failure message="WebDriverException: Message: Service /var/jenkins_home/.cache/selenium/chromedriver/linux64/144.0.7559.96/chromedriver unexpectedly exited. Status code was: 127&#10;" type="AssertionError"/>
+</testcase>
+<testcase classname="Guruttava_Android_E2E_Tests.E2EAudio" name="Validate mobile app does not show deleted Podcast tracks" time="14.904">
+<failure message="WebDriverException: Message: Service /var/jenkins_home/.cache/selenium/chromedriver/linux64/144.0.7559.96/chromedriver unexpectedly exited. Status code was: 127&#10;" type="AssertionError"/>
+</testcase>
+<testcase classname="Guruttava_Android_E2E_Tests.E2EAudio" name="Validate mobile app does not show deleted Music tracks" time="15.715">
+<failure message="WebDriverException: Message: Service /var/jenkins_home/.cache/selenium/chromedriver/linux64/144.0.7559.96/chromedriver unexpectedly exited. Status code was: 127&#10;" type="AssertionError"/>
+</testcase>
+<testcase classname="Guruttava_Android_E2E_Tests.E2EAudio" name="Validate Editing and Publishing of Music Track in Web CMS and Verify in Mobile App" time="16.678">
+<failure message="WebDriverException: Message: Service /var/jenkins_home/.cache/selenium/chromedriver/linux64/144.0.7559.96/chromedriver unexpectedly exited. Status code was: 127&#10;" type="AssertionError"/>
+</testcase>
+<testcase classname="Guruttava_Android_E2E_Tests.E2EAudio" name="Validate Editing and Publishing of Podcast Track in Web CMS and Verify in Mobile App" time="15.334">
+<failure message="WebDriverException: Message: Service /var/jenkins_home/.cache/selenium/chromedriver/linux64/144.0.7559.96/chromedriver unexpectedly exited. Status code was: 127&#10;" type="AssertionError"/>
+</testcase>
+<testcase classname="Guruttava_Android_E2E_Tests.E2EAudio" name="Delete Music Track And Verify Removal From Mobile App" time="14.021">
+<failure message="WebDriverException: Message: Service /var/jenkins_home/.cache/selenium/chromedriver/linux64/144.0.7559.96/chromedriver unexpectedly exited. Status code was: 127&#10;" type="AssertionError"/>
+</testcase>
+<testcase classname="Guruttava_Android_E2E_Tests.E2EAudio" name="Delete Podcast Track And Verify Removal From Mobile App" time="15.057">
+<failure message="WebDriverException: Message: Service /var/jenkins_home/.cache/selenium/chromedriver/linux64/144.0.7559.96/chromedriver unexpectedly exited. Status code was: 127&#10;" type="AssertionError"/>
+</testcase>
+<testcase classname="Guruttava_Android_E2E_Tests.E2EAudio" name="Add Music Track With Same Track And Thumbnail For Both Languages" time="14.385">
+<failure message="WebDriverException: Message: Service /var/jenkins_home/.cache/selenium/chromedriver/linux64/144.0.7559.96/chromedriver unexpectedly exited. Status code was: 127&#10;" type="AssertionError"/>
+</testcase>
+<testcase classname="Guruttava_Android_E2E_Tests.E2EAudio" name="Add Podcast Track With Same Track And Thumbnail For Both Languages" time="15.278">
+<failure message="WebDriverException: Message: Service /var/jenkins_home/.cache/selenium/chromedriver/linux64/144.0.7559.96/chromedriver unexpectedly exited. Status code was: 127&#10;" type="AssertionError"/>
+</testcase>
+<testcase classname="Guruttava_Android_E2E_Tests.E2EAudio" name="Add Music Track Without Author" time="15.821">
+<failure message="WebDriverException: Message: Service /var/jenkins_home/.cache/selenium/chromedriver/linux64/144.0.7559.96/chromedriver unexpectedly exited. Status code was: 127&#10;" type="AssertionError"/>
+</testcase>
+<testcase classname="Guruttava_Android_E2E_Tests.E2EAudio" name="Add Podcast Track Without Speaker Should not be allowed" time="33.564">
+<failure message="WebDriverException: Message: Service /var/jenkins_home/.cache/selenium/chromedriver/linux64/144.0.7559.96/chromedriver unexpectedly exited. Status code was: 127&#10;" type="AssertionError"/>
+</testcase>
+<testcase classname="Guruttava_Android_E2E_Tests.E2EAudio" name="Test Music Different Filter Functionality" time="28.865">
+<failure message="WebDriverException: Message: Service /var/jenkins_home/.cache/selenium/chromedriver/linux64/144.0.7559.96/chromedriver unexpectedly exited. Status code was: 127&#10;" type="AssertionError"/>
+</testcase>
+<testcase classname="Guruttava_Android_E2E_Tests.E2EAudio" name="Test Podcast Different Filter Functionality" time="22.255">
+<failure message="WebDriverException: Message: Service /var/jenkins_home/.cache/selenium/chromedriver/linux64/144.0.7559.96/chromedriver unexpectedly exited. Status code was: 127&#10;" type="AssertionError"/>
+</testcase>
+<testcase classname="Guruttava_Android_E2E_Tests.E2EAudio" name="Test Music Management Refresh Button Functionality" time="18.197">
+<failure message="WebDriverException: Message: Service /var/jenkins_home/.cache/selenium/chromedriver/linux64/144.0.7559.96/chromedriver unexpectedly exited. Status code was: 127&#10;" type="AssertionError"/>
+</testcase>
+<testcase classname="Guruttava_Android_E2E_Tests.E2EAudio" name="Test Podcast Management Refresh Button Functionality" time="17.021">
+<failure message="WebDriverException: Message: Service /var/jenkins_home/.cache/selenium/chromedriver/linux64/144.0.7559.96/chromedriver unexpectedly exited. Status code was: 127&#10;" type="AssertionError"/>
+</testcase>
+<testcase classname="Guruttava_Android_E2E_Tests.E2EAudio" name="Test Multiple Music Tracks Same Category Same Subcategory" time="17.541">
+<failure message="WebDriverException: Message: Service /var/jenkins_home/.cache/selenium/chromedriver/linux64/144.0.7559.96/chromedriver unexpectedly exited. Status code was: 127&#10;" type="AssertionError"/>
+</testcase>
+<testcase classname="Guruttava_Android_E2E_Tests.E2EAudio" name="Add Audio in English language only" time="17.929">
+<failure message="WebDriverException: Message: Service /var/jenkins_home/.cache/selenium/chromedriver/linux64/144.0.7559.96/chromedriver unexpectedly exited. Status code was: 127&#10;" type="AssertionError"/>
+</testcase>
+</testsuite>
+<testsuite name="E2EDhyankendra" tests="8" errors="0" failures="8" skipped="0" time="135.698" timestamp="2026-01-23T06:22:33.148427">
+<testcase classname="Guruttava_Android_E2E_Tests.E2EDhyankendra" name="Test Dhyankendra Different Filter Functionality" time="18.270">
+<failure message="WebDriverException: Message: Service /var/jenkins_home/.cache/selenium/chromedriver/linux64/144.0.7559.96/chromedriver unexpectedly exited. Status code was: 127&#10;" type="AssertionError"/>
+</testcase>
+<testcase classname="Guruttava_Android_E2E_Tests.E2EDhyankendra" name="Test Dhyankendra Management Refresh Button Functionality" time="15.615">
+<failure message="WebDriverException: Message: Service /var/jenkins_home/.cache/selenium/chromedriver/linux64/144.0.7559.96/chromedriver unexpectedly exited. Status code was: 127&#10;" type="AssertionError"/>
+</testcase>
+<testcase classname="Guruttava_Android_E2E_Tests.E2EDhyankendra" name="Sanchalak login to CMS application and as per the role and rights it should have access to left menu. News, Event, Dhyankendra added by own, Dhyansthali" time="16.405">
+<failure message="WebDriverException: Message: Service /var/jenkins_home/.cache/selenium/chromedriver/linux64/144.0.7559.96/chromedriver unexpectedly exited. Status code was: 127&#10;" type="AssertionError"/>
+</testcase>
+<testcase classname="Guruttava_Android_E2E_Tests.E2EDhyankendra" name="Login from Mobile as Sadhak and register for Dhyankendra. Compare all the fields of Mobile with CMS." time="13.856">
+<failure message="MaxRetryError: HTTPConnectionPool(host='localhost', port=4723): Max retries exceeded with url: /session (Caused by NewConnectionError('&lt;urllib3.connection.HTTPConnection object at 0x73faf3d03100&gt;: Failed to establish a new connection: [Errno 111] Connection refused'))" type="AssertionError"/>
+</testcase>
+<testcase classname="Guruttava_Android_E2E_Tests.E2EDhyankendra" name="Sanchalak edits any field of Dhyankendra. Super Admin/ Acharya approves the changes requeted. Check refleciton in Mobile app." time="13.106">
+<failure message="MaxRetryError: HTTPConnectionPool(host='localhost', port=4723): Max retries exceeded with url: /session (Caused by NewConnectionError('&lt;urllib3.connection.HTTPConnection object at 0x73faf37b6f10&gt;: Failed to establish a new connection: [Errno 111] Connection refused'))" type="AssertionError"/>
+</testcase>
+<testcase classname="Guruttava_Android_E2E_Tests.E2EDhyankendra" name="Change the Primary Sanchalak from Dhyankendra and add other sanchalak" time="17.899">
+<failure message="WebDriverException: Message: Service /var/jenkins_home/.cache/selenium/chromedriver/linux64/144.0.7559.96/chromedriver unexpectedly exited. Status code was: 127&#10;" type="AssertionError"/>
+</testcase>
+<testcase classname="Guruttava_Android_E2E_Tests.E2EDhyankendra" name="Sanchalak edits any field of Dhyankendra. Super Admin/ Acharya Rejectes the changes requeted. check reflection in mobile app." time="14.404">
+<failure message="MaxRetryError: HTTPConnectionPool(host='localhost', port=4723): Max retries exceeded with url: /session (Caused by NewConnectionError('&lt;urllib3.connection.HTTPConnection object at 0x73faf3e9ce20&gt;: Failed to establish a new connection: [Errno 111] Connection refused'))" type="AssertionError"/>
+</testcase>
+<testcase classname="Guruttava_Android_E2E_Tests.E2EDhyankendra" name="Super Admin changes Sanchalak1 of TC67's Dhyankendra to free Vaishali" time="17.377">
+<failure message="WebDriverException: Message: Service /var/jenkins_home/.cache/selenium/chromedriver/linux64/144.0.7559.96/chromedriver unexpectedly exited. Status code was: 127&#10;" type="AssertionError"/>
+</testcase>
+</testsuite>
+<testsuite name="E2EEvents" tests="10" errors="0" failures="10" skipped="0" time="178.576" timestamp="2026-01-23T06:24:48.846996">
+<testcase classname="Guruttava_Android_E2E_Tests.E2EEvents" name="Verify the image upload validation in CMS for Events" time="15.771">
+<failure message="WebDriverException: Message: Service /var/jenkins_home/.cache/selenium/chromedriver/linux64/144.0.7559.96/chromedriver unexpectedly exited. Status code was: 127&#10;" type="AssertionError"/>
+</testcase>
+<testcase classname="Guruttava_Android_E2E_Tests.E2EEvents" name="Verify that user is not able to publish event when publish date is selected after the event dates" time="16.805">
+<failure message="WebDriverException: Message: Service /var/jenkins_home/.cache/selenium/chromedriver/linux64/144.0.7559.96/chromedriver unexpectedly exited. Status code was: 127&#10;" type="AssertionError"/>
+</testcase>
+<testcase classname="Guruttava_Android_E2E_Tests.E2EEvents" name="Verify that the user is able to add a English event, publish it in the CMS, and verify the english event details on the mobile app" time="16.190">
+<failure message="WebDriverException: Message: Service /var/jenkins_home/.cache/selenium/chromedriver/linux64/144.0.7559.96/chromedriver unexpectedly exited. Status code was: 127&#10;" type="AssertionError"/>
+</testcase>
+<testcase classname="Guruttava_Android_E2E_Tests.E2EEvents" name="Verify that the user is able to add a Hindi event, publish it in the CMS, and verify the hindi event details on the mobile app" time="16.870">
+<failure message="WebDriverException: Message: Service /var/jenkins_home/.cache/selenium/chromedriver/linux64/144.0.7559.96/chromedriver unexpectedly exited. Status code was: 127&#10;" type="AssertionError"/>
+</testcase>
+<testcase classname="Guruttava_Android_E2E_Tests.E2EEvents" name="Test Add Event Category from CMS and Add Events under that Category" time="16.209">
+<failure message="WebDriverException: Message: Service /var/jenkins_home/.cache/selenium/chromedriver/linux64/144.0.7559.96/chromedriver unexpectedly exited. Status code was: 127&#10;" type="AssertionError"/>
+</testcase>
+<testcase classname="Guruttava_Android_E2E_Tests.E2EEvents" name="Test Unpublish Event from CMS and Verify in Mobile App" time="15.877">
+<failure message="WebDriverException: Message: Service /var/jenkins_home/.cache/selenium/chromedriver/linux64/144.0.7559.96/chromedriver unexpectedly exited. Status code was: 127&#10;" type="AssertionError"/>
+</testcase>
+<testcase classname="Guruttava_Android_E2E_Tests.E2EEvents" name="Test Event Category Tab In Mobile App" time="23.548">
+<failure message="Could not open Gurutattva App after 3 attempts" type="AssertionError"/>
+</testcase>
+<testcase classname="Guruttava_Android_E2E_Tests.E2EEvents" name="Test Check Local Event Filter Functionality" time="17.247">
+<failure message="WebDriverException: Message: Service /var/jenkins_home/.cache/selenium/chromedriver/linux64/144.0.7559.96/chromedriver unexpectedly exited. Status code was: 127&#10;" type="AssertionError"/>
+</testcase>
+<testcase classname="Guruttava_Android_E2E_Tests.E2EEvents" name="Sanchalak adds local Event, once Acharya/Super Admin Approves it then only that Event is reflected in Mobile app uncer Local Event section." time="17.259">
+<failure message="WebDriverException: Message: Service /var/jenkins_home/.cache/selenium/chromedriver/linux64/144.0.7559.96/chromedriver unexpectedly exited. Status code was: 127&#10;" type="AssertionError"/>
+</testcase>
+<testcase classname="Guruttava_Android_E2E_Tests.E2EEvents" name="Sanchalak adds local event and Acharya/Super Admin Rejects that event." time="16.449">
+<failure message="WebDriverException: Message: Service /var/jenkins_home/.cache/selenium/chromedriver/linux64/144.0.7559.96/chromedriver unexpectedly exited. Status code was: 127&#10;" type="AssertionError"/>
+</testcase>
+</testsuite>
+<testsuite name="E2EHindi" tests="1" errors="0" failures="1" skipped="0" time="36.084" timestamp="2026-01-23T06:27:47.430370">
+<testcase classname="Guruttava_Android_E2E_Tests.E2EHindi" name="Test Mobile Language Change To Hindi" time="32.366">
+<failure message="MaxRetryError: HTTPConnectionPool(host='localhost', port=4723): Max retries exceeded with url: /session (Caused by NewConnectionError('&lt;urllib3.connection.HTTPConnection object at 0x73faf37b7350&gt;: Failed to establish a new connection: [Errno 111] Connection refused'))" type="AssertionError"/>
+</testcase>
+</testsuite>
+<testsuite name="E2ENamkaran" tests="16" errors="0" failures="16" skipped="0" time="214.343" timestamp="2026-01-23T06:28:23.515055">
+<testcase classname="Guruttava_Android_E2E_Tests.E2ENamkaran" name="Verify user is able to add Bride Namkaran with NO Option on the mobile app and verify the details in CSM" time="12.881">
+<failure message="MaxRetryError: HTTPConnectionPool(host='localhost', port=4723): Max retries exceeded with url: /session (Caused by NewConnectionError('&lt;urllib3.connection.HTTPConnection object at 0x73faf3e9c5a0&gt;: Failed to establish a new connection: [Errno 111] Connection refused'))" type="AssertionError"/>
+</testcase>
+<testcase classname="Guruttava_Android_E2E_Tests.E2ENamkaran" name="Verify user is able to add Business Namkaran with NO Option on the mobile app and verify the details in CSM" time="12.971">
+<failure message="MaxRetryError: HTTPConnectionPool(host='localhost', port=4723): Max retries exceeded with url: /session (Caused by NewConnectionError('&lt;urllib3.connection.HTTPConnection object at 0x73faf3e9c380&gt;: Failed to establish a new connection: [Errno 111] Connection refused'))" type="AssertionError"/>
+</testcase>
+<testcase classname="Guruttava_Android_E2E_Tests.E2ENamkaran" name="Verify user is able to add House Namkaran with NO Option on the mobile app and verify the details in CSM" time="12.599">
+<failure message="MaxRetryError: HTTPConnectionPool(host='localhost', port=4723): Max retries exceeded with url: /session (Caused by NewConnectionError('&lt;urllib3.connection.HTTPConnection object at 0x73faf3e9c5a0&gt;: Failed to establish a new connection: [Errno 111] Connection refused'))" type="AssertionError"/>
+</testcase>
+<testcase classname="Guruttava_Android_E2E_Tests.E2ENamkaran" name="Verify user is able to add Child Namkaran with NO Option on the mobile app and verify the details in CSM" time="12.670">
+<failure message="MaxRetryError: HTTPConnectionPool(host='localhost', port=4723): Max retries exceeded with url: /session (Caused by NewConnectionError('&lt;urllib3.connection.HTTPConnection object at 0x73faf3e9d7b0&gt;: Failed to establish a new connection: [Errno 111] Connection refused'))" type="AssertionError"/>
+</testcase>
+<testcase classname="Guruttava_Android_E2E_Tests.E2ENamkaran" name="Verify user is able to add Bride Namkaran with YES Option on the mobile app and verify the details in CSM" time="13.073">
+<failure message="MaxRetryError: HTTPConnectionPool(host='localhost', port=4723): Max retries exceeded with url: /session (Caused by NewConnectionError('&lt;urllib3.connection.HTTPConnection object at 0x73faf3e9d6a0&gt;: Failed to establish a new connection: [Errno 111] Connection refused'))" type="AssertionError"/>
+</testcase>
+<testcase classname="Guruttava_Android_E2E_Tests.E2ENamkaran" name="Verify user is able to add Business Namkaran with YES Option on the mobile app and verify the details in CSM" time="12.847">
+<failure message="MaxRetryError: HTTPConnectionPool(host='localhost', port=4723): Max retries exceeded with url: /session (Caused by NewConnectionError('&lt;urllib3.connection.HTTPConnection object at 0x73faf3e9c7c0&gt;: Failed to establish a new connection: [Errno 111] Connection refused'))" type="AssertionError"/>
+</testcase>
+<testcase classname="Guruttava_Android_E2E_Tests.E2ENamkaran" name="Verify user is able to add House Namkaran with YES Option on the mobile app and verify the details in CSM" time="12.862">
+<failure message="MaxRetryError: HTTPConnectionPool(host='localhost', port=4723): Max retries exceeded with url: /session (Caused by NewConnectionError('&lt;urllib3.connection.HTTPConnection object at 0x73faf3e9cc00&gt;: Failed to establish a new connection: [Errno 111] Connection refused'))" type="AssertionError"/>
+</testcase>
+<testcase classname="Guruttava_Android_E2E_Tests.E2ENamkaran" name="Verify user is able to add Child Namkaran with YES Option on the mobile app and verify the details in CSM" time="12.924">
+<failure message="MaxRetryError: HTTPConnectionPool(host='localhost', port=4723): Max retries exceeded with url: /session (Caused by NewConnectionError('&lt;urllib3.connection.HTTPConnection object at 0x73faf3e9c490&gt;: Failed to establish a new connection: [Errno 111] Connection refused'))" type="AssertionError"/>
+</testcase>
+<testcase classname="Guruttava_Android_E2E_Tests.E2ENamkaran" name="Verify that admin user is able to approve Bride Namkaran in CMS and verify the details on mobile app" time="14.413">
+<failure message="MaxRetryError: HTTPConnectionPool(host='localhost', port=4723): Max retries exceeded with url: /session (Caused by NewConnectionError('&lt;urllib3.connection.HTTPConnection object at 0x73faf3e9c9e0&gt;: Failed to establish a new connection: [Errno 111] Connection refused'))" type="AssertionError"/>
+</testcase>
+<testcase classname="Guruttava_Android_E2E_Tests.E2ENamkaran" name="Verify that admin user is able to approve Business Namkaran in CMS and verify the details on mobile app" time="12.802">
+<failure message="MaxRetryError: HTTPConnectionPool(host='localhost', port=4723): Max retries exceeded with url: /session (Caused by NewConnectionError('&lt;urllib3.connection.HTTPConnection object at 0x73faf3e9caf0&gt;: Failed to establish a new connection: [Errno 111] Connection refused'))" type="AssertionError"/>
+</testcase>
+<testcase classname="Guruttava_Android_E2E_Tests.E2ENamkaran" name="Verify that admin user is able to approve House Namkaran in CMS and verify the details on mobile app" time="13.042">
+<failure message="MaxRetryError: HTTPConnectionPool(host='localhost', port=4723): Max retries exceeded with url: /session (Caused by NewConnectionError('&lt;urllib3.connection.HTTPConnection object at 0x73faf37b7020&gt;: Failed to establish a new connection: [Errno 111] Connection refused'))" type="AssertionError"/>
+</testcase>
+<testcase classname="Guruttava_Android_E2E_Tests.E2ENamkaran" name="Verify that admin user is able to approve Child Namkaran in CMS and verify the details on mobile app" time="12.825">
+<failure message="MaxRetryError: HTTPConnectionPool(host='localhost', port=4723): Max retries exceeded with url: /session (Caused by NewConnectionError('&lt;urllib3.connection.HTTPConnection object at 0x73faf4339150&gt;: Failed to establish a new connection: [Errno 111] Connection refused'))" type="AssertionError"/>
+</testcase>
+<testcase classname="Guruttava_Android_E2E_Tests.E2ENamkaran" name="Verify that admin user is able to reject Bride Namkaran in CMS and verify the details on mobile app" time="13.263">
+<failure message="MaxRetryError: HTTPConnectionPool(host='localhost', port=4723): Max retries exceeded with url: /session (Caused by NewConnectionError('&lt;urllib3.connection.HTTPConnection object at 0x73faf37b59d0&gt;: Failed to establish a new connection: [Errno 111] Connection refused'))" type="AssertionError"/>
+</testcase>
+<testcase classname="Guruttava_Android_E2E_Tests.E2ENamkaran" name="Verify that admin user is able to reject Business Namkaran in CMS and verify the details on mobile app" time="12.928">
+<failure message="MaxRetryError: HTTPConnectionPool(host='localhost', port=4723): Max retries exceeded with url: /session (Caused by NewConnectionError('&lt;urllib3.connection.HTTPConnection object at 0x73faf32c8af0&gt;: Failed to establish a new connection: [Errno 111] Connection refused'))" type="AssertionError"/>
+</testcase>
+<testcase classname="Guruttava_Android_E2E_Tests.E2ENamkaran" name="Verify that admin user is able to reject House Namkaran in CMS and verify the details on mobile app" time="12.946">
+<failure message="MaxRetryError: HTTPConnectionPool(host='localhost', port=4723): Max retries exceeded with url: /session (Caused by NewConnectionError('&lt;urllib3.connection.HTTPConnection object at 0x73faf32ca8b0&gt;: Failed to establish a new connection: [Errno 111] Connection refused'))" type="AssertionError"/>
+</testcase>
+<testcase classname="Guruttava_Android_E2E_Tests.E2ENamkaran" name="Verify that admin user is able to reject Child Namkaran in CMS and verify the details on mobile app" time="13.488">
+<failure message="MaxRetryError: HTTPConnectionPool(host='localhost', port=4723): Max retries exceeded with url: /session (Caused by NewConnectionError('&lt;urllib3.connection.HTTPConnection object at 0x73faf37b6360&gt;: Failed to establish a new connection: [Errno 111] Connection refused'))" type="AssertionError"/>
+</testcase>
+</testsuite>
+<testsuite name="E2ENews" tests="9" errors="0" failures="9" skipped="0" time="188.684" timestamp="2026-01-23T06:31:57.859402">
+<testcase classname="Guruttava_Android_E2E_Tests.E2ENews" name="Verify the image upload validation in CMS" time="17.642">
+<failure message="WebDriverException: Message: Service /var/jenkins_home/.cache/selenium/chromedriver/linux64/144.0.7559.96/chromedriver unexpectedly exited. Status code was: 127&#10;" type="AssertionError"/>
+</testcase>
+<testcase classname="Guruttava_Android_E2E_Tests.E2ENews" name="Verify that the user is able to add a English news, publish it in the CMS, and verify the english news details on the mobile app" time="17.340">
+<failure message="WebDriverException: Message: Service /var/jenkins_home/.cache/selenium/chromedriver/linux64/144.0.7559.96/chromedriver unexpectedly exited. Status code was: 127&#10;" type="AssertionError"/>
+</testcase>
+<testcase classname="Guruttava_Android_E2E_Tests.E2ENews" name="Verify that the user is able to add a Hindi news, publish it in the CMS, and verify the hindi news details on the mobile app" time="36.361">
+<failure message="WebDriverException: Message: Service /var/jenkins_home/.cache/selenium/chromedriver/linux64/144.0.7559.96/chromedriver unexpectedly exited. Status code was: 127&#10;" type="AssertionError"/>
+</testcase>
+<testcase classname="Guruttava_Android_E2E_Tests.E2ENews" name="Test Unpublish News from CMS and Verify in Mobile App" time="16.972">
+<failure message="WebDriverException: Message: Service /var/jenkins_home/.cache/selenium/chromedriver/linux64/144.0.7559.96/chromedriver unexpectedly exited. Status code was: 127&#10;" type="AssertionError"/>
+</testcase>
+<testcase classname="Guruttava_Android_E2E_Tests.E2ENews" name="Test News Category Tab In Mobile App" time="23.613">
+<failure message="Could not open Gurutattva App after 3 attempts" type="AssertionError"/>
+</testcase>
+<testcase classname="Guruttava_Android_E2E_Tests.E2ENews" name="Test Check Local News Filter Functionality" time="23.579">
+<failure message="Could not open Gurutattva App after 3 attempts" type="AssertionError"/>
+</testcase>
+<testcase classname="Guruttava_Android_E2E_Tests.E2ENews" name="Test Sanchalak Adds Local News And Super Admin Approves It" time="16.598">
+<failure message="WebDriverException: Message: Service /var/jenkins_home/.cache/selenium/chromedriver/linux64/144.0.7559.96/chromedriver unexpectedly exited. Status code was: 127&#10;" type="AssertionError"/>
+</testcase>
+<testcase classname="Guruttava_Android_E2E_Tests.E2ENews" name="Test Sanchalak Adds Local News And Super Admin Rejects It" time="17.013">
+<failure message="WebDriverException: Message: Service /var/jenkins_home/.cache/selenium/chromedriver/linux64/144.0.7559.96/chromedriver unexpectedly exited. Status code was: 127&#10;" type="AssertionError"/>
+</testcase>
+<testcase classname="Guruttava_Android_E2E_Tests.E2ENews" name="Add News Category from CMS. Add News uder that category. check list of all categories in the Mobile app under Category tab." time="14.868">
+<failure message="WebDriverException: Message: Service /var/jenkins_home/.cache/selenium/chromedriver/linux64/144.0.7559.96/chromedriver unexpectedly exited. Status code was: 127&#10;" type="AssertionError"/>
+</testcase>
+</testsuite>
+<testsuite name="E2EPrayer" tests="3" errors="0" failures="3" skipped="0" time="43.942" timestamp="2026-01-23T06:35:06.544537">
+<testcase classname="Guruttava_Android_E2E_Tests.E2EPrayer" name="End-to-End Integration: Verify that user is able to add Prayer with Self Option on the mobile app and verify it in CMS" time="12.746">
+<failure message="MaxRetryError: HTTPConnectionPool(host='localhost', port=4723): Max retries exceeded with url: /session (Caused by NewConnectionError('&lt;urllib3.connection.HTTPConnection object at 0x73faf37b6cf0&gt;: Failed to establish a new connection: [Errno 111] Connection refused'))" type="AssertionError"/>
+</testcase>
+<testcase classname="Guruttava_Android_E2E_Tests.E2EPrayer" name="End-to-End Integration:Verify that user is able to add Prayer with Other Option on the mobile app and verify it in CMS" time="13.090">
+<failure message="MaxRetryError: HTTPConnectionPool(host='localhost', port=4723): Max retries exceeded with url: /session (Caused by NewConnectionError('&lt;urllib3.connection.HTTPConnection object at 0x73faf3e9cf30&gt;: Failed to establish a new connection: [Errno 111] Connection refused'))" type="AssertionError"/>
+</testcase>
+<testcase classname="Guruttava_Android_E2E_Tests.E2EPrayer" name="Verify that user is able to export the Prayer in CMS" time="12.882">
+<failure message="MaxRetryError: HTTPConnectionPool(host='localhost', port=4723): Max retries exceeded with url: /session (Caused by NewConnectionError('&lt;urllib3.connection.HTTPConnection object at 0x73faf37b4050&gt;: Failed to establish a new connection: [Errno 111] Connection refused'))" type="AssertionError"/>
+</testcase>
+</testsuite>
+<testsuite name="E2ERegistration" tests="6" errors="0" failures="6" skipped="0" time="82.599" timestamp="2026-01-23T06:35:50.487699">
+<testcase classname="Guruttava_Android_E2E_Tests.E2ERegistration" name="Verify that quick registration on the mobile app reflects correctly in the CMS and user details are displayed properly in profile and flip card." time="12.826">
+<failure message="MaxRetryError: HTTPConnectionPool(host='localhost', port=4723): Max retries exceeded with url: /session (Caused by NewConnectionError('&lt;urllib3.connection.HTTPConnection object at 0x73faf3e9c5a0&gt;: Failed to establish a new connection: [Errno 111] Connection refused'))" type="AssertionError"/>
+</testcase>
+<testcase classname="Guruttava_Android_E2E_Tests.E2ERegistration" name="Verify user is not able to do quick registration on mobile app with already used email id and phone number" time="12.822">
+<failure message="MaxRetryError: HTTPConnectionPool(host='localhost', port=4723): Max retries exceeded with url: /session (Caused by NewConnectionError('&lt;urllib3.connection.HTTPConnection object at 0x73faf3e9fbd0&gt;: Failed to establish a new connection: [Errno 111] Connection refused'))" type="AssertionError"/>
+</testcase>
+<testcase classname="Guruttava_Android_E2E_Tests.E2ERegistration" name="Verify that the quick registration user is not able to access Events, Dhyan Kendra, and Podcasts , Home screen on the mobile app, and that a pop-up message is displayed" time="12.933">
+<failure message="MaxRetryError: HTTPConnectionPool(host='localhost', port=4723): Max retries exceeded with url: /session (Caused by NewConnectionError('&lt;urllib3.connection.HTTPConnection object at 0x73faf3e9dae0&gt;: Failed to establish a new connection: [Errno 111] Connection refused'))" type="AssertionError"/>
+</testcase>
+<testcase classname="Guruttava_Android_E2E_Tests.E2ERegistration" name="Verify that the quick registration user is able to become a member on the mobile app" time="13.309">
+<failure message="MaxRetryError: HTTPConnectionPool(host='localhost', port=4723): Max retries exceeded with url: /session (Caused by NewConnectionError('&lt;urllib3.connection.HTTPConnection object at 0x73faf3e9c5a0&gt;: Failed to establish a new connection: [Errno 111] Connection refused'))" type="AssertionError"/>
+</testcase>
+<testcase classname="Guruttava_Android_E2E_Tests.E2ERegistration" name="Verify that Community registration on the mobile app reflects correctly in the CMS and user details are displayed properly in profile and flip card." time="12.734">
+<failure message="MaxRetryError: HTTPConnectionPool(host='localhost', port=4723): Max retries exceeded with url: /session (Caused by NewConnectionError('&lt;urllib3.connection.HTTPConnection object at 0x73faf3e9c8d0&gt;: Failed to establish a new connection: [Errno 111] Connection refused'))" type="AssertionError"/>
+</testcase>
+<testcase classname="Guruttava_Android_E2E_Tests.E2ERegistration" name="Verify that the community registered user is able to access Events, Dhyan Kendra, and Podcasts on the mobile app, and ensure that no pop-up message is displayed" time="12.994">
+<failure message="MaxRetryError: HTTPConnectionPool(host='localhost', port=4723): Max retries exceeded with url: /session (Caused by NewConnectionError('&lt;urllib3.connection.HTTPConnection object at 0x73faf3e9d040&gt;: Failed to establish a new connection: [Errno 111] Connection refused'))" type="AssertionError"/>
+</testcase>
+</testsuite>
+<testsuite name="E2ERoleRight" tests="5" errors="0" failures="5" skipped="0" time="84.484" timestamp="2026-01-23T06:37:13.087380">
+<testcase classname="Guruttava_Android_E2E_Tests.E2ERoleRight" name="Test Prayer Coordinator Role Access" time="15.534">
+<failure message="WebDriverException: Message: Service /var/jenkins_home/.cache/selenium/chromedriver/linux64/144.0.7559.96/chromedriver unexpectedly exited. Status code was: 127&#10;" type="AssertionError"/>
+</testcase>
+<testcase classname="Guruttava_Android_E2E_Tests.E2ERoleRight" name="Test Global Event Coordinator Role Access" time="16.660">
+<failure message="WebDriverException: Message: Service /var/jenkins_home/.cache/selenium/chromedriver/linux64/144.0.7559.96/chromedriver unexpectedly exited. Status code was: 127&#10;" type="AssertionError"/>
+</testcase>
+<testcase classname="Guruttava_Android_E2E_Tests.E2ERoleRight" name="Test Acharya Role Access" time="15.695">
+<failure message="WebDriverException: Message: Service /var/jenkins_home/.cache/selenium/chromedriver/linux64/144.0.7559.96/chromedriver unexpectedly exited. Status code was: 127&#10;" type="AssertionError"/>
+</testcase>
+<testcase classname="Guruttava_Android_E2E_Tests.E2ERoleRight" name="Test Maha Acharya Role Access" time="16.325">
+<failure message="WebDriverException: Message: Service /var/jenkins_home/.cache/selenium/chromedriver/linux64/144.0.7559.96/chromedriver unexpectedly exited. Status code was: 127&#10;" type="AssertionError"/>
+</testcase>
+<testcase classname="Guruttava_Android_E2E_Tests.E2ERoleRight" name="Test Namkaran Coordinator Role Access" time="17.340">
+<failure message="WebDriverException: Message: Service /var/jenkins_home/.cache/selenium/chromedriver/linux64/144.0.7559.96/chromedriver unexpectedly exited. Status code was: 127&#10;" type="AssertionError"/>
+</testcase>
+</testsuite>
+</testsuite>

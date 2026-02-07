@@ -1,0 +1,17 @@
+Started by timer
+Running as SYSTEM
+Building in workspace /var/jenkins_home/workspace/DDN-Test-Job
+[DDN-Test-Job] $ /bin/bash /tmp/jenkins8930437666307653703.sh
+=========================================
+DDN E2E Tests (Robot Framework)
+Build: 2
+Job: DDN-Test-Job
+Test Type: Smoke
+=========================================
+Project ID: 1 | Slug: ddn
+DDN Test Job - Placeholder
+Configure your test execution here
+Archiving artifacts
+‘robot-results/**/*’ doesn’t match anything: even ‘robot-results’ doesn’t exist
+No artifacts found that match the file pattern "robot-results/**/*". Configuration error?
+Finished: SUCCESS

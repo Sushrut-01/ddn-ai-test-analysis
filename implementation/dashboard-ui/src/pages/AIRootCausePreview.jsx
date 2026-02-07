@@ -28,7 +28,7 @@ import ThumbUpIcon from '@mui/icons-material/ThumbUp';
 import ThumbDownIcon from '@mui/icons-material/ThumbDown';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import { useColorTheme } from '../theme/ThemeContext';
-import { failuresAPI, monitoringAPI } from '../services/api';
+import { failuresAPI, monitoringAPI, exportAPI } from '../services/api';
 
 const ERROR_CATEGORIES = [
     { value: '', label: 'All Categories' },
@@ -111,6 +111,26 @@ const AIRootCausePreview = () => {
         fetchAnalyses();
     };
 
+    const handleExport = async () => {
+        try {
+            // Generate CSV from current analyses
+            const csvContent = analyses.map(a =>
+                `${a.build_id || ''},${a.test_name || ''},${a.classification || ''},${a.confidence_score || ''},${a.root_cause || ''},${a.timestamp || ''}`
+            ).join('\n');
+
+            const header = 'Build ID,Test Name,Classification,Confidence,Root Cause,Timestamp\n';
+            const blob = new Blob([header + csvContent], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `root_cause_analysis_${new Date().toISOString().split('T')[0]}.csv`;
+            a.click();
+            window.URL.revokeObjectURL(url);
+        } catch (err) {
+            console.error('Export error:', err);
+        }
+    };
+
     const handleViewDetails = (analysis) => {
         const buildId = analysis?.build_id || analysis?.buildId || analysis?._id || '';
         if (buildId) {
@@ -143,7 +163,7 @@ const AIRootCausePreview = () => {
             {/* Header */}
             <Box
                 sx={{
-                    background: 'linear-gradient(135deg, #dc2626 0%, #991b1b 100%)',
+                    background: 'linear-gradient(135deg, #10b981, #14b8a6)',
                     pt: 4,
                     pb: 8,
                     px: 3,
@@ -172,6 +192,7 @@ const AIRootCausePreview = () => {
                             <Button
                                 variant="contained"
                                 startIcon={<DownloadIcon />}
+                                onClick={handleExport}
                                 sx={{ bgcolor: 'rgba(255,255,255,0.15)', '&:hover': { bgcolor: 'rgba(255,255,255,0.25)' } }}
                             >
                                 Export
@@ -194,10 +215,10 @@ const AIRootCausePreview = () => {
                 {/* Summary Stats Cards */}
                 <Grid container spacing={3} mb={4}>
                     {[
-                        { label: 'Total Analyses', value: loading ? '-' : summaryStats.totalAnalyses, icon: <SmartToyIcon />, color: '#3b82f6', desc: 'AI-analyzed failures' },
-                        { label: 'High Confidence', value: loading ? '-' : summaryStats.highConfidence, icon: <CheckCircleIcon />, color: '#10b981', desc: 'Confidence > 80%' },
+                        { label: 'Total Analyses', value: loading ? '-' : summaryStats.totalAnalyses, icon: <SmartToyIcon />, color: '#10b981', desc: 'AI-analyzed failures' },
+                        { label: 'High Confidence', value: loading ? '-' : summaryStats.highConfidence, icon: <CheckCircleIcon />, color: '#14b8a6', desc: 'Confidence > 80%' },
                         { label: 'Code Errors', value: loading ? '-' : summaryStats.codeErrors, icon: <CodeIcon />, color: '#ef4444', desc: 'Requiring code fixes' },
-                        { label: 'Avg Confidence', value: loading ? '-' : `${summaryStats.avgConfidence}%`, icon: <TipsAndUpdatesIcon />, color: '#f59e0b', desc: 'Analysis accuracy' },
+                        { label: 'Avg Confidence', value: loading ? '-' : `${summaryStats.avgConfidence}%`, icon: <TipsAndUpdatesIcon />, color: '#10b981', desc: 'Analysis accuracy' },
                     ].map((stat, idx) => (
                         <Grid item xs={6} md={3} key={idx}>
                             <Card elevation={0} sx={{ borderRadius: 4, boxShadow: '0 4px 20px rgba(0,0,0,0.04)' }}>
@@ -431,9 +452,9 @@ const AIRootCausePreview = () => {
                                                             <IconButton
                                                                 size="small"
                                                                 onClick={(e) => { e.stopPropagation(); handleViewDetails(analysis); }}
-                                                                sx={{ bgcolor: '#e0f2fe', '&:hover': { bgcolor: '#bae6fd' } }}
+                                                                sx={{ bgcolor: alpha('#10b981', 0.1), '&:hover': { bgcolor: alpha('#10b981', 0.2) } }}
                                                             >
-                                                                <OpenInNewIcon sx={{ fontSize: 18, color: '#0284c7' }} />
+                                                                <OpenInNewIcon sx={{ fontSize: 18, color: '#10b981' }} />
                                                             </IconButton>
                                                         </Tooltip>
                                                         <Tooltip title="Copy Root Cause">
@@ -534,7 +555,7 @@ const AIRootCausePreview = () => {
                                                                             variant="contained"
                                                                             startIcon={<OpenInNewIcon />}
                                                                             onClick={() => handleViewDetails(analysis)}
-                                                                            sx={{ bgcolor: '#3b82f6' }}
+                                                                            sx={{ background: 'linear-gradient(135deg, #10b981, #14b8a6)', '&:hover': { background: 'linear-gradient(135deg, #059669, #0d9488)' } }}
                                                                         >
                                                                             View Full Details
                                                                         </Button>

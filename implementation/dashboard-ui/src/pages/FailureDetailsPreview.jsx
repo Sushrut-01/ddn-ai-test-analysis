@@ -30,7 +30,19 @@ import HistoryIcon from '@mui/icons-material/History';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 import AnalyticsIcon from '@mui/icons-material/Analytics';
 import { useNavigate, useParams } from 'react-router-dom';
-import { failuresAPI } from '../services/api';
+import { failuresAPI, copilotAPI } from '../services/api';
+
+// Copy to clipboard helper
+const copyToClipboard = async (text, setSnackbar) => {
+  try {
+    await navigator.clipboard.writeText(text);
+    setSnackbar({ open: true, message: 'Code copied to clipboard!', severity: 'success' });
+    return true;
+  } catch (err) {
+    setSnackbar({ open: true, message: 'Failed to copy code', severity: 'error' });
+    return false;
+  }
+};
 
 const TabPanel = ({ children, value, index }) => (
     <div role="tabpanel" hidden={value !== index}>
@@ -186,42 +198,64 @@ const FailureDetailsPreview = () => {
         setFeedbackDialogOpen(true);
     };
 
-    const handleFeedbackSubmit = () => {
+    const handleFeedbackSubmit = async () => {
         if (!feedbackText.trim()) {
             setSnackbar({ open: true, message: 'Please provide feedback for the AI to improve.', severity: 'warning' });
             return;
         }
 
         setFeedbackDialogOpen(false);
+        setIsReanalyzing(true);
 
         if (feedbackType === 'reject') {
             setFeedbackStatus('rejected');
-            // Start re-analysis
-            setIsReanalyzing(true);
             setSnackbar({ open: true, message: 'Feedback submitted. AI is re-analyzing with your input...', severity: 'info' });
-
-            // Simulate re-analysis
-            setTimeout(() => {
-                setIsReanalyzing(false);
-                setFeedbackStatus('refined');
-                setAnalysisHistory([...analysisHistory, { type: 'reject', feedback: feedbackText, timestamp: new Date() }]);
-                setSnackbar({ open: true, message: 'Re-analysis complete! Please review the updated analysis.', severity: 'success' });
-            }, 3000);
         } else {
             setFeedbackStatus('refining');
-            setIsReanalyzing(true);
             setSnackbar({ open: true, message: 'Refinement requested. AI is improving the analysis...', severity: 'info' });
-
-            // Simulate refinement
-            setTimeout(() => {
-                setIsReanalyzing(false);
-                setFeedbackStatus('refined');
-                setAnalysisHistory([...analysisHistory, { type: 'refine', feedback: feedbackText, timestamp: new Date() }]);
-                setSnackbar({ open: true, message: 'Analysis refined! Please review the improvements.', severity: 'success' });
-            }, 3000);
         }
 
-        setFeedbackText('');
+        try {
+            // Call the real AI API for re-analysis with feedback
+            const prompt = feedbackType === 'reject'
+                ? `Re-analyze this test failure with the following feedback from the user: "${feedbackText}"\n\nOriginal error: ${errorMessage}\n\nProvide an updated root cause analysis and fix recommendation.`
+                : `Refine the analysis for this test failure based on user feedback: "${feedbackText}"\n\nOriginal error: ${errorMessage}\n\nProvide an improved analysis.`;
+
+            const response = await copilotAPI.chat({
+                message: prompt,
+                conversation_history: []
+            });
+
+            const aiResponse = response?.data?.response || response?.response || 'Re-analysis completed.';
+
+            // Update the analysis with the new response
+            setAnalysisHistory([...analysisHistory, {
+                type: feedbackType,
+                feedback: feedbackText,
+                timestamp: new Date(),
+                aiResponse: aiResponse
+            }]);
+
+            setFeedbackStatus('refined');
+            setSnackbar({
+                open: true,
+                message: feedbackType === 'reject'
+                    ? 'Re-analysis complete! Please review the updated analysis.'
+                    : 'Analysis refined! Please review the improvements.',
+                severity: 'success'
+            });
+        } catch (error) {
+            console.error('Re-analysis error:', error);
+            setSnackbar({
+                open: true,
+                message: 'Re-analysis failed. Please try again.',
+                severity: 'error'
+            });
+            setFeedbackStatus(null);
+        } finally {
+            setIsReanalyzing(false);
+            setFeedbackText('');
+        }
     };
 
     const handleDialogClose = () => {
@@ -495,7 +529,7 @@ const FailureDetailsPreview = () => {
                                         <Box display="flex" justifyContent="space-between" alignItems="center" mb={1}>
                                             <Chip label="BEFORE (Error)" size="small" sx={{ bgcolor: '#fee2e2', color: '#991b1b', fontWeight: 600 }} />
                                             <Tooltip title="Copy code">
-                                                <IconButton size="small"><ContentCopyIcon fontSize="small" /></IconButton>
+                                                <IconButton size="small" onClick={() => copyToClipboard(analysis.before_code, setSnackbar)}><ContentCopyIcon fontSize="small" /></IconButton>
                                             </Tooltip>
                                         </Box>
                                         <Paper
@@ -524,7 +558,7 @@ const FailureDetailsPreview = () => {
                                         <Box display="flex" justifyContent="space-between" alignItems="center" mb={1}>
                                             <Chip label="AFTER (Fixed)" size="small" sx={{ bgcolor: '#dcfce7', color: '#166534', fontWeight: 600 }} />
                                             <Tooltip title="Copy code">
-                                                <IconButton size="small"><ContentCopyIcon fontSize="small" /></IconButton>
+                                                <IconButton size="small" onClick={() => copyToClipboard(analysis.after_code, setSnackbar)}><ContentCopyIcon fontSize="small" /></IconButton>
                                             </Tooltip>
                                         </Box>
                                         <Paper

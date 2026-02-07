@@ -1,0 +1,18 @@
+Started by timer
+Running as SYSTEM
+Building in workspace /var/jenkins_home/workspace/DDN-Nightly-Tests
+[DDN-Nightly-Tests] $ /bin/bash /tmp/jenkins8322052457772080563.sh
+=========================================
+DDN Nightly Tests (Robot Framework)
+Build: 6
+Full Regression: true
+Started at: Tue Feb  3 02:00:14 UTC 2026
+=========================================
+Project ID: 1 | Slug: ddn | Test Type: Nightly
+Running nightly automated tests...
+Running FULL regression suite...
+DDN Nightly Tests completed at: Tue Feb  3 02:00:14 UTC 2026
+Archiving artifacts
+‘robot-results/**/*’ doesn’t match anything, but ‘**/*’ does. Perhaps that’s what you mean?
+No artifacts found that match the file pattern "robot-results/**/*". Configuration error?
+Finished: SUCCESS

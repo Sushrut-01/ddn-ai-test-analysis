@@ -1,0 +1,48 @@
+Started by timer
+Running as SYSTEM
+Building in workspace /var/jenkins_home/workspace/Guruttava-E2E-Tests
+[Guruttava-E2E-Tests] $ /bin/bash /tmp/jenkins4175804770834236856.sh
+=========================================
+Guruttava E2E Tests (Robot Framework)
+Build: 1
+Job: Guruttava-E2E-Tests
+Platform: Android
+Test Type: Smoke
+=========================================
+Project ID: 2 | Slug: guruttava
+Checking out code from https://github.com/Sushrut-01/gurutattva-e2e-automation (branch: Sushrut-laptop)...
+HEAD is now at 2d288d7 feat: add Jenkins pipeline to run all E2E suites sequentially (PROJECT_ID=2, Multi-Project)
+Git Branch: Sushrut-laptop | Commit: 2d288d73cc10e6006e222d80af955d53a97f6623
+Installing Robot Framework and dependencies...
+/tmp/jenkins4175804770834236856.sh: line 33: python3: command not found
+/tmp/jenkins4175804770834236856.sh: line 34: python3: command not found
+Creating Docker Chrome library wrapper (proven web solution)...
+✅ Docker Chrome library created
+Running E2E tests from: tests/E2E*.robot
+Appium Server: http://host.docker.internal:4723
+Configuring Chrome for headless mode in Docker...
+Installing ChromeDriver...
+Chrome Binary: /usr/bin/google-chrome
+ChromeDriver: /usr/bin/chromedriver
+Chrome Options: --headless --no-sandbox --disable-dev-shm-usage --disable-gpu --disable-software-rasterizer --disable-extensions --remote-debugging-port=9222 --user-data-dir=/tmp/chrome-user-data --window-size=1920,1080 --single-process
+Running Android E2E tests
+Test Type: Smoke
+Executing Robot Framework E2E tests (E2E* files only)...
+/tmp/jenkins4175804770834236856.sh: line 133: python3: command not found
+Robot Framework exit code: 127
+Parsing test results and uploading to platform...
+Triggering AI analysis for failures...
+{
+  "error": "Missing required field: build_id"
+}
+=========================================
+Guruttava Tests completed!
+Platform: Android
+Results uploaded to project_id: 2
+=========================================
+Build step 'Execute shell' marked build as failure
+Archiving artifacts
+Recording test results
+No test report files were found. Configuration error?
+[Checks API] No suitable checks publisher found.
+Finished: FAILURE

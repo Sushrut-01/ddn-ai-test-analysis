@@ -60,7 +60,7 @@ import TimelineIcon from '@mui/icons-material/Timeline'
 import AssessmentIcon from '@mui/icons-material/Assessment'
 import SearchIcon from '@mui/icons-material/Search'
 import BuildIcon from '@mui/icons-material/Build'
-import { chatAPI, failuresAPI } from '../services/api'
+import { chatAPI, failuresAPI, exportAPI, jiraAPI } from '../services/api'
 
 // Copy to clipboard helper
 const copyToClipboard = async (text) => {
@@ -149,15 +149,57 @@ function AIChatbotPreview() {
     }
   }
 
-  const handleCreateBug = () => {
-    // Add a message asking for failure details
-    const bugMessage = {
-      id: messages.length + 1,
-      role: 'assistant',
-      content: `🐛 **Create Jira Bug**\n\nTo create a bug ticket, please provide:\n1. The build ID or failure you want to report\n2. Any additional context\n\nOr say "Create bug for latest failure" and I'll help you create a ticket.\n\n*Jira is configured for: ${window.location.hostname.includes('localhost') ? 'sushrutnistane2001.atlassian.net' : 'your Jira instance'}*`,
-      timestamp: new Date()
+  const handleCreateBug = async () => {
+    setIsTyping(true)
+    try {
+      // Get the latest failure to create a bug for
+      const failuresResponse = await failuresAPI.getList({ limit: 1, analyzed: 'true' })
+      const failures = failuresResponse?.data?.failures || failuresResponse?.failures || []
+
+      if (failures.length === 0) {
+        const noFailureMessage = {
+          id: messages.length + 1,
+          role: 'assistant',
+          content: `🐛 **No Recent Failures Found**\n\nThere are no analyzed failures available to create a bug for. Please analyze a failure first or provide a specific build ID.`,
+          timestamp: new Date()
+        }
+        setMessages(prev => [...prev, noFailureMessage])
+        return
+      }
+
+      const failure = failures[0]
+
+      // Create the Jira bug
+      const bugData = {
+        build_id: failure.build_id || failure.buildId,
+        test_name: failure.test_name || failure.testName,
+        error_message: failure.error_message || failure.stack_trace || 'Test failure',
+        ai_analysis: failure.analysis?.root_cause || 'AI analysis pending',
+        recommendation: failure.analysis?.recommendation || 'See failure details'
+      }
+
+      const response = await jiraAPI.createBug(bugData)
+      const result = response?.data || response
+
+      const successMessage = {
+        id: messages.length + 1,
+        role: 'assistant',
+        content: `✅ **Jira Bug Created Successfully!**\n\n🎫 **Ticket:** ${result.issue_key || 'DDN-XXX'}\n📋 **Summary:** ${failure.test_name || failure.testName}\n🔗 **Link:** ${result.issue_url || '#'}\n\nThe bug has been created in Jira with the AI analysis details.`,
+        timestamp: new Date()
+      }
+      setMessages(prev => [...prev, successMessage])
+      showSnackbar(`Bug ${result.issue_key || 'created'} successfully!`, 'success')
+    } catch (error) {
+      const errorMessage = {
+        id: messages.length + 1,
+        role: 'assistant',
+        content: `❌ **Failed to Create Bug**\n\n${error.message || 'Could not connect to Jira. Please check your configuration.'}\n\nYou can manually create a bug in Jira or try again later.`,
+        timestamp: new Date()
+      }
+      setMessages(prev => [...prev, errorMessage])
+    } finally {
+      setIsTyping(false)
     }
-    setMessages(prev => [...prev, bugMessage])
   }
 
   const scrollToBottom = () => {
@@ -270,28 +312,49 @@ function AIChatbotPreview() {
     }
   }
 
-  const handleGeneratePDF = () => {
+  const handleGeneratePDF = async () => {
     setGenerating(true)
-    setTimeout(() => {
-      setGenerating(false)
+    try {
+      // Call the real PDF export API
+      const response = await exportAPI.exportFailuresPDF({ days: reportType === 'daily' ? 1 : reportType === 'weekly' ? 7 : 30 })
+
+      // Create downloadable PDF (the API returns HTML for printing, we'll convert it)
+      const blob = new Blob([response.data || response], { type: 'application/pdf' })
+      const url = window.URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `${reportType}_failure_report_${new Date().toISOString().split('T')[0]}.pdf`
+      document.body.appendChild(a)
+      a.click()
+      document.body.removeChild(a)
+      window.URL.revokeObjectURL(url)
+
       setPdfDialogOpen(false)
-      // Add confirmation message
       const confirmMessage = {
         id: messages.length + 1,
         role: 'assistant',
-        content: `✅ **PDF Report Generated Successfully!**\n\n📄 File: \`${reportType}_failure_report_${new Date().toISOString().split('T')[0]}.pdf\`\n📦 Size: 2.4 MB\n\nThe report has been downloaded to your system.`,
+        content: `✅ **PDF Report Generated Successfully!**\n\n📄 File: \`${reportType}_failure_report_${new Date().toISOString().split('T')[0]}.pdf\`\n\nThe report has been downloaded to your system.`,
         timestamp: new Date()
       }
       setMessages(prev => [...prev, confirmMessage])
-    }, 2000)
+    } catch (error) {
+      showSnackbar('Failed to generate PDF: ' + error.message, 'error')
+    } finally {
+      setGenerating(false)
+    }
   }
 
-  const handleSendEmail = () => {
+  const handleSendEmail = async () => {
     setGenerating(true)
-    setTimeout(() => {
-      setGenerating(false)
+    try {
+      // Call the real email API
+      await exportAPI.sendReportEmail({
+        to: emailTo,
+        report_type: reportType,
+        subject: `DDN AI Analysis - ${reportType.charAt(0).toUpperCase() + reportType.slice(1)} Report`
+      })
+
       setEmailDialogOpen(false)
-      // Add confirmation message
       const confirmMessage = {
         id: messages.length + 1,
         role: 'assistant',
@@ -299,7 +362,12 @@ function AIChatbotPreview() {
         timestamp: new Date()
       }
       setMessages(prev => [...prev, confirmMessage])
-    }, 2000)
+      setEmailTo('')
+    } catch (error) {
+      showSnackbar('Failed to send email: ' + error.message, 'error')
+    } finally {
+      setGenerating(false)
+    }
   }
 
   const clearChat = () => {
@@ -357,7 +425,7 @@ function AIChatbotPreview() {
             p: 2,
             mb: 2,
             borderRadius: 3,
-            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+            background: 'linear-gradient(135deg, #10b981, #14b8a6)',
             color: 'white'
           }}
         >

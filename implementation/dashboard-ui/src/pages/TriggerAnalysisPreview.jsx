@@ -176,7 +176,7 @@ const TriggerAnalysisPreview = () => {
             {/* Header */}
             <Box
                 sx={{
-                    background: 'linear-gradient(135deg, #ea580c 0%, #c2410c 100%)',
+                    background: 'linear-gradient(135deg, #10b981, #14b8a6)',
                     pt: 4,
                     pb: 8,
                     px: 3,
@@ -225,7 +225,7 @@ const TriggerAnalysisPreview = () => {
                     <Typography variant="subtitle2" color="textSecondary" sx={{ mr: 1 }}>
                         Flow:
                     </Typography>
-                    <Chip label="1. Select & Trigger" color="warning" size="small" sx={{ fontWeight: 600, bgcolor: '#ea580c', color: 'white' }} />
+                    <Chip label="1. Select & Trigger" color="warning" size="small" sx={{ fontWeight: 600, bgcolor: '#10b981', color: 'white' }} />
                     <ArrowForwardIcon sx={{ color: '#94a3b8', fontSize: 18 }} />
                     <Chip
                         label="2. View Results"
@@ -233,7 +233,7 @@ const TriggerAnalysisPreview = () => {
                         variant="outlined"
                         onClick={() => navigate('/failures')}
                         icon={<VisibilityIcon sx={{ fontSize: 16 }} />}
-                        sx={{ cursor: 'pointer', '&:hover': { bgcolor: 'rgba(234, 88, 12, 0.1)' } }}
+                        sx={{ cursor: 'pointer', '&:hover': { bgcolor: alpha('#10b981', 0.1) } }}
                     />
                     <ArrowForwardIcon sx={{ color: '#94a3b8', fontSize: 18 }} />
                     <Chip label="3. Review & Approve" size="small" variant="outlined" />
@@ -268,9 +268,9 @@ const TriggerAnalysisPreview = () => {
                 <Grid container spacing={3} mb={4}>
                     {[
                         { label: 'Pending Analysis', value: pendingCount, icon: <PendingIcon />, color: '#f59e0b' },
-                        { label: 'Currently Analyzing', value: analyzingCount, icon: <SmartToyIcon />, color: '#3b82f6' },
+                        { label: 'Currently Analyzing', value: analyzingCount, icon: <SmartToyIcon />, color: '#10b981' },
                         { label: 'Completed Today', value: completedCount, icon: <CheckCircleIcon />, color: '#10b981' },
-                        { label: 'Selected', value: selectedBuilds.size, icon: <BoltIcon />, color: '#ea580c' },
+                        { label: 'Selected', value: selectedBuilds.size, icon: <BoltIcon />, color: '#10b981' },
                     ].map((stat, idx) => (
                         <Grid item xs={6} md={3} key={idx}>
                             <Card elevation={0} sx={{ borderRadius: 4, boxShadow: '0 4px 20px rgba(0,0,0,0.04)' }}>
@@ -311,8 +311,8 @@ const TriggerAnalysisPreview = () => {
                         disabled={selectedBuilds.size === 0 || analyzing}
                         sx={{
                             borderRadius: 3,
-                            bgcolor: '#ea580c',
-                            '&:hover': { bgcolor: '#c2410c' },
+                            background: 'linear-gradient(135deg, #10b981, #14b8a6)',
+                            '&:hover': { background: 'linear-gradient(135deg, #059669, #0d9488)' },
                             px: 4
                         }}
                     >
@@ -408,7 +408,7 @@ const TriggerAnalysisPreview = () => {
                                             key={failure.id}
                                             sx={{
                                                 '&:hover': { bgcolor: '#f8fafc' },
-                                                bgcolor: selectedBuilds.has(failure.id) ? alpha('#ea580c', 0.05) : 'transparent'
+                                                bgcolor: selectedBuilds.has(failure.id) ? alpha('#10b981', 0.05) : 'transparent'
                                             }}
                                         >
                                             <TableCell padding="checkbox">
@@ -419,7 +419,7 @@ const TriggerAnalysisPreview = () => {
                                                 />
                                             </TableCell>
                                             <TableCell>
-                                                <Typography variant="body2" fontFamily="monospace" fontWeight={600} color="#3b82f6">
+                                                <Typography variant="body2" fontFamily="monospace" fontWeight={600} color="#10b981">
                                                     {failure.buildId}
                                                 </Typography>
                                             </TableCell>
@@ -475,10 +475,10 @@ const TriggerAnalysisPreview = () => {
                                                     }
                                                     sx={{
                                                         bgcolor: failure.status === 'completed' ? '#dcfce7' :
-                                                                failure.status === 'analyzing' ? '#dbeafe' :
+                                                                failure.status === 'analyzing' ? alpha('#10b981', 0.15) :
                                                                 failure.status === 'failed' ? '#fee2e2' : '#fef3c7',
                                                         color: failure.status === 'completed' ? '#166534' :
-                                                               failure.status === 'analyzing' ? '#1e40af' :
+                                                               failure.status === 'analyzing' ? '#10b981' :
                                                                failure.status === 'failed' ? '#991b1b' : '#92400e',
                                                         fontWeight: 600,
                                                         fontSize: '0.7rem'

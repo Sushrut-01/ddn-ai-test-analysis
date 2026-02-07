@@ -212,10 +212,10 @@ function SignupPage() {
       }}
     >
       {/* Background Elements */}
-      <FloatingShape delay={0} duration={6} size={100} top="10%" left="5%" color="#3b82f6" />
-      <FloatingShape delay={1} duration={8} size={150} top="60%" left="10%" color="#8b5cf6" />
-      <FloatingShape delay={2} duration={7} size={80} top="30%" left="85%" color="#06b6d4" />
-      <FloatingShape delay={0.5} duration={9} size={120} top="70%" left="80%" color="#10b981" />
+      <FloatingShape delay={0} duration={6} size={100} top="10%" left="5%" color="#10b981" />
+      <FloatingShape delay={1} duration={8} size={150} top="60%" left="10%" color="#14b8a6" />
+      <FloatingShape delay={2} duration={7} size={80} top="30%" left="85%" color="#10b981" />
+      <FloatingShape delay={0.5} duration={9} size={120} top="70%" left="80%" color="#14b8a6" />
 
       {/* Left Branding Panel */}
       <Box
@@ -238,14 +238,15 @@ function SignupPage() {
                   width: 60,
                   height: 60,
                   borderRadius: 3,
-                  background: 'linear-gradient(135deg, #3b82f6, #8b5cf6)',
+                  background: 'linear-gradient(135deg, #10b981, #14b8a6)',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  boxShadow: '0 10px 40px rgba(59, 130, 246, 0.4)'
+                  boxShadow: '0 10px 40px rgba(16, 185, 129, 0.5), inset 0 2px 8px rgba(255, 255, 255, 0.2)',
+                  border: '2px solid rgba(16, 185, 129, 0.3)'
                 }}
               >
-                <SmartToyIcon sx={{ fontSize: 32, color: 'white' }} />
+                <SmartToyIcon sx={{ fontSize: 32, color: 'white', filter: 'drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3))' }} />
               </Box>
               <Box>
                 <Typography variant="h4" fontWeight={700} color="white">
@@ -327,8 +328,11 @@ function SignupPage() {
               maxWidth: 520,
               p: 4,
               borderRadius: 4,
-              bgcolor: 'white',
-              boxShadow: '0 25px 80px rgba(0,0,0,0.3)',
+              background: 'linear-gradient(135deg, rgba(17, 24, 39, 0.95) 0%, rgba(31, 41, 55, 0.95) 50%, rgba(17, 24, 39, 0.95) 100%)',
+              backdropFilter: 'blur(20px)',
+              border: '1.5px solid',
+              borderColor: alpha('#10b981', 0.3),
+              boxShadow: '0 25px 80px rgba(0,0,0,0.6), 0 0 40px rgba(16, 185, 129, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.05)',
               maxHeight: '90vh',
               overflow: 'auto'
             }}
@@ -340,23 +344,25 @@ function SignupPage() {
                   width: 44,
                   height: 44,
                   borderRadius: 2,
-                  background: 'linear-gradient(135deg, #3b82f6, #8b5cf6)',
+                  background: 'linear-gradient(135deg, #10b981, #14b8a6)',
                   display: 'flex',
                   alignItems: 'center',
-                  justifyContent: 'center'
+                  justifyContent: 'center',
+                  boxShadow: '0 4px 12px rgba(16, 185, 129, 0.4)',
+                  border: '1px solid rgba(16, 185, 129, 0.3)'
                 }}
               >
-                <SmartToyIcon sx={{ color: 'white' }} />
+                <SmartToyIcon sx={{ color: 'white', filter: 'drop-shadow(0 2px 3px rgba(0, 0, 0, 0.3))' }} />
               </Box>
-              <Typography variant="h5" fontWeight={700} color="#1e293b">
+              <Typography variant="h5" fontWeight={700} sx={{ color: '#f9fafb', textShadow: '0 2px 4px rgba(0, 0, 0, 0.3)' }}>
                 DDN AI Platform
               </Typography>
             </Box>
 
-            <Typography variant="h5" fontWeight={700} color="#1e293b" gutterBottom>
+            <Typography variant="h5" fontWeight={700} sx={{ color: '#f9fafb', mb: 1, textShadow: '0 2px 4px rgba(0, 0, 0, 0.3)' }}>
               Create your account
             </Typography>
-            <Typography variant="body2" color="textSecondary" sx={{ mb: 3 }}>
+            <Typography variant="body2" sx={{ color: '#9ca3af', mb: 3 }}>
               Get started with your free trial today
             </Typography>
 
@@ -456,12 +462,12 @@ function SignupPage() {
                       name="agreeTerms"
                       checked={formData.agreeTerms}
                       onChange={handleChange}
-                      sx={{ '&.Mui-checked': { color: '#3b82f6' } }}
+                      sx={{ '&.Mui-checked': { color: '#10b981' } }}
                     />
                   }
                   label={
-                    <Typography variant="body2" color="textSecondary">
-                      I agree to the <Link href="#" sx={{ color: '#3b82f6' }}>Terms of Service</Link> and <Link href="#" sx={{ color: '#3b82f6' }}>Privacy Policy</Link>
+                    <Typography variant="body2" sx={{ color: '#9ca3af' }}>
+                      I agree to the <Link href="#" sx={{ color: '#10b981', textDecoration: 'none', '&:hover': { textDecoration: 'underline' } }}>Terms of Service</Link> and <Link href="#" sx={{ color: '#10b981', textDecoration: 'none', '&:hover': { textDecoration: 'underline' } }}>Privacy Policy</Link>
                     </Typography>
                   }
                   sx={{ mt: 2 }}
@@ -650,9 +656,17 @@ function SignupPage() {
                   py: 1.2,
                   px: 4,
                   borderRadius: 2,
-                  background: 'linear-gradient(135deg, #3b82f6, #8b5cf6)',
+                  background: 'linear-gradient(135deg, #10b981, #14b8a6)',
                   textTransform: 'none',
-                  fontWeight: 600
+                  fontWeight: 600,
+                  letterSpacing: '0.3px',
+                  boxShadow: '0 4px 20px rgba(16, 185, 129, 0.5)',
+                  transition: 'all 0.35s cubic-bezier(0.4, 0, 0.2, 1)',
+                  '&:hover': {
+                    background: 'linear-gradient(135deg, #14b8a6, #10b981)',
+                    boxShadow: '0 6px 24px rgba(16, 185, 129, 0.6)',
+                    transform: 'translateY(-2px)'
+                  }
                 }}
               >
                 {loading ? (
@@ -666,13 +680,13 @@ function SignupPage() {
             </Box>
 
             {/* Login Link */}
-            <Typography variant="body2" color="textSecondary" sx={{ mt: 3, textAlign: 'center' }}>
+            <Typography variant="body2" sx={{ color: '#9ca3af', mt: 3, textAlign: 'center' }}>
               Already have an account?{' '}
               <Link
                 component={RouterLink}
                 to="/login"
                 underline="hover"
-                sx={{ color: '#3b82f6', fontWeight: 600 }}
+                sx={{ color: '#10b981', fontWeight: 600, textDecoration: 'none', '&:hover': { textDecoration: 'underline' } }}
               >
                 Sign in
               </Link>

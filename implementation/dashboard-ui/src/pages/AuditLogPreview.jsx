@@ -57,7 +57,7 @@ import CalendarTodayIcon from '@mui/icons-material/CalendarToday'
 import AccessTimeIcon from '@mui/icons-material/AccessTime'
 import ComputerIcon from '@mui/icons-material/Computer'
 import RefreshIcon from '@mui/icons-material/Refresh'
-import { auditLogAPI } from '../services/api'
+import { auditLogAPI, exportAPI } from '../services/api'
 
 const getActionIcon = (action) => {
   switch (action) {
@@ -151,6 +151,22 @@ function AuditLogPreview() {
 
   const handleRefresh = () => fetchAuditLogs(true)
 
+  const handleExportLogs = () => {
+    const header = 'Timestamp,User,Action,Category,Resource,Details,Status,IP Address\n'
+    const csvContent = auditLogs.map(log =>
+      `"${log.timestamp}","${log.user}","${log.action}","${log.category}","${log.resource}","${(log.details || '').replace(/"/g, '""')}","${log.status}","${log.ipAddress}"`
+    ).join('\n')
+    const blob = new Blob([header + csvContent], { type: 'text/csv;charset=utf-8;' })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = `audit_logs_${new Date().toISOString().split('T')[0]}.csv`
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    URL.revokeObjectURL(url)
+  }
+
   const categories = [...new Set(auditLogs.map(l => l.category))]
   const actions = [...new Set(auditLogs.map(l => l.action))]
 
@@ -191,6 +207,7 @@ function AuditLogPreview() {
           <Button
             variant="contained"
             startIcon={<DownloadIcon />}
+            onClick={handleExportLogs}
             sx={{ bgcolor: 'white', color: '#334155', '&:hover': { bgcolor: '#f1f5f9' } }}
           >
             Export Logs

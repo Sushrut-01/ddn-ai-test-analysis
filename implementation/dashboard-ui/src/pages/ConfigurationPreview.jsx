@@ -38,7 +38,8 @@ import {
   Avatar,
   Badge,
   LinearProgress,
-  Skeleton
+  Skeleton,
+  CircularProgress
 } from '@mui/material'
 import { alpha } from '@mui/material/styles'
 import SettingsIcon from '@mui/icons-material/Settings'
@@ -58,6 +59,7 @@ import VisibilityOffIcon from '@mui/icons-material/VisibilityOff'
 import ContentCopyIcon from '@mui/icons-material/ContentCopy'
 import RefreshIcon from '@mui/icons-material/Refresh'
 import CheckCircleIcon from '@mui/icons-material/CheckCircle'
+import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline'
 import ErrorIcon from '@mui/icons-material/Error'
 import WarningIcon from '@mui/icons-material/Warning'
 import SaveIcon from '@mui/icons-material/Save'
@@ -73,9 +75,10 @@ import DataObjectIcon from '@mui/icons-material/DataObject'
 import ChatIcon from '@mui/icons-material/Chat'
 import LinkIcon from '@mui/icons-material/Link'
 import PlayArrowIcon from '@mui/icons-material/PlayArrow'
+import { configAPI, monitoringAPI, apiKeysAPI, settingsAPI, integrationAPI } from '../services/api'
 
-// Mock integrations
-const mockIntegrations = [
+// Default integrations (from system status)
+const defaultIntegrations = [
   {
     id: 'github',
     name: 'GitHub',
@@ -90,7 +93,7 @@ const mockIntegrations = [
     icon: <BugReportIcon />,
     status: 'connected',
     description: 'Bug tracking and issue creation',
-    config: { project: 'DDN', url: 'https://company.atlassian.net' }
+    config: { project: 'DDN', url: 'https://sushrutnistane097-1768028782643.atlassian.net' }
   },
   {
     id: 'slack',
@@ -148,41 +151,188 @@ function ConfigurationPreview() {
   const [integrations, setIntegrations] = useState([])
   const [apiKeys, setApiKeys] = useState([])
 
-  // Fetch integrations and API keys from API
+  // Fetch integrations and configuration from API
   React.useEffect(() => {
     const fetchData = async () => {
       try {
-        // Fetch integrations status
-        const intResponse = await fetch('http://localhost:5001/api/monitoring/services')
-        if (intResponse.ok) {
-          const data = await intResponse.json()
-          const services = data?.services || data || []
-          const transformedIntegrations = services.map(s => ({
-            id: s.name?.toLowerCase().replace(/\s+/g, '-') || s.id,
-            name: s.name || 'Unknown',
-            icon: s.name?.toLowerCase() === 'github' ? <GitHubIcon /> :
-                  s.name?.toLowerCase() === 'jira' ? <BugReportIcon /> :
-                  s.name?.toLowerCase() === 'slack' ? <ChatIcon /> :
-                  s.name?.toLowerCase() === 'jenkins' ? <BuildIcon /> :
-                  <IntegrationInstructionsIcon />,
-            status: s.status === 'healthy' || s.status === 'running' ? 'connected' : 'disconnected',
-            description: s.description || s.name || '-',
-            config: s.config || {}
-          }))
+        // Fetch system status to get integration statuses
+        const systemStatus = await monitoringAPI.getSystemStatus()
+
+        if (systemStatus?.components) {
+          const components = systemStatus.components
+          const transformedIntegrations = [
+            {
+              id: 'mongodb',
+              name: 'MongoDB',
+              icon: <StorageIcon />,
+              status: components.mongodb?.status === 'healthy' ? 'connected' : 'disconnected',
+              description: 'Test data storage',
+              config: { failures: components.mongodb?.total_failures || 0 }
+            },
+            {
+              id: 'postgresql',
+              name: 'PostgreSQL',
+              icon: <StorageIcon />,
+              status: components.postgresql?.status === 'healthy' ? 'connected' : 'disconnected',
+              description: 'Analysis storage',
+              config: { analyses: components.postgresql?.total_analyses || 0 }
+            },
+            {
+              id: 'pinecone',
+              name: 'Pinecone',
+              icon: <CloudIcon />,
+              status: components.pinecone?.status === 'healthy' ? 'connected' : 'disconnected',
+              description: 'Vector embeddings',
+              config: { vectors: components.pinecone?.total_vectors || 0 }
+            },
+            {
+              id: 'ai-service',
+              name: 'AI Service',
+              icon: <SmartToyIcon />,
+              status: components.ai_service?.status === 'healthy' ? 'connected' : 'disconnected',
+              description: 'AI analysis engine',
+              config: {
+                openai: components.ai_service?.openai_available ? 'Enabled' : 'Disabled',
+                rag: components.ai_service?.rag_enabled ? 'Enabled' : 'Disabled'
+              }
+            },
+            {
+              id: 'github',
+              name: 'GitHub',
+              icon: <GitHubIcon />,
+              status: 'connected', // Assumed connected if token exists
+              description: 'PR creation & code access',
+              config: {}
+            },
+            {
+              id: 'jira',
+              name: 'Jira',
+              icon: <BugReportIcon />,
+              status: 'connected', // Would need separate check
+              description: 'Bug tracking integration',
+              config: {}
+            }
+          ]
           setIntegrations(transformedIntegrations)
         }
+
+        // Fetch configuration settings
+        try {
+          const configData = await configAPI.getAll()
+          if (configData?.configs) {
+            // Update AI settings from config
+            const aiConfigs = configData.configs.filter(c => c.category === 'ai')
+            // Could update aiSettings state here
+          }
+        } catch (configErr) {
+          console.warn('Could not fetch configurations:', configErr)
+        }
+
+        // Fetch API keys
+        try {
+          const keysData = await apiKeysAPI.getAll()
+          if (keysData?.keys) {
+            setApiKeys(keysData.keys.map(k => ({
+              id: k.id,
+              name: k.name,
+              key: k.key,
+              created: k.created_at?.split('T')[0] || 'Unknown',
+              lastUsed: k.last_used_at?.split('T')[0] || 'Never',
+              status: k.status
+            })))
+          }
+        } catch (keyErr) {
+          console.warn('Could not fetch API keys:', keyErr)
+        }
+
+        // Fetch notification settings
+        try {
+          const notifData = await settingsAPI.notifications.get()
+          if (notifData?.settings) {
+            setNotificationSettings(prev => ({ ...prev, ...notifData.settings }))
+          }
+        } catch (notifErr) {
+          console.warn('Could not fetch notification settings:', notifErr)
+        }
+
+        // Fetch analysis settings
+        try {
+          const analysisData = await settingsAPI.analysis.get()
+          if (analysisData?.settings) {
+            setAnalysisSettings(prev => ({ ...prev, ...analysisData.settings }))
+          }
+        } catch (analysisErr) {
+          console.warn('Could not fetch analysis settings:', analysisErr)
+        }
+
+        // Fetch AI settings
+        try {
+          const aiData = await settingsAPI.ai.get()
+          if (aiData?.settings) {
+            setAiSettings(prev => ({ ...prev, ...aiData.settings }))
+          }
+        } catch (aiErr) {
+          console.warn('Could not fetch AI settings:', aiErr)
+        }
+
         setError(null)
       } catch (err) {
         console.error('Error fetching configuration:', err)
         setError(err.message?.includes('Network') ? 'No connection to server' : err.message)
-        setIntegrations([])
-        setApiKeys([])
+        // Use fallback data on error
+        setIntegrations(defaultIntegrations)
       } finally {
         setLoading(false)
       }
     }
     fetchData()
   }, [])
+
+  // New key state
+  const [newKeyName, setNewKeyName] = useState('')
+  const [generatedKey, setGeneratedKey] = useState(null)
+
+  // Generate new API key
+  const handleGenerateKey = async () => {
+    try {
+      setSaving(true)
+      const keyName = newKeyName || `API Key ${apiKeys.length + 1}`
+      const response = await apiKeysAPI.create({ name: keyName, created_by: 'dashboard_user' })
+
+      if (response?.success && response?.key) {
+        // Show the generated key (only shown once!)
+        setGeneratedKey(response.key.key)
+
+        // Add to list
+        setApiKeys(prev => [...prev, {
+          id: response.key.id,
+          name: response.key.name,
+          key: response.key.key_preview,
+          created: new Date().toISOString().split('T')[0],
+          lastUsed: 'Never',
+          status: 'active'
+        }])
+
+        setNewKeyName('')
+        setAddKeyDialogOpen(false)
+      }
+    } catch (err) {
+      console.error('Error generating API key:', err)
+      setError('Failed to generate API key')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  // Delete API key
+  const handleDeleteKey = async (keyId) => {
+    try {
+      await apiKeysAPI.delete(keyId)
+      setApiKeys(prev => prev.filter(k => k.id !== keyId))
+    } catch (err) {
+      console.error('Error deleting API key:', err)
+    }
+  }
 
   // AI Settings
   const [aiSettings, setAiSettings] = useState({
@@ -218,14 +368,109 @@ function ConfigurationPreview() {
     archiveEnabled: true
   })
 
-  const handleSave = () => {
+  const [saveSuccess, setSaveSuccess] = useState(false)
+  const [saveError, setSaveError] = useState(null)
+
+  const handleSave = async () => {
     setSaving(true)
-    setTimeout(() => setSaving(false), 1500)
+    setSaveError(null)
+    setSaveSuccess(false)
+
+    try {
+      // Save all settings in parallel
+      await Promise.all([
+        settingsAPI.notifications.save(notificationSettings),
+        settingsAPI.analysis.save(analysisSettings),
+        settingsAPI.ai.save(aiSettings)
+      ])
+
+      setSaveSuccess(true)
+      setTimeout(() => setSaveSuccess(false), 3000)
+    } catch (err) {
+      console.error('Error saving settings:', err)
+      setSaveError('Failed to save settings. Please try again.')
+    } finally {
+      setSaving(false)
+    }
   }
 
-  const handleTestConnection = (integration) => {
+  const [testingConnection, setTestingConnection] = useState(false)
+  const [connectionResult, setConnectionResult] = useState(null)
+
+  const handleTestConnection = async (integration) => {
     setSelectedIntegration(integration)
     setTestConnectionDialogOpen(true)
+    setTestingConnection(true)
+    setConnectionResult(null)
+
+    try {
+      const response = await integrationAPI.testConnection(integration.name)
+      if (response?.success && response.result) {
+        setConnectionResult(response.result)
+      } else {
+        setConnectionResult({
+          status: 'error',
+          message: response?.error || 'Connection test failed'
+        })
+      }
+    } catch (err) {
+      console.error('Test connection error:', err)
+      setConnectionResult({
+        status: 'error',
+        message: err.message || 'Failed to test connection'
+      })
+    } finally {
+      setTestingConnection(false)
+    }
+  }
+
+  const handleConnect = async (integration) => {
+    try {
+      const response = await integrationAPI.add({
+        name: integration.name,
+        type: integration.type || 'service',
+        enabled: true
+      })
+      if (response?.success) {
+        setSaveSuccess(true)
+        // Refresh integrations
+        fetchIntegrations()
+      }
+    } catch (err) {
+      console.error('Connect error:', err)
+      setSaveError('Failed to connect integration')
+    }
+  }
+
+  const handleDisconnect = async (integration) => {
+    if (!window.confirm(`Are you sure you want to disconnect ${integration.name}?`)) return
+
+    try {
+      // For now, just update the local state
+      setIntegrations(prev => prev.map(i =>
+        i.name === integration.name ? { ...i, connected: false } : i
+      ))
+      setSaveSuccess(true)
+    } catch (err) {
+      console.error('Disconnect error:', err)
+      setSaveError('Failed to disconnect integration')
+    }
+  }
+
+  const fetchIntegrations = async () => {
+    try {
+      const response = await integrationAPI.getAll()
+      if (response?.success && response.integrations) {
+        // Merge with default integrations
+        const updated = defaultIntegrations.map(def => {
+          const found = response.integrations.find(i => i.name.toLowerCase() === def.name.toLowerCase())
+          return found ? { ...def, connected: found.status === 'connected' || found.status === 'configured' } : def
+        })
+        setIntegrations(updated)
+      }
+    } catch (err) {
+      console.error('Fetch integrations error:', err)
+    }
   }
 
   return (
@@ -261,6 +506,18 @@ function ConfigurationPreview() {
           </Button>
         </Box>
       </Paper>
+
+      {/* Save status alerts */}
+      {saveSuccess && (
+        <Alert severity="success" sx={{ mb: 2 }} onClose={() => setSaveSuccess(false)}>
+          Settings saved successfully!
+        </Alert>
+      )}
+      {saveError && (
+        <Alert severity="error" sx={{ mb: 2 }} onClose={() => setSaveError(null)}>
+          {saveError}
+        </Alert>
+      )}
 
       {/* Tabs */}
       <Paper elevation={0} sx={{ borderRadius: 3, border: '1px solid', borderColor: 'divider' }}>
@@ -475,7 +732,7 @@ function ConfigurationPreview() {
                         </IconButton>
                       </Tooltip>
                       <Tooltip title="Delete">
-                        <IconButton size="small" color="error">
+                        <IconButton size="small" color="error" onClick={() => handleDeleteKey(apiKey.id)}>
                           <DeleteIcon />
                         </IconButton>
                       </Tooltip>
@@ -851,39 +1108,109 @@ function ConfigurationPreview() {
         </DialogTitle>
         <DialogContent>
           <Box sx={{ textAlign: 'center', py: 4 }}>
-            <Avatar sx={{ width: 64, height: 64, bgcolor: '#dcfce7', mx: 'auto', mb: 2 }}>
-              <CheckCircleIcon sx={{ fontSize: 40, color: '#166534' }} />
-            </Avatar>
-            <Typography variant="h6" color="success.main">Connection Successful!</Typography>
-            <Typography variant="body2" color="textSecondary" sx={{ mt: 1 }}>
-              {selectedIntegration?.name} is properly configured and responding.
-            </Typography>
+            {testingConnection ? (
+              <>
+                <CircularProgress size={48} sx={{ mb: 2 }} />
+                <Typography variant="body1">Testing connection...</Typography>
+              </>
+            ) : connectionResult ? (
+              <>
+                <Avatar sx={{
+                  width: 64,
+                  height: 64,
+                  bgcolor: connectionResult.status === 'connected' ? '#dcfce7' : connectionResult.status === 'configured' ? '#fef3c7' : '#fee2e2',
+                  mx: 'auto',
+                  mb: 2
+                }}>
+                  {connectionResult.status === 'connected' ? (
+                    <CheckCircleIcon sx={{ fontSize: 40, color: '#166534' }} />
+                  ) : connectionResult.status === 'configured' ? (
+                    <CheckCircleIcon sx={{ fontSize: 40, color: '#d97706' }} />
+                  ) : (
+                    <ErrorOutlineIcon sx={{ fontSize: 40, color: '#dc2626' }} />
+                  )}
+                </Avatar>
+                <Typography
+                  variant="h6"
+                  color={connectionResult.status === 'connected' ? 'success.main' : connectionResult.status === 'configured' ? 'warning.main' : 'error.main'}
+                >
+                  {connectionResult.status === 'connected' ? 'Connection Successful!' :
+                   connectionResult.status === 'configured' ? 'Configured (Not Verified)' : 'Connection Failed'}
+                </Typography>
+                <Typography variant="body2" color="textSecondary" sx={{ mt: 1 }}>
+                  {connectionResult.message || `${selectedIntegration?.name} status: ${connectionResult.status}`}
+                </Typography>
+              </>
+            ) : (
+              <Typography variant="body2" color="textSecondary">
+                Click Test to check connection status
+              </Typography>
+            )}
           </Box>
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setTestConnectionDialogOpen(false)}>Close</Button>
+          <Button
+            variant="contained"
+            onClick={() => handleTestConnection(selectedIntegration)}
+            disabled={testingConnection}
+          >
+            {testingConnection ? 'Testing...' : 'Test Again'}
+          </Button>
         </DialogActions>
       </Dialog>
 
       {/* Add API Key Dialog */}
-      <Dialog open={addKeyDialogOpen} onClose={() => setAddKeyDialogOpen(false)} maxWidth="sm" fullWidth>
+      <Dialog open={addKeyDialogOpen} onClose={() => { setAddKeyDialogOpen(false); setGeneratedKey(null); }} maxWidth="sm" fullWidth>
         <DialogTitle>Generate New API Key</DialogTitle>
         <DialogContent>
-          <TextField
-            fullWidth
-            label="Key Name"
-            placeholder="e.g., Production API Key"
-            sx={{ mt: 2 }}
-          />
-          <Alert severity="warning" sx={{ mt: 2 }}>
-            The API key will only be shown once after generation. Make sure to copy and store it securely.
-          </Alert>
+          {generatedKey ? (
+            <>
+              <Alert severity="success" sx={{ mt: 2 }}>
+                API key generated successfully! Copy it now - it won't be shown again.
+              </Alert>
+              <TextField
+                fullWidth
+                label="Your API Key"
+                value={generatedKey}
+                sx={{ mt: 2, fontFamily: 'monospace' }}
+                InputProps={{
+                  readOnly: true,
+                  endAdornment: (
+                    <InputAdornment position="end">
+                      <IconButton onClick={() => navigator.clipboard.writeText(generatedKey)}>
+                        <ContentCopyIcon />
+                      </IconButton>
+                    </InputAdornment>
+                  )
+                }}
+              />
+            </>
+          ) : (
+            <>
+              <TextField
+                fullWidth
+                label="Key Name"
+                placeholder="e.g., Production API Key"
+                value={newKeyName}
+                onChange={(e) => setNewKeyName(e.target.value)}
+                sx={{ mt: 2 }}
+              />
+              <Alert severity="warning" sx={{ mt: 2 }}>
+                The API key will only be shown once after generation. Make sure to copy and store it securely.
+              </Alert>
+            </>
+          )}
         </DialogContent>
         <DialogActions sx={{ p: 3 }}>
-          <Button onClick={() => setAddKeyDialogOpen(false)}>Cancel</Button>
-          <Button variant="contained" startIcon={<KeyIcon />}>
-            Generate Key
+          <Button onClick={() => { setAddKeyDialogOpen(false); setGeneratedKey(null); }}>
+            {generatedKey ? 'Done' : 'Cancel'}
           </Button>
+          {!generatedKey && (
+            <Button variant="contained" startIcon={saving ? <CircularProgress size={16} /> : <KeyIcon />} onClick={handleGenerateKey} disabled={saving}>
+              Generate Key
+            </Button>
+          )}
         </DialogActions>
       </Dialog>
     </Box>

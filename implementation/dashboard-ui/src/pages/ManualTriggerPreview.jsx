@@ -107,7 +107,7 @@ const ManualTriggerPreview = () => {
             {/* Header */}
             <Box
                 sx={{
-                    background: 'linear-gradient(135deg, #0891b2 0%, #0e7490 100%)',
+                    background: 'linear-gradient(135deg, #10b981, #14b8a6)',
                     pt: 4,
                     pb: 8,
                     px: 3,
@@ -160,7 +160,7 @@ const ManualTriggerPreview = () => {
                         variant="outlined"
                         onClick={() => navigate('/failures')}
                         icon={<ErrorIcon sx={{ fontSize: 16 }} />}
-                        sx={{ cursor: 'pointer', '&:hover': { bgcolor: alpha('#3b82f6', 0.1) } }}
+                        sx={{ cursor: 'pointer', '&:hover': { bgcolor: alpha('#10b981', 0.1) } }}
                     />
                     <ArrowForwardIcon sx={{ color: '#94a3b8', fontSize: 18 }} />
                     <Chip
@@ -183,7 +183,7 @@ const ManualTriggerPreview = () => {
                     <Grid item xs={12} lg={6}>
                         <Paper elevation={0} sx={{ p: 4, borderRadius: 4, boxShadow: '0 4px 20px rgba(0,0,0,0.04)' }}>
                             <Box display="flex" alignItems="center" gap={2} mb={3}>
-                                <Avatar sx={{ bgcolor: alpha('#0891b2', 0.1), color: '#0891b2', width: 48, height: 48 }}>
+                                <Avatar sx={{ bgcolor: alpha('#10b981', 0.1), color: '#10b981', width: 48, height: 48 }}>
                                     <PlayArrowIcon />
                                 </Avatar>
                                 <Box>
@@ -232,8 +232,8 @@ const ManualTriggerPreview = () => {
                                 sx={{
                                     py: 1.5,
                                     borderRadius: 3,
-                                    bgcolor: '#0891b2',
-                                    '&:hover': { bgcolor: '#0e7490' },
+                                    background: 'linear-gradient(135deg, #10b981, #14b8a6)',
+                                    '&:hover': { background: 'linear-gradient(135deg, #059669, #0d9488)' },
                                     fontSize: '1rem',
                                     fontWeight: 600
                                 }}
@@ -268,7 +268,7 @@ const ManualTriggerPreview = () => {
                     <Grid item xs={12} lg={6}>
                         <Paper elevation={0} sx={{ p: 4, borderRadius: 4, boxShadow: '0 4px 20px rgba(0,0,0,0.04)', height: '100%' }}>
                             <Box display="flex" alignItems="center" gap={2} mb={3}>
-                                <Avatar sx={{ bgcolor: alpha('#3b82f6', 0.1), color: '#3b82f6', width: 48, height: 48 }}>
+                                <Avatar sx={{ bgcolor: alpha('#10b981', 0.1), color: '#10b981', width: 48, height: 48 }}>
                                     <InfoIcon />
                                 </Avatar>
                                 <Box>
@@ -310,7 +310,7 @@ const ManualTriggerPreview = () => {
                                 ].map((step, idx) => (
                                     <Grid item xs={6} key={idx}>
                                         <Box display="flex" alignItems="center" gap={1.5} p={1.5} bgcolor="#f8fafc" borderRadius={2}>
-                                            <Avatar sx={{ bgcolor: alpha('#3b82f6', 0.1), color: '#3b82f6', width: 32, height: 32 }}>
+                                            <Avatar sx={{ bgcolor: alpha('#10b981', 0.1), color: '#10b981', width: 32, height: 32 }}>
                                                 {step.icon}
                                             </Avatar>
                                             <Typography variant="caption" fontWeight={500}>{step.label}</Typography>
@@ -391,7 +391,7 @@ const ManualTriggerPreview = () => {
                                             triggerHistory.map((trigger) => (
                                                 <TableRow key={trigger.id} sx={{ '&:hover': { bgcolor: '#f8fafc' } }}>
                                                     <TableCell>
-                                                        <Typography variant="body2" fontFamily="monospace" fontWeight={600} color="#3b82f6">
+                                                        <Typography variant="body2" fontFamily="monospace" fontWeight={600} color="#10b981">
                                                             #{trigger.build_id}
                                                         </Typography>
                                                     </TableCell>

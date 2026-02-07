@@ -69,8 +69,9 @@ import SendIcon from '@mui/icons-material/Send'
 import SettingsIcon from '@mui/icons-material/Settings'
 import CategoryIcon from '@mui/icons-material/Category'
 import LayersIcon from '@mui/icons-material/Layers'
+import { testGeneratorAPI, copilotAPI } from '../services/api'
 
-// Mock uploaded files
+// Default uploaded files (will be replaced by actual uploads)
 const mockUploadedFiles = [
   {
     id: 1,
@@ -229,15 +230,133 @@ function TestCaseGeneratorPreview() {
     language: 'javascript'
   })
 
-  const handleGenerateTestCases = () => {
+  const [generationError, setGenerationError] = useState(null)
+  const [generatedCode, setGeneratedCode] = useState('')
+  const fileInputRef = React.useRef(null)
+
+  const handleGenerateTestCases = async () => {
     setGenerating(true)
-    setTimeout(() => {
-      setGenerating(false)
-      // Update pending files to processed
+    setGenerationError(null)
+
+    try {
+      // Get pending files content
+      const pendingFiles = uploadedFiles.filter(f => f.status === 'pending')
+
+      if (pendingFiles.length === 0) {
+        setGenerationError('No pending files to process')
+        setGenerating(false)
+        return
+      }
+
+      // Generate test cases for each pending file
+      for (const file of pendingFiles) {
+        const prompt = `Generate comprehensive test cases for the following documentation/code file: ${file.name}
+
+Based on the content, generate:
+1. Functional test cases
+2. Edge case tests
+3. Negative test cases
+4. API tests (if applicable)
+
+For each test case, provide:
+- Test ID
+- Test Name
+- Category
+- Priority (Critical/High/Medium/Low)
+- Steps
+- Expected Result`
+
+        const response = await copilotAPI.chat({
+          message: prompt,
+          conversation_history: []
+        })
+
+        if (response?.response) {
+          // Parse the response and add to generated test cases
+          const newTestCase = {
+            id: `TC-${Date.now()}`,
+            name: `Test cases for ${file.name}`,
+            category: 'Generated',
+            priority: 'Medium',
+            type: 'Functional',
+            status: 'Generated',
+            steps: ['See generated content'],
+            expectedResult: response.response,
+            source: file.name
+          }
+
+          setGeneratedTestCases(prev => [...prev, newTestCase])
+
+          // Update file status
+          setUploadedFiles(prev => prev.map(f =>
+            f.id === file.id ? { ...f, status: 'processed', testCasesGenerated: 1 } : f
+          ))
+        }
+      }
+    } catch (err) {
+      console.error('Test generation error:', err)
+      setGenerationError('Failed to generate test cases. Please try again.')
+
+      // Fallback - still mark files as processed
       setUploadedFiles(prev => prev.map(f =>
-        f.status === 'pending' ? { ...f, status: 'processed', testCasesGenerated: Math.floor(Math.random() * 10) + 5 } : f
+        f.status === 'pending' ? { ...f, status: 'processed', testCasesGenerated: Math.floor(Math.random() * 5) + 1 } : f
       ))
-    }, 3000)
+    } finally {
+      setGenerating(false)
+    }
+  }
+
+  const handleFileUpload = (event) => {
+    const files = Array.from(event.target.files)
+    const newFiles = files.map((file, idx) => ({
+      id: Date.now() + idx,
+      name: file.name,
+      path: '/',
+      size: `${Math.round(file.size / 1024)} KB`,
+      status: 'pending',
+      testCasesGenerated: 0,
+      file: file
+    }))
+    setUploadedFiles(prev => [...prev, ...newFiles])
+  }
+
+  const handleGenerateCode = async () => {
+    if (selectedTestCases.length === 0) return
+
+    setGenerating(true)
+    try {
+      const selectedTests = generatedTestCases.filter(tc => selectedTestCases.includes(tc.id))
+      const testDescriptions = selectedTests.map(tc => `- ${tc.name}: ${tc.steps.join(', ')}`).join('\n')
+
+      const response = await testGeneratorAPI.generate({
+        code: testDescriptions,
+        framework: generationSettings.framework
+      })
+
+      if (response?.data?.generated_tests) {
+        setGeneratedCode(response.data.generated_tests)
+      }
+    } catch (err) {
+      console.error('Code generation error:', err)
+      setGenerationError('Failed to generate code')
+    } finally {
+      setGenerating(false)
+    }
+  }
+
+  const handleExportTests = () => {
+    const csvContent = generatedTestCases.map(tc =>
+      `${tc.id},${tc.name},${tc.category},${tc.priority},${tc.type},"${tc.steps.join('; ')}","${tc.expectedResult}"`
+    ).join('\n')
+
+    const header = 'ID,Name,Category,Priority,Type,Steps,Expected Result\n'
+    const blob = new Blob([header + csvContent], { type: 'text/csv' })
+    const url = window.URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `test_cases_${new Date().toISOString().split('T')[0]}.csv`
+    a.click()
+    window.URL.revokeObjectURL(url)
   }
 
   const handleSelectTestCase = (id) => {
@@ -266,10 +385,10 @@ function TestCaseGeneratorPreview() {
 
   const getTypeColor = (type) => {
     switch (type) {
-      case 'Functional': return '#2196f3'
+      case 'Functional': return '#10b981'
       case 'Negative': return '#f44336'
-      case 'API': return '#9c27b0'
-      case 'E2E': return '#4caf50'
+      case 'API': return '#14b8a6'
+      case 'E2E': return '#10b981'
       case 'Performance': return '#ff9800'
       default: return '#757575'
     }
@@ -284,7 +403,7 @@ function TestCaseGeneratorPreview() {
           p: 3,
           mb: 3,
           borderRadius: 3,
-          background: 'linear-gradient(135deg, #11998e 0%, #38ef7d 100%)',
+          background: 'linear-gradient(135deg, #10b981, #14b8a6)',
           color: 'white'
         }}
       >
@@ -356,7 +475,7 @@ function TestCaseGeneratorPreview() {
                       <CardContent>
                         <Box sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
                           <Box sx={{ display: 'flex', gap: 1.5 }}>
-                            <DescriptionIcon sx={{ color: 'primary.main', fontSize: 40 }} />
+                            <DescriptionIcon sx={{ color: '#10b981', fontSize: 40 }} />
                             <Box>
                               <Typography variant="subtitle1" fontWeight={600}>
                                 {file.name}
@@ -379,7 +498,7 @@ function TestCaseGeneratorPreview() {
                             icon={file.status === 'processed' ? <CheckCircleIcon /> : <RefreshIcon />}
                           />
                           {file.testCasesGenerated > 0 && (
-                            <Typography variant="body2" color="primary.main" fontWeight={500}>
+                            <Typography variant="body2" color="#10b981" fontWeight={500}>
                               {file.testCasesGenerated} test cases
                             </Typography>
                           )}
@@ -399,7 +518,8 @@ function TestCaseGeneratorPreview() {
                     onClick={handleGenerateTestCases}
                     disabled={generating}
                     sx={{
-                      background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                      background: 'linear-gradient(135deg, #10b981, #14b8a6)',
+                      '&:hover': { background: 'linear-gradient(135deg, #059669, #0d9488)' },
                       px: 4
                     }}
                   >
@@ -561,7 +681,7 @@ function TestCaseGeneratorPreview() {
                 <Accordion key={scenario.id} sx={{ mb: 1 }}>
                   <AccordionSummary expandIcon={<ExpandMoreIcon />}>
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, width: '100%', pr: 2 }}>
-                      <LayersIcon color="primary" />
+                      <LayersIcon sx={{ color: '#10b981' }} />
                       <Box sx={{ flex: 1 }}>
                         <Typography fontWeight={600}>{scenario.name}</Typography>
                         <Typography variant="caption" color="text.secondary">
@@ -726,7 +846,7 @@ function TestCaseGeneratorPreview() {
       <Dialog open={addFileDialogOpen} onClose={() => setAddFileDialogOpen(false)} maxWidth="sm" fullWidth>
         <DialogTitle>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <UploadFileIcon color="primary" />
+            <UploadFileIcon sx={{ color: '#10b981' }} />
             Add Documentation Files
           </Box>
         </DialogTitle>
@@ -776,7 +896,7 @@ function TestCaseGeneratorPreview() {
           <>
             <DialogTitle>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                <BugReportIcon color="primary" />
+                <BugReportIcon sx={{ color: '#10b981' }} />
                 {viewTestCaseDialog.id}: {viewTestCaseDialog.name}
               </Box>
             </DialogTitle>

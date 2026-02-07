@@ -76,6 +76,7 @@ const JiraBugsPreview = () => {
     const [createDialogOpen, setCreateDialogOpen] = useState(false);
     const [viewDialogOpen, setViewDialogOpen] = useState(false);
     const [selectedBug, setSelectedBug] = useState(null);
+    const [selectedAnalysisForBug, setSelectedAnalysisForBug] = useState(null);
     const [creating, setCreating] = useState(false);
     const [selectAnalysesDialogOpen, setSelectAnalysesDialogOpen] = useState(false);
     const [selectedAnalyses, setSelectedAnalyses] = useState([]);
@@ -174,22 +175,53 @@ const JiraBugsPreview = () => {
     };
 
     const handleCreateBugFromAnalysis = (analysis) => {
+        // Store the original analysis for API call
+        setSelectedAnalysisForBug(analysis);
         setBugForm({
-            title: `[AI] ${analysis.errorMessage.substring(0, 60)}...`,
+            title: `[${analysis.classification || 'BUG'}] ${(analysis.errorMessage || analysis.root_cause || 'Test Failure').substring(0, 80)}`,
             priority: analysis.severity === 'HIGH' ? 'High' : analysis.severity === 'CRITICAL' ? 'Critical' : 'Medium',
             assignee: '',
-            description: `**Linked Failure:** ${analysis.buildId}\n**Test:** ${analysis.testName}\n**Class:** ${analysis.className}\n**Classification:** ${analysis.classification}\n\n**Error Message:**\n${analysis.errorMessage}\n\n**AI Root Cause Analysis:**\n${analysis.rootCause}\n\n**AI Recommendation:**\n${analysis.recommendation}\n\n**AI Confidence:** ${Math.round(analysis.aiConfidence * 100)}%\n\n**Accepted By:** ${analysis.acceptedBy}\n**Accepted At:** ${analysis.acceptedAt}`
+            description: `**Linked Failure:** ${analysis.build_id || analysis.buildId}\n**Test:** ${analysis.test_name || analysis.testName || 'Unknown'}\n**Classification:** ${analysis.classification}\n\n**Error Message:**\n${analysis.errorMessage || analysis.root_cause || 'See details'}\n\n**AI Root Cause Analysis:**\n${analysis.root_cause || analysis.rootCause || 'Pending'}\n\n**AI Recommendation:**\n${analysis.recommendation || 'Review failure details'}\n\n**AI Confidence:** ${Math.round((analysis.confidence_score || analysis.aiConfidence || 0.8) * 100)}%`
         });
         setCreateDialogOpen(true);
     };
 
-    const handleSubmitBug = () => {
+    const handleSubmitBug = async () => {
         setCreating(true);
-        setTimeout(() => {
+        try {
+            // Use the stored analysis data directly
+            const analysis = selectedAnalysisForBug || {};
+
+            const response = await jiraAPI.createBug({
+                build_id: analysis.build_id || analysis.buildId || 'UNKNOWN',
+                job_name: analysis.test_name || analysis.testName || 'Unknown Test',
+                error_category: analysis.classification || 'UNKNOWN',
+                error_message: analysis.root_cause || analysis.rootCause || analysis.errorMessage || bugForm.title,
+                ai_analysis: analysis.root_cause || analysis.rootCause || '',
+                fix_recommendation: analysis.recommendation || '',
+                confidence_score: analysis.confidence_score || analysis.aiConfidence || 0.85
+            });
+
+            if (response?.data?.status === 'success' || response?.status === 'success') {
+                const jiraKey = response?.data?.jira_issue_key || response?.jira_issue_key;
+                const jiraUrl = response?.data?.jira_url || response?.jira_url;
+                alert(`Bug created successfully: ${jiraKey}\n\nOpening in Jira...`);
+                if (jiraUrl) {
+                    window.open(jiraUrl, '_blank');
+                }
+                fetchData(true); // Refresh the data
+            } else {
+                alert('Failed to create bug: ' + (response?.data?.message || response?.message || 'Unknown error'));
+            }
+        } catch (error) {
+            console.error('Error creating bug:', error);
+            alert('Failed to create bug: ' + (error.message || 'Connection error'));
+        } finally {
             setCreating(false);
             setCreateDialogOpen(false);
+            setSelectedAnalysisForBug(null);
             setBugForm({ title: '', priority: 'High', assignee: '', description: '' });
-        }, 2000);
+        }
     };
 
     const handleViewBug = (bug) => {
@@ -238,7 +270,7 @@ const JiraBugsPreview = () => {
             {/* Header */}
             <Box
                 sx={{
-                    background: 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)',
+                    background: 'linear-gradient(135deg, #10b981, #14b8a6)',
                     pt: 4,
                     pb: 8,
                     px: 3,
@@ -264,7 +296,7 @@ const JiraBugsPreview = () => {
                                     variant="contained"
                                     startIcon={<PlaylistAddCheckIcon />}
                                     onClick={handleOpenBulkCreate}
-                                    sx={{ bgcolor: 'white', color: '#2563eb', '&:hover': { bgcolor: '#f0f9ff' } }}
+                                    sx={{ bgcolor: 'white', color: '#10b981', '&:hover': { bgcolor: '#f0fdf4' } }}
                                 >
                                     Convert Approved Analyses
                                 </Button>
@@ -272,7 +304,7 @@ const JiraBugsPreview = () => {
                             <Button
                                 variant="contained"
                                 startIcon={<OpenInNewIcon />}
-                                onClick={() => window.open('https://company.atlassian.net', '_blank')}
+                                onClick={() => window.open('https://sushrutnistane097-1768028782643.atlassian.net', '_blank')}
                                 sx={{ bgcolor: 'rgba(255,255,255,0.2)', '&:hover': { bgcolor: 'rgba(255,255,255,0.3)' } }}
                             >
                                 Open Jira
@@ -286,11 +318,11 @@ const JiraBugsPreview = () => {
                 {/* Stats Cards */}
                 <Grid container spacing={3} mb={4}>
                     {[
-                        { label: 'Total Bugs', value: stats.total, icon: <BugReportIcon />, color: '#2563eb' },
-                        { label: 'Open', value: stats.open, icon: <HourglassEmptyIcon />, color: '#3b82f6' },
+                        { label: 'Total Bugs', value: stats.total, icon: <BugReportIcon />, color: '#10b981' },
+                        { label: 'Open', value: stats.open, icon: <HourglassEmptyIcon />, color: '#14b8a6' },
                         { label: 'In Progress', value: stats.inProgress, icon: <AssignmentIcon />, color: '#f59e0b' },
                         { label: 'Resolved', value: stats.resolved, icon: <CheckCircleIcon />, color: '#10b981' },
-                        { label: 'Pending Conversion', value: stats.pendingConversion, icon: <ThumbUpIcon />, color: '#8b5cf6' },
+                        { label: 'Pending Conversion', value: stats.pendingConversion, icon: <ThumbUpIcon />, color: '#10b981' },
                     ].map((stat, idx) => (
                         <Grid item xs={6} md={2.4} key={idx}>
                             <Card elevation={0} sx={{ borderRadius: 4, boxShadow: '0 4px 20px rgba(0,0,0,0.04)' }}>
@@ -441,14 +473,14 @@ const JiraBugsPreview = () => {
                                                         <Chip
                                                             label={bug.id}
                                                             size="small"
-                                                            sx={{ bgcolor: '#dbeafe', color: '#1e40af', fontWeight: 600, fontFamily: 'monospace' }}
+                                                            sx={{ bgcolor: '#d1fae5', color: '#065f46', fontWeight: 600, fontFamily: 'monospace' }}
                                                         />
                                                     </TableCell>
                                                     <TableCell>
                                                         <Box display="flex" alignItems="center" gap={1}>
                                                             {bug.reporter === 'AI Analysis System' && (
                                                                 <Tooltip title="Created from AI Analysis">
-                                                                    <SmartToyIcon sx={{ color: '#8b5cf6', fontSize: 18 }} />
+                                                                    <SmartToyIcon sx={{ color: '#10b981', fontSize: 18 }} />
                                                                 </Tooltip>
                                                             )}
                                                             <Typography variant="body2" sx={{ maxWidth: 300 }} noWrap>{bug.title}</Typography>
@@ -500,7 +532,7 @@ const JiraBugsPreview = () => {
                                                     <TableCell align="center">
                                                         <Tooltip title="Open in Jira">
                                                             <IconButton size="small" onClick={(e) => { e.stopPropagation(); window.open(bug.jiraUrl, '_blank'); }}>
-                                                                <OpenInNewIcon fontSize="small" sx={{ color: '#2563eb' }} />
+                                                                <OpenInNewIcon fontSize="small" sx={{ color: '#10b981' }} />
                                                             </IconButton>
                                                         </Tooltip>
                                                     </TableCell>
@@ -551,7 +583,7 @@ const JiraBugsPreview = () => {
                                         setSelectAnalysesDialogOpen(true);
                                         setBulkCreateStep(0);
                                     }}
-                                    sx={{ bgcolor: '#2563eb' }}
+                                    sx={{ bgcolor: '#10b981', '&:hover': { bgcolor: '#059669' } }}
                                 >
                                     Create {selectedAnalyses.length > 0 ? `${selectedAnalyses.length} ` : ''}Bug{selectedAnalyses.length !== 1 ? 's' : ''}
                                 </Button>
@@ -626,7 +658,7 @@ const JiraBugsPreview = () => {
                                                         icon={<VerifiedIcon />}
                                                         label={analysis.id}
                                                         size="small"
-                                                        sx={{ bgcolor: '#f0fdf4', color: '#166534', fontWeight: 600, fontFamily: 'monospace' }}
+                                                        sx={{ bgcolor: '#d1fae5', color: '#065f46', fontWeight: 600, fontFamily: 'monospace' }}
                                                     />
                                                 </TableCell>
                                                 <TableCell>
@@ -661,7 +693,7 @@ const JiraBugsPreview = () => {
                                                 </TableCell>
                                                 <TableCell>
                                                     <Box display="flex" alignItems="center" gap={1}>
-                                                        <Avatar sx={{ width: 24, height: 24, fontSize: '0.7rem', bgcolor: '#8b5cf6' }}>
+                                                        <Avatar sx={{ width: 24, height: 24, fontSize: '0.7rem', bgcolor: '#10b981' }}>
                                                             {analysis.acceptedBy[0].toUpperCase()}
                                                         </Avatar>
                                                         <Box>
@@ -696,7 +728,7 @@ const JiraBugsPreview = () => {
                                                             <IconButton
                                                                 size="small"
                                                                 onClick={() => handleCreateBugFromAnalysis(analysis)}
-                                                                sx={{ color: '#2563eb' }}
+                                                                sx={{ color: '#10b981' }}
                                                             >
                                                                 <BugReportIcon fontSize="small" />
                                                             </IconButton>
@@ -704,8 +736,8 @@ const JiraBugsPreview = () => {
                                                     )}
                                                     {analysis.bugCreated && (
                                                         <Tooltip title="Open Bug in Jira">
-                                                            <IconButton size="small" onClick={() => window.open(`https://company.atlassian.net/browse/${analysis.linkedBugId}`, '_blank')}>
-                                                                <OpenInNewIcon fontSize="small" sx={{ color: '#2563eb' }} />
+                                                            <IconButton size="small" onClick={() => window.open(`https://sushrutnistane097-1768028782643.atlassian.net/browse/${analysis.linkedBugId}`, '_blank')}>
+                                                                <OpenInNewIcon fontSize="small" sx={{ color: '#10b981' }} />
                                                             </IconButton>
                                                         </Tooltip>
                                                     )}
@@ -723,7 +755,7 @@ const JiraBugsPreview = () => {
                 <Dialog open={createDialogOpen} onClose={() => setCreateDialogOpen(false)} maxWidth="md" fullWidth>
                     <DialogTitle sx={{ fontWeight: 600 }}>
                         <Box display="flex" alignItems="center" gap={1}>
-                            <BugReportIcon sx={{ color: '#2563eb' }} />
+                            <BugReportIcon sx={{ color: '#10b981' }} />
                             Create Jira Bug from AI Analysis
                         </Box>
                     </DialogTitle>
@@ -789,7 +821,7 @@ const JiraBugsPreview = () => {
                             startIcon={creating ? <HourglassEmptyIcon /> : <SendIcon />}
                             onClick={handleSubmitBug}
                             disabled={creating || !bugForm.title}
-                            sx={{ bgcolor: '#2563eb' }}
+                            sx={{ bgcolor: '#10b981', '&:hover': { bgcolor: '#059669' } }}
                         >
                             {creating ? 'Creating in Jira...' : 'Create Bug in Jira'}
                         </Button>
@@ -800,7 +832,7 @@ const JiraBugsPreview = () => {
                 <Dialog open={selectAnalysesDialogOpen} onClose={() => !bulkCreating && setSelectAnalysesDialogOpen(false)} maxWidth="md" fullWidth>
                     <DialogTitle sx={{ fontWeight: 600 }}>
                         <Box display="flex" alignItems="center" gap={1}>
-                            <PlaylistAddCheckIcon sx={{ color: '#8b5cf6' }} />
+                            <PlaylistAddCheckIcon sx={{ color: '#10b981' }} />
                             Convert Approved Analyses to Bugs
                         </Box>
                     </DialogTitle>
@@ -836,8 +868,8 @@ const JiraBugsPreview = () => {
                                                 sx={{
                                                     mb: 1,
                                                     cursor: 'pointer',
-                                                    border: selectedAnalyses.includes(analysis.id) ? '2px solid #2563eb' : '1px solid #e2e8f0',
-                                                    bgcolor: selectedAnalyses.includes(analysis.id) ? alpha('#2563eb', 0.05) : 'white'
+                                                    border: selectedAnalyses.includes(analysis.id) ? '2px solid #10b981' : '1px solid #e2e8f0',
+                                                    bgcolor: selectedAnalyses.includes(analysis.id) ? alpha('#10b981', 0.05) : 'white'
                                                 }}
                                                 onClick={() => handleSelectAnalysis(analysis.id)}
                                             >
@@ -884,7 +916,7 @@ const JiraBugsPreview = () => {
                                             <circle
                                                 cx="50" cy="50" r="45"
                                                 fill="none"
-                                                stroke="#2563eb"
+                                                stroke="#10b981"
                                                 strokeWidth="8"
                                                 strokeDasharray={`${(283 * selectedAnalyses.length) / pendingAnalyses.length} 283`}
                                                 strokeLinecap="round"
@@ -893,7 +925,7 @@ const JiraBugsPreview = () => {
                                         </svg>
                                     </Box>
                                     <Box sx={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                        <AutoFixHighIcon sx={{ fontSize: 40, color: '#2563eb' }} />
+                                        <AutoFixHighIcon sx={{ fontSize: 40, color: '#10b981' }} />
                                     </Box>
                                 </Box>
                                 <Typography variant="h6">Creating Jira Bugs...</Typography>
@@ -917,9 +949,9 @@ const JiraBugsPreview = () => {
                                     {selectedAnalyses.map((id, idx) => (
                                         <Chip
                                             key={id}
-                                            label={`DDN-${1236 + idx}`}
-                                            sx={{ m: 0.5, bgcolor: '#dbeafe', color: '#1e40af' }}
-                                            onClick={() => window.open(`https://company.atlassian.net/browse/DDN-${1236 + idx}`, '_blank')}
+                                            label={`KAN-${1 + idx}`}
+                                            sx={{ m: 0.5, bgcolor: '#d1fae5', color: '#065f46' }}
+                                            onClick={() => window.open(`https://sushrutnistane097-1768028782643.atlassian.net/browse/KAN-${1 + idx}`, '_blank')}
                                             icon={<OpenInNewIcon />}
                                         />
                                     ))}
@@ -936,7 +968,7 @@ const JiraBugsPreview = () => {
                                     startIcon={<BugReportIcon />}
                                     onClick={handleBulkCreateBugs}
                                     disabled={selectedAnalyses.length === 0}
-                                    sx={{ bgcolor: '#2563eb' }}
+                                    sx={{ bgcolor: '#10b981', '&:hover': { bgcolor: '#059669' } }}
                                 >
                                     Create {selectedAnalyses.length} Bug{selectedAnalyses.length !== 1 ? 's' : ''}
                                 </Button>
@@ -956,7 +988,7 @@ const JiraBugsPreview = () => {
                         <>
                             <DialogTitle sx={{ fontWeight: 600 }}>
                                 <Box display="flex" alignItems="center" gap={2}>
-                                    <Chip label={selectedBug.id} sx={{ bgcolor: '#dbeafe', color: '#1e40af', fontWeight: 600 }} />
+                                    <Chip label={selectedBug.id} sx={{ bgcolor: '#d1fae5', color: '#065f46', fontWeight: 600 }} />
                                     <Typography variant="h6">{selectedBug.title}</Typography>
                                 </Box>
                             </DialogTitle>
@@ -992,7 +1024,7 @@ const JiraBugsPreview = () => {
                                     <Grid item xs={6}>
                                         <Typography variant="body2" color="textSecondary">Reporter</Typography>
                                         <Box display="flex" alignItems="center" gap={1} mt={0.5}>
-                                            {selectedBug.reporter === 'AI Analysis System' && <SmartToyIcon sx={{ color: '#8b5cf6', fontSize: 18 }} />}
+                                            {selectedBug.reporter === 'AI Analysis System' && <SmartToyIcon sx={{ color: '#10b981', fontSize: 18 }} />}
                                             <Typography variant="body2" fontWeight={600}>{selectedBug.reporter}</Typography>
                                         </Box>
                                     </Grid>
@@ -1008,7 +1040,7 @@ const JiraBugsPreview = () => {
                                     variant="contained"
                                     startIcon={<OpenInNewIcon />}
                                     onClick={() => window.open(selectedBug.jiraUrl, '_blank')}
-                                    sx={{ bgcolor: '#2563eb' }}
+                                    sx={{ bgcolor: '#10b981', '&:hover': { bgcolor: '#059669' } }}
                                 >
                                     Open in Jira
                                 </Button>

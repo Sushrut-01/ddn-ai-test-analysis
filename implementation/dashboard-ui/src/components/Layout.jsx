@@ -51,9 +51,11 @@ import AutoFixHighIcon from '@mui/icons-material/AutoFixHigh'
 import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome'
 import ExpandLess from '@mui/icons-material/ExpandLess'
 import ExpandMore from '@mui/icons-material/ExpandMore'
+import BusinessIcon from '@mui/icons-material/Business'
 import ThemeSelector from './ThemeSelector'
 import AppBreadcrumbs from './Breadcrumbs'
 import { useColorTheme } from '../theme/ThemeContext'
+import ProjectSelector from './ProjectSelector'
 
 const drawerWidth = 260
 
@@ -98,6 +100,7 @@ const menuSections = [
   {
     title: 'Administration',
     items: [
+      { text: 'Projects', icon: <BusinessIcon />, path: '/projects/manage' },
       { text: 'Users', icon: <GroupIcon />, path: '/users' },
       { text: 'Configuration', icon: <SettingsIcon />, path: '/config' },
       { text: 'Notifications', icon: <NotificationsIcon />, path: '/notifications' },
@@ -107,6 +110,10 @@ const menuSections = [
 ]
 
 function Layout({ children }) {
+  // DEBUG: Verify this component is loading the latest code
+  console.log('🚀 Layout Component Loaded - Multi-Project Version!')
+  console.log('📋 Administration Menu Items:', menuSections.find(s => s.title === 'Administration')?.items)
+
   const [mobileOpen, setMobileOpen] = useState(false)
   const [userMenuAnchor, setUserMenuAnchor] = useState(null)
   const [user, setUser] = useState(null)
@@ -117,6 +124,9 @@ function Layout({ children }) {
     'AI Tools': true,
     Administration: true
   })
+  const [currentProjectName, setCurrentProjectName] = useState(
+    localStorage.getItem('current_project_slug')?.toUpperCase() || 'DDN'
+  )
   const navigate = useNavigate()
   const location = useLocation()
   const { theme } = useColorTheme()
@@ -127,6 +137,18 @@ function Layout({ children }) {
     if (storedUser) {
       setUser(JSON.parse(storedUser))
     }
+  }, [])
+
+  // Listen for project changes
+  useEffect(() => {
+    const handleProjectChange = (event) => {
+      console.log('🔄 Project changed to:', event.detail)
+      const newProjectName = event.detail.slug?.toUpperCase() || event.detail.name?.toUpperCase()
+      setCurrentProjectName(newProjectName)
+    }
+
+    window.addEventListener('projectChanged', handleProjectChange)
+    return () => window.removeEventListener('projectChanged', handleProjectChange)
   }, [])
 
   const handleDrawerToggle = () => {
@@ -284,8 +306,11 @@ function Layout({ children }) {
             <MenuIcon />
           </IconButton>
           <Typography variant="h6" noWrap component="div" sx={{ flexGrow: 1, fontWeight: 600 }}>
-            Test Failure Analysis Dashboard
+            {currentProjectName} - Test Failure Analysis Dashboard
           </Typography>
+          <Box sx={{ mr: 2 }}>
+            <ProjectSelector />
+          </Box>
           <ThemeSelector />
           <IconButton color="inherit" onClick={() => window.location.reload()}>
             <RefreshIcon />

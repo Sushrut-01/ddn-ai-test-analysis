@@ -1,0 +1,1753 @@
+Started by timer
+Running as SYSTEM
+Building in workspace /var/jenkins_home/workspace/Guruttava-E2E-Tests
+[Guruttava-E2E-Tests] $ /bin/bash /tmp/jenkins10231575064198020177.sh
+=========================================
+Guruttava E2E Tests (Robot Framework)
+Build: 12
+Job: Guruttava-E2E-Tests
+Platform: Android
+Test Type: Smoke
+=========================================
+Project ID: 2 | Slug: guruttava
+Checking out code from https://github.com/Sushrut-01/gurutattva-e2e-automation (branch: Sushrut-laptop)...
+HEAD is now at 2d288d7 feat: add Jenkins pipeline to run all E2E suites sequentially (PROJECT_ID=2, Multi-Project)
+Removing resources/DockerChromeLibrary.py
+Git Branch: Sushrut-laptop | Commit: 2d288d73cc10e6006e222d80af955d53a97f6623
+Installing Robot Framework and dependencies...
+Creating Docker Chrome library wrapper (proven web solution)...
+✅ Docker Chrome library created
+Running E2E tests from: tests/E2E*.robot
+Appium Server: http://host.docker.internal:4723
+Configuring Chrome for headless mode in Docker...
+Installing ChromeDriver...
+Chrome Binary: /usr/bin/google-chrome
+ChromeDriver: /usr/bin/chromedriver
+Chrome Options: --headless --no-sandbox --disable-dev-shm-usage --disable-gpu --disable-software-rasterizer --disable-extensions --remote-debugging-port=9222 --user-data-dir=/tmp/chrome-user-data --window-size=1920,1080 --single-process
+Running Android E2E tests
+Test Type: Smoke
+Executing Robot Framework E2E tests (E2E* files only)...
+==============================================================================
+Guruttava_Android_E2E_Tests                                                   
+==============================================================================
+[ WARN ] Error in file '/var/jenkins_home/workspace/Guruttava-E2E-Tests/pages/E2EAudioPage.robot' on line 4800: The '[Return]' setting is deprecated. Use the 'RETURN' statement instead.
+[ WARN ] Error in file '/var/jenkins_home/workspace/Guruttava-E2E-Tests/pages/E2EAudioPage.robot' on line 4946: The '[Return]' setting is deprecated. Use the 'RETURN' statement instead.
+[ WARN ] Error in file '/var/jenkins_home/workspace/Guruttava-E2E-Tests/pages/E2EAudioPage.robot' on line 4962: The '[Return]' setting is deprecated. Use the 'RETURN' statement instead.
+[ WARN ] Error in file '/var/jenkins_home/workspace/Guruttava-E2E-Tests/pages/E2EAudioPage.robot' on line 4993: The '[Return]' setting is deprecated. Use the 'RETURN' statement instead.
+[ WARN ] Error in file '/var/jenkins_home/workspace/Guruttava-E2E-Tests/pages/E2EAudioPage.robot' on line 5533: The '[Return]' setting is deprecated. Use the 'RETURN' statement instead.
+[ WARN ] Error in file '/var/jenkins_home/workspace/Guruttava-E2E-Tests/pages/E2EAudioPage.robot' on line 5644: The '[Return]' setting is deprecated. Use the 'RETURN' statement instead.
+[ WARN ] Error in file '/var/jenkins_home/workspace/Guruttava-E2E-Tests/pages/E2ENewsPage.robot' on line 798: The '[Return]' setting is deprecated. Use the 'RETURN' statement instead.
+Guruttava_Android_E2E_Tests.E2EAudio                                          
+==============================================================================
+End-to-End Integration Create and Publish Music Track in Web CRM a... ===== Starting Test Setup =====
+===== Test Setup Completed =====
+🎯 Generated E2E Test Data:
+🎯 Category: E2E_Category_2835
+🎯 SubCategory: E2E_SubCategory_2835
+🎯 Audio Track: E2E_Track_2835
+🎯 Author: E2E_Author_2835
+🌐 Opening web browser: chrome
+🔗 Navigating to: https://gurutattvacmsnewdev.rysun.in:9090/
+===== Starting Test Teardown =====
+✅ Mobile screenshot captured: /var/jenkins_home/workspace/Guruttava-E2E-Tests/results/Screenshot/End-to-End_Integration_Create_and_Publish_Music_Track_in_Web_CRM_and_Verify_Playback_in_Mobile_App_20260123_061647.png
+⚠️ Mobile screenshot capture failed, capturing web screenshot...
+✅ Screenshot captured: /var/jenkins_home/workspace/Guruttava-E2E-Tests/results/Screenshot/End-to-End_Integration_Create_and_Publish_Music_Track_in_Web_CRM_and_Verify_Playback_in_Mobile_App_20260123_061647.png
+===== Closing Gurutattva App =====
+⚠️ Graceful termination failed, using force stop
+⚠️ Mobile session close had issues
+===== Gurutattva App Closed =====
+🗑️ Cleared download directory: /var/jenkins_home/workspace/Guruttava-E2E-Tests/downloads
+===== Test Teardown Completed =====
+| FAIL |
+WebDriverException: Message: Service /var/jenkins_home/.cache/selenium/chromedriver/linux64/144.0.7559.96/chromedriver unexpectedly exited. Status code was: 127
+------------------------------------------------------------------------------
+Unpublish Music Track And Validate In Mobile App :: Unpublish the ... ===== Starting Test Setup =====
+===== Test Setup Completed =====
+🌐 Opening web browser: chrome
+🔗 Navigating to: https://gurutattvacmsnewdev.rysun.in:9090/
+===== Starting Test Teardown =====
+✅ Mobile screenshot captured: /var/jenkins_home/workspace/Guruttava-E2E-Tests/results/Screenshot/Unpublish_Music_Track_And_Validate_In_Mobile_App_20260123_061701.png
+⚠️ Mobile screenshot capture failed, capturing web screenshot...
+✅ Screenshot captured: /var/jenkins_home/workspace/Guruttava-E2E-Tests/results/Screenshot/Unpublish_Music_Track_And_Validate_In_Mobile_App_20260123_061701.png
+===== Closing Gurutattva App =====
+⚠️ Graceful termination failed, using force stop
+⚠️ Mobile session close had issues
+===== Gurutattva App Closed =====
+🗑️ Cleared download directory: /var/jenkins_home/workspace/Guruttava-E2E-Tests/downloads
+===== Test Teardown Completed =====
+| FAIL |
+WebDriverException: Message: Service /var/jenkins_home/.cache/selenium/chromedriver/linux64/144.0.7559.96/chromedriver unexpectedly exited. Status code was: 127
+------------------------------------------------------------------------------
+End-to-End Integration Create and Publish Podcast in Web CRM and V... ===== Starting Test Setup =====
+===== Test Setup Completed =====
+🎯 Generated E2E Test Data:
+🎯 Category: PodcastCategory_4492
+🎯 SubCategory: Podcast_SubCategory_4492
+🎯 Audio Track: Podcast_Track_4492
+🎯 Speaker: E2E_Speaker_4492
+🌐 Opening web browser: chrome
+🔗 Navigating to: https://gurutattvacmsnewdev.rysun.in:9090/
+===== Starting Test Teardown =====
+✅ Mobile screenshot captured: /var/jenkins_home/workspace/Guruttava-E2E-Tests/results/Screenshot/End-to-End_Integration_Create_and_Publish_Podcast_in_Web_CRM_and_Verify_Playback_in_Mobile_App_20260123_061716.png
+⚠️ Mobile screenshot capture failed, capturing web screenshot...
+✅ Screenshot captured: /var/jenkins_home/workspace/Guruttava-E2E-Tests/results/Screenshot/End-to-End_Integration_Create_and_Publish_Podcast_in_Web_CRM_and_Verify_Playback_in_Mobile_App_20260123_061716.png
+===== Closing Gurutattva App =====
+⚠️ Graceful termination failed, using force stop
+⚠️ Mobile session close had issues
+===== Gurutattva App Closed =====
+🗑️ Cleared download directory: /var/jenkins_home/workspace/Guruttava-E2E-Tests/downloads
+===== Test Teardown Completed =====
+| FAIL |
+WebDriverException: Message: Service /var/jenkins_home/.cache/selenium/chromedriver/linux64/144.0.7559.96/chromedriver unexpectedly exited. Status code was: 127
+------------------------------------------------------------------------------
+Validate that the mobile app does not display unpublished podcast ... ===== Starting Test Setup =====
+===== Test Setup Completed =====
+🌐 Opening web browser: chrome
+🔗 Navigating to: https://gurutattvacmsnewdev.rysun.in:9090/
+===== Starting Test Teardown =====
+✅ Mobile screenshot captured: /var/jenkins_home/workspace/Guruttava-E2E-Tests/results/Screenshot/Validate_that_the_mobile_app_does_not_display_unpublished_podcast_track_20260123_061731.png
+⚠️ Mobile screenshot capture failed, capturing web screenshot...
+✅ Screenshot captured: /var/jenkins_home/workspace/Guruttava-E2E-Tests/results/Screenshot/Validate_that_the_mobile_app_does_not_display_unpublished_podcast_track_20260123_061731.png
+===== Closing Gurutattva App =====
+⚠️ Graceful termination failed, using force stop
+⚠️ Mobile session close had issues
+===== Gurutattva App Closed =====
+🗑️ Cleared download directory: /var/jenkins_home/workspace/Guruttava-E2E-Tests/downloads
+===== Test Teardown Completed =====
+| FAIL |
+WebDriverException: Message: Service /var/jenkins_home/.cache/selenium/chromedriver/linux64/144.0.7559.96/chromedriver unexpectedly exited. Status code was: 127
+------------------------------------------------------------------------------
+Validate mobile app does not show deleted Podcast tracks :: Valida... ===== Starting Test Setup =====
+===== Test Setup Completed =====
+🎯 Generated E2E Test Data:
+🎯 Category: PodcastCategory_9043
+🎯 SubCategory: Podcast_SubCategory_9043
+🎯 Audio Track: Podcast_Track_9043
+🎯 Speaker: E2E_Speaker_9043
+🌐 Opening web browser: chrome
+🔗 Navigating to: https://gurutattvacmsnewdev.rysun.in:9090/
+===== Starting Test Teardown =====
+✅ Mobile screenshot captured: /var/jenkins_home/workspace/Guruttava-E2E-Tests/results/Screenshot/Validate_mobile_app_does_not_show_deleted_Podcast_tracks_20260123_061746.png
+⚠️ Mobile screenshot capture failed, capturing web screenshot...
+✅ Screenshot captured: /var/jenkins_home/workspace/Guruttava-E2E-Tests/results/Screenshot/Validate_mobile_app_does_not_show_deleted_Podcast_tracks_20260123_061746.png
+===== Closing Gurutattva App =====
+⚠️ Graceful termination failed, using force stop
+⚠️ Mobile session close had issues
+===== Gurutattva App Closed =====
+🗑️ Cleared download directory: /var/jenkins_home/workspace/Guruttava-E2E-Tests/downloads
+===== Test Teardown Completed =====
+| FAIL |
+WebDriverException: Message: Service /var/jenkins_home/.cache/selenium/chromedriver/linux64/144.0.7559.96/chromedriver unexpectedly exited. Status code was: 127
+------------------------------------------------------------------------------
+Validate mobile app does not show deleted Music tracks :: Validate... ===== Starting Test Setup =====
+===== Test Setup Completed =====
+🎯 Generated E2E Test Data:
+🎯 Category: E2E_Category_8819
+🎯 SubCategory: E2E_SubCategory_8819
+🎯 Audio Track: E2E_Track_8819
+🎯 Author: E2E_Author_8819
+🌐 Opening web browser: chrome
+🔗 Navigating to: https://gurutattvacmsnewdev.rysun.in:9090/
+===== Starting Test Teardown =====
+✅ Mobile screenshot captured: /var/jenkins_home/workspace/Guruttava-E2E-Tests/results/Screenshot/Validate_mobile_app_does_not_show_deleted_Music_tracks_20260123_061801.png
+⚠️ Mobile screenshot capture failed, capturing web screenshot...
+✅ Screenshot captured: /var/jenkins_home/workspace/Guruttava-E2E-Tests/results/Screenshot/Validate_mobile_app_does_not_show_deleted_Music_tracks_20260123_061801.png
+===== Closing Gurutattva App =====
+⚠️ Graceful termination failed, using force stop
+⚠️ Mobile session close had issues
+===== Gurutattva App Closed =====
+🗑️ Cleared download directory: /var/jenkins_home/workspace/Guruttava-E2E-Tests/downloads
+===== Test Teardown Completed =====
+| FAIL |
+WebDriverException: Message: Service /var/jenkins_home/.cache/selenium/chromedriver/linux64/144.0.7559.96/chromedriver unexpectedly exited. Status code was: 127
+------------------------------------------------------------------------------
+Validate Editing and Publishing of Music Track in Web CMS and Veri... ===== Starting Test Setup =====
+===== Test Setup Completed =====
+🎯 Generated E2E Test Data:
+🎯 Category: E2E_Category_4297
+🎯 SubCategory: E2E_SubCategory_4297
+🎯 Audio Track: E2E_Track_4297
+🎯 Author: E2E_Author_4297
+🌐 Opening web browser: chrome
+🔗 Navigating to: https://gurutattvacmsnewdev.rysun.in:9090/
+===== Starting Test Teardown =====
+✅ Mobile screenshot captured: /var/jenkins_home/workspace/Guruttava-E2E-Tests/results/Screenshot/Validate_Editing_and_Publishing_of_Music_Track_in_Web_CMS_and_Verify_in_Mobile_App_20260123_061818.png
+⚠️ Mobile screenshot capture failed, capturing web screenshot...
+✅ Screenshot captured: /var/jenkins_home/workspace/Guruttava-E2E-Tests/results/Screenshot/Validate_Editing_and_Publishing_of_Music_Track_in_Web_CMS_and_Verify_in_Mobile_App_20260123_061818.png
+===== Closing Gurutattva App =====
+⚠️ Graceful termination failed, using force stop
+⚠️ Mobile session close had issues
+===== Gurutattva App Closed =====
+🗑️ Cleared download directory: /var/jenkins_home/workspace/Guruttava-E2E-Tests/downloads
+===== Test Teardown Completed =====
+| FAIL |
+WebDriverException: Message: Service /var/jenkins_home/.cache/selenium/chromedriver/linux64/144.0.7559.96/chromedriver unexpectedly exited. Status code was: 127
+------------------------------------------------------------------------------
+Validate Editing and Publishing of Podcast Track in Web CMS and Ve... ===== Starting Test Setup =====
+===== Test Setup Completed =====
+🎯 Generated E2E Test Data:
+🎯 Category: PodcastCategory_9567
+🎯 SubCategory: Podcast_SubCategory_9567
+🎯 Audio Track: Podcast_Track_9567
+🎯 Speaker: E2E_Speaker_9567
+🌐 Opening web browser: chrome
+🔗 Navigating to: https://gurutattvacmsnewdev.rysun.in:9090/
+===== Starting Test Teardown =====
+✅ Mobile screenshot captured: /var/jenkins_home/workspace/Guruttava-E2E-Tests/results/Screenshot/Validate_Editing_and_Publishing_of_Podcast_Track_in_Web_CMS_and_Verify_in_Mobile_App_20260123_061833.png
+⚠️ Mobile screenshot capture failed, capturing web screenshot...
+✅ Screenshot captured: /var/jenkins_home/workspace/Guruttava-E2E-Tests/results/Screenshot/Validate_Editing_and_Publishing_of_Podcast_Track_in_Web_CMS_and_Verify_in_Mobile_App_20260123_061833.png
+===== Closing Gurutattva App =====
+⚠️ Graceful termination failed, using force stop
+⚠️ Mobile session close had issues
+===== Gurutattva App Closed =====
+🗑️ Cleared download directory: /var/jenkins_home/workspace/Guruttava-E2E-Tests/downloads
+===== Test Teardown Completed =====
+| FAIL |
+WebDriverException: Message: Service /var/jenkins_home/.cache/selenium/chromedriver/linux64/144.0.7559.96/chromedriver unexpectedly exited. Status code was: 127
+------------------------------------------------------------------------------
+Delete Music Track And Verify Removal From Mobile App :: Delete a ... ===== Starting Test Setup =====
+===== Test Setup Completed =====
+🎯 Generated E2E Test Data:
+🎯 Category: E2E_Category_4617
+🎯 SubCategory: E2E_SubCategory_4617
+🎯 Audio Track: E2E_Track_4617
+🎯 Author: E2E_Author_4617
+🌐 Opening web browser: chrome
+🔗 Navigating to: https://gurutattvacmsnewdev.rysun.in:9090/
+===== Starting Test Teardown =====
+✅ Mobile screenshot captured: /var/jenkins_home/workspace/Guruttava-E2E-Tests/results/Screenshot/Delete_Music_Track_And_Verify_Removal_From_Mobile_App_20260123_061847.png
+⚠️ Mobile screenshot capture failed, capturing web screenshot...
+✅ Screenshot captured: /var/jenkins_home/workspace/Guruttava-E2E-Tests/results/Screenshot/Delete_Music_Track_And_Verify_Removal_From_Mobile_App_20260123_061847.png
+===== Closing Gurutattva App =====
+⚠️ Graceful termination failed, using force stop
+⚠️ Mobile session close had issues
+===== Gurutattva App Closed =====
+🗑️ Cleared download directory: /var/jenkins_home/workspace/Guruttava-E2E-Tests/downloads
+===== Test Teardown Completed =====
+| FAIL |
+WebDriverException: Message: Service /var/jenkins_home/.cache/selenium/chromedriver/linux64/144.0.7559.96/chromedriver unexpectedly exited. Status code was: 127
+------------------------------------------------------------------------------
+Delete Podcast Track And Verify Removal From Mobile App :: Delete ... ===== Starting Test Setup =====
+===== Test Setup Completed =====
+🎯 Generated E2E Test Data:
+🎯 Category: PodcastCategory_7441
+🎯 SubCategory: Podcast_SubCategory_7441
+🎯 Audio Track: Podcast_Track_7441
+🎯 Speaker: E2E_Speaker_7441
+🌐 Opening web browser: chrome
+🔗 Navigating to: https://gurutattvacmsnewdev.rysun.in:9090/
+===== Starting Test Teardown =====
+✅ Mobile screenshot captured: /var/jenkins_home/workspace/Guruttava-E2E-Tests/results/Screenshot/Delete_Podcast_Track_And_Verify_Removal_From_Mobile_App_20260123_061902.png
+⚠️ Mobile screenshot capture failed, capturing web screenshot...
+✅ Screenshot captured: /var/jenkins_home/workspace/Guruttava-E2E-Tests/results/Screenshot/Delete_Podcast_Track_And_Verify_Removal_From_Mobile_App_20260123_061902.png
+===== Closing Gurutattva App =====
+⚠️ Graceful termination failed, using force stop
+⚠️ Mobile session close had issues
+===== Gurutattva App Closed =====
+🗑️ Cleared download directory: /var/jenkins_home/workspace/Guruttava-E2E-Tests/downloads
+===== Test Teardown Completed =====
+| FAIL |
+WebDriverException: Message: Service /var/jenkins_home/.cache/selenium/chromedriver/linux64/144.0.7559.96/chromedriver unexpectedly exited. Status code was: 127
+------------------------------------------------------------------------------
+Add Music Track With Same Track And Thumbnail For Both Languages :... ===== Starting Test Setup =====
+===== Test Setup Completed =====
+🎯 Generated E2E Test Data:
+🎯 Category: E2E_Category_4180
+🎯 SubCategory: E2E_SubCategory_4180
+🎯 Audio Track: E2E_Track_4180
+🎯 Author: E2E_Author_4180
+🌐 Opening web browser: chrome
+🔗 Navigating to: https://gurutattvacmsnewdev.rysun.in:9090/
+===== Starting Test Teardown =====
+✅ Mobile screenshot captured: /var/jenkins_home/workspace/Guruttava-E2E-Tests/results/Screenshot/Add_Music_Track_With_Same_Track_And_Thumbnail_For_Both_Languages_20260123_061917.png
+⚠️ Mobile screenshot capture failed, capturing web screenshot...
+✅ Screenshot captured: /var/jenkins_home/workspace/Guruttava-E2E-Tests/results/Screenshot/Add_Music_Track_With_Same_Track_And_Thumbnail_For_Both_Languages_20260123_061917.png
+===== Closing Gurutattva App =====
+⚠️ Graceful termination failed, using force stop
+⚠️ Mobile session close had issues
+===== Gurutattva App Closed =====
+🗑️ Cleared download directory: /var/jenkins_home/workspace/Guruttava-E2E-Tests/downloads
+===== Test Teardown Completed =====
+| FAIL |
+WebDriverException: Message: Service /var/jenkins_home/.cache/selenium/chromedriver/linux64/144.0.7559.96/chromedriver unexpectedly exited. Status code was: 127
+------------------------------------------------------------------------------
+Add Podcast Track With Same Track And Thumbnail For Both Languages... ===== Starting Test Setup =====
+===== Test Setup Completed =====
+🎯 Generated E2E Test Data:
+🎯 Category: PodcastCategory_2635
+🎯 SubCategory: Podcast_SubCategory_2635
+🎯 Audio Track: Podcast_Track_2635
+🎯 Speaker: E2E_Speaker_2635
+🌐 Opening web browser: chrome
+🔗 Navigating to: https://gurutattvacmsnewdev.rysun.in:9090/
+===== Starting Test Teardown =====
+✅ Mobile screenshot captured: /var/jenkins_home/workspace/Guruttava-E2E-Tests/results/Screenshot/Add_Podcast_Track_With_Same_Track_And_Thumbnail_For_Both_Languages_20260123_061932.png
+⚠️ Mobile screenshot capture failed, capturing web screenshot...
+✅ Screenshot captured: /var/jenkins_home/workspace/Guruttava-E2E-Tests/results/Screenshot/Add_Podcast_Track_With_Same_Track_And_Thumbnail_For_Both_Languages_20260123_061932.png
+===== Closing Gurutattva App =====
+⚠️ Graceful termination failed, using force stop
+⚠️ Mobile session close had issues
+===== Gurutattva App Closed =====
+🗑️ Cleared download directory: /var/jenkins_home/workspace/Guruttava-E2E-Tests/downloads
+===== Test Teardown Completed =====
+| FAIL |
+WebDriverException: Message: Service /var/jenkins_home/.cache/selenium/chromedriver/linux64/144.0.7559.96/chromedriver unexpectedly exited. Status code was: 127
+------------------------------------------------------------------------------
+Add Music Track Without Author :: NEGATIVE TEST: Verify that music... ===== Starting Test Setup =====
+===== Test Setup Completed =====
+🎯 Generated E2E Test Data:
+🎯 Category: E2E_Category_1277
+🎯 SubCategory: E2E_SubCategory_1277
+🎯 Audio Track: E2E_Track_1277
+🎯 Author: E2E_Author_1277
+🌐 Opening web browser: chrome
+🔗 Navigating to: https://gurutattvacmsnewdev.rysun.in:9090/
+===== Starting Test Teardown =====
+✅ Mobile screenshot captured: /var/jenkins_home/workspace/Guruttava-E2E-Tests/results/Screenshot/Add_Music_Track_Without_Author_20260123_061947.png
+⚠️ Mobile screenshot capture failed, capturing web screenshot...
+✅ Screenshot captured: /var/jenkins_home/workspace/Guruttava-E2E-Tests/results/Screenshot/Add_Music_Track_Without_Author_20260123_061947.png
+===== Closing Gurutattva App =====
+⚠️ Graceful termination failed, using force stop
+⚠️ Mobile session close had issues
+===== Gurutattva App Closed =====
+🗑️ Cleared download directory: /var/jenkins_home/workspace/Guruttava-E2E-Tests/downloads
+===== Test Teardown Completed =====
+| FAIL |
+WebDriverException: Message: Service /var/jenkins_home/.cache/selenium/chromedriver/linux64/144.0.7559.96/chromedriver unexpectedly exited. Status code was: 127
+------------------------------------------------------------------------------
+Add Podcast Track Without Speaker Should not be allowed :: Attempt... ===== Starting Test Setup =====
+===== Test Setup Completed =====
+🎯 Generated E2E Test Data:
+🎯 Category: PodcastCategory_3438
+🎯 SubCategory: Podcast_SubCategory_3438
+🎯 Audio Track: Podcast_Track_3438
+🎯 Speaker: E2E_Speaker_3438
+🌐 Opening web browser: chrome
+🔗 Navigating to: https://gurutattvacmsnewdev.rysun.in:9090/
+===== Starting Test Teardown =====
+✅ Mobile screenshot captured: /var/jenkins_home/workspace/Guruttava-E2E-Tests/results/Screenshot/Add_Podcast_Track_Without_Speaker_Should_not_be_allowed_20260123_062021.png
+⚠️ Mobile screenshot capture failed, capturing web screenshot...
+✅ Screenshot captured: /var/jenkins_home/workspace/Guruttava-E2E-Tests/results/Screenshot/Add_Podcast_Track_Without_Speaker_Should_not_be_allowed_20260123_062021.png
+===== Closing Gurutattva App =====
+⚠️ Graceful termination failed, using force stop
+⚠️ Mobile session close had issues
+===== Gurutattva App Closed =====
+🗑️ Cleared download directory: /var/jenkins_home/workspace/Guruttava-E2E-Tests/downloads
+===== Test Teardown Completed =====
+| FAIL |
+WebDriverException: Message: Service /var/jenkins_home/.cache/selenium/chromedriver/linux64/144.0.7559.96/chromedriver unexpectedly exited. Status code was: 127
+------------------------------------------------------------------------------
+Test Music Different Filter Functionality :: Test different filter... ===== Starting Test Setup =====
+===== Test Setup Completed =====
+🌐 Opening web browser: chrome
+🔗 Navigating to: https://gurutattvacmsnewdev.rysun.in:9090/
+===== Starting Test Teardown =====
+✅ Mobile screenshot captured: /var/jenkins_home/workspace/Guruttava-E2E-Tests/results/Screenshot/Test_Music_Different_Filter_Functionality_20260123_062046.png
+⚠️ Mobile screenshot capture failed, capturing web screenshot...
+✅ Screenshot captured: /var/jenkins_home/workspace/Guruttava-E2E-Tests/results/Screenshot/Test_Music_Different_Filter_Functionality_20260123_062046.png
+===== Closing Gurutattva App =====
+⚠️ Graceful termination failed, using force stop
+⚠️ Mobile session close had issues
+===== Gurutattva App Closed =====
+🗑️ Cleared download directory: /var/jenkins_home/workspace/Guruttava-E2E-Tests/downloads
+===== Test Teardown Completed =====
+| FAIL |
+WebDriverException: Message: Service /var/jenkins_home/.cache/selenium/chromedriver/linux64/144.0.7559.96/chromedriver unexpectedly exited. Status code was: 127
+------------------------------------------------------------------------------
+Test Podcast Different Filter Functionality :: Test different filt... ===== Starting Test Setup =====
+===== Test Setup Completed =====
+🌐 Opening web browser: chrome
+🔗 Navigating to: https://gurutattvacmsnewdev.rysun.in:9090/
+===== Starting Test Teardown =====
+✅ Mobile screenshot captured: /var/jenkins_home/workspace/Guruttava-E2E-Tests/results/Screenshot/Test_Podcast_Different_Filter_Functionality_20260123_062111.png
+⚠️ Mobile screenshot capture failed, capturing web screenshot...
+✅ Screenshot captured: /var/jenkins_home/workspace/Guruttava-E2E-Tests/results/Screenshot/Test_Podcast_Different_Filter_Functionality_20260123_062111.png
+===== Closing Gurutattva App =====
+⚠️ Graceful termination failed, using force stop
+⚠️ Mobile session close had issues
+===== Gurutattva App Closed =====
+🗑️ Cleared download directory: /var/jenkins_home/workspace/Guruttava-E2E-Tests/downloads
+===== Test Teardown Completed =====
+| FAIL |
+WebDriverException: Message: Service /var/jenkins_home/.cache/selenium/chromedriver/linux64/144.0.7559.96/chromedriver unexpectedly exited. Status code was: 127
+------------------------------------------------------------------------------
+Test Music Management Refresh Button Functionality :: Test refresh... ===== Starting Test Setup =====
+===== Test Setup Completed =====
+🌐 Opening web browser: chrome
+🔗 Navigating to: https://gurutattvacmsnewdev.rysun.in:9090/
+===== Starting Test Teardown =====
+✅ Mobile screenshot captured: /var/jenkins_home/workspace/Guruttava-E2E-Tests/results/Screenshot/Test_Music_Management_Refresh_Button_Functionality_20260123_062131.png
+⚠️ Mobile screenshot capture failed, capturing web screenshot...
+✅ Screenshot captured: /var/jenkins_home/workspace/Guruttava-E2E-Tests/results/Screenshot/Test_Music_Management_Refresh_Button_Functionality_20260123_062131.png
+===== Closing Gurutattva App =====
+⚠️ Graceful termination failed, using force stop
+⚠️ Mobile session close had issues
+===== Gurutattva App Closed =====
+🗑️ Cleared download directory: /var/jenkins_home/workspace/Guruttava-E2E-Tests/downloads
+===== Test Teardown Completed =====
+| FAIL |
+WebDriverException: Message: Service /var/jenkins_home/.cache/selenium/chromedriver/linux64/144.0.7559.96/chromedriver unexpectedly exited. Status code was: 127
+------------------------------------------------------------------------------
+Test Podcast Management Refresh Button Functionality :: Test refre... ===== Starting Test Setup =====
+===== Test Setup Completed =====
+🌐 Opening web browser: chrome
+🔗 Navigating to: https://gurutattvacmsnewdev.rysun.in:9090/
+===== Starting Test Teardown =====
+✅ Mobile screenshot captured: /var/jenkins_home/workspace/Guruttava-E2E-Tests/results/Screenshot/Test_Podcast_Management_Refresh_Button_Functionality_20260123_062148.png
+⚠️ Mobile screenshot capture failed, capturing web screenshot...
+✅ Screenshot captured: /var/jenkins_home/workspace/Guruttava-E2E-Tests/results/Screenshot/Test_Podcast_Management_Refresh_Button_Functionality_20260123_062148.png
+===== Closing Gurutattva App =====
+⚠️ Graceful termination failed, using force stop
+⚠️ Mobile session close had issues
+===== Gurutattva App Closed =====
+🗑️ Cleared download directory: /var/jenkins_home/workspace/Guruttava-E2E-Tests/downloads
+===== Test Teardown Completed =====
+| FAIL |
+WebDriverException: Message: Service /var/jenkins_home/.cache/selenium/chromedriver/linux64/144.0.7559.96/chromedriver unexpectedly exited. Status code was: 127
+------------------------------------------------------------------------------
+Test Multiple Music Tracks Same Category Same Subcategory :: Add 4... ===== Starting Test Setup =====
+===== Test Setup Completed =====
+🎯 Generated E2E Test Data:
+🎯 Category: E2E_Category_4014
+🎯 SubCategory: E2E_SubCategory_4014
+🎯 Audio Track: E2E_Track_4014
+🎯 Author: E2E_Author_4014
+🌐 Opening web browser: chrome
+🔗 Navigating to: https://gurutattvacmsnewdev.rysun.in:9090/
+===== Starting Test Teardown =====
+✅ Mobile screenshot captured: /var/jenkins_home/workspace/Guruttava-E2E-Tests/results/Screenshot/Test_Multiple_Music_Tracks_Same_Category_Same_Subcategory_20260123_062205.png
+⚠️ Mobile screenshot capture failed, capturing web screenshot...
+✅ Screenshot captured: /var/jenkins_home/workspace/Guruttava-E2E-Tests/results/Screenshot/Test_Multiple_Music_Tracks_Same_Category_Same_Subcategory_20260123_062205.png
+===== Closing Gurutattva App =====
+⚠️ Graceful termination failed, using force stop
+⚠️ Mobile session close had issues
+===== Gurutattva App Closed =====
+🗑️ Cleared download directory: /var/jenkins_home/workspace/Guruttava-E2E-Tests/downloads
+===== Test Teardown Completed =====
+| FAIL |
+WebDriverException: Message: Service /var/jenkins_home/.cache/selenium/chromedriver/linux64/144.0.7559.96/chromedriver unexpectedly exited. Status code was: 127
+------------------------------------------------------------------------------
+Add Audio in English language only :: Add an audio track using Eng... ===== Starting Test Setup =====
+===== Test Setup Completed =====
+🎯 Generated E2E Test Data:
+🎯 Category: E2E_Category_7093
+🎯 SubCategory: E2E_SubCategory_7093
+🎯 Audio Track: E2E_Track_7093
+🎯 Author: E2E_Author_7093
+🌐 Opening web browser: chrome
+🔗 Navigating to: https://gurutattvacmsnewdev.rysun.in:9090/
+===== Starting Test Teardown =====
+✅ Mobile screenshot captured: /var/jenkins_home/workspace/Guruttava-E2E-Tests/results/Screenshot/Add_Audio_in_English_language_only_20260123_062223.png
+⚠️ Mobile screenshot capture failed, capturing web screenshot...
+✅ Screenshot captured: /var/jenkins_home/workspace/Guruttava-E2E-Tests/results/Screenshot/Add_Audio_in_English_language_only_20260123_062223.png
+===== Closing Gurutattva App =====
+⚠️ Graceful termination failed, using force stop
+⚠️ Mobile session close had issues
+===== Gurutattva App Closed =====
+🗑️ Cleared download directory: /var/jenkins_home/workspace/Guruttava-E2E-Tests/downloads
+===== Test Teardown Completed =====
+| FAIL |
+WebDriverException: Message: Service /var/jenkins_home/.cache/selenium/chromedriver/linux64/144.0.7559.96/chromedriver unexpectedly exited. Status code was: 127
+------------------------------------------------------------------------------
+Guruttava_Android_E2E_Tests.E2EAudio                                  | FAIL |
+20 tests, 0 passed, 20 failed
+==============================================================================
+Guruttava_Android_E2E_Tests.E2EDhyankendra                                    
+==============================================================================
+Test Dhyankendra Different Filter Functionality :: Test different ... ===== Starting Test Setup =====
+===== Test Setup Completed =====
+🌐 Opening web browser: chrome
+🔗 Navigating to: https://gurutattvacmsnewdev.rysun.in:9090/
+===== Starting Test Teardown =====
+✅ Mobile screenshot captured: /var/jenkins_home/workspace/Guruttava-E2E-Tests/results/Screenshot/Test_Dhyankendra_Different_Filter_Functionality_20260123_062250.png
+⚠️ Mobile screenshot capture failed, capturing web screenshot...
+✅ Screenshot captured: /var/jenkins_home/workspace/Guruttava-E2E-Tests/results/Screenshot/Test_Dhyankendra_Different_Filter_Functionality_20260123_062250.png
+===== Closing Gurutattva App =====
+⚠️ Graceful termination failed, using force stop
+⚠️ Mobile session close had issues
+===== Gurutattva App Closed =====
+🗑️ Cleared download directory: /var/jenkins_home/workspace/Guruttava-E2E-Tests/downloads
+===== Test Teardown Completed =====
+| FAIL |
+WebDriverException: Message: Service /var/jenkins_home/.cache/selenium/chromedriver/linux64/144.0.7559.96/chromedriver unexpectedly exited. Status code was: 127
+------------------------------------------------------------------------------
+Test Dhyankendra Management Refresh Button Functionality :: Test r... ===== Starting Test Setup =====
+===== Test Setup Completed =====
+🌐 Opening web browser: chrome
+🔗 Navigating to: https://gurutattvacmsnewdev.rysun.in:9090/
+===== Starting Test Teardown =====
+✅ Mobile screenshot captured: /var/jenkins_home/workspace/Guruttava-E2E-Tests/results/Screenshot/Test_Dhyankendra_Management_Refresh_Button_Functionality_20260123_062306.png
+⚠️ Mobile screenshot capture failed, capturing web screenshot...
+✅ Screenshot captured: /var/jenkins_home/workspace/Guruttava-E2E-Tests/results/Screenshot/Test_Dhyankendra_Management_Refresh_Button_Functionality_20260123_062306.png
+===== Closing Gurutattva App =====
+⚠️ Graceful termination failed, using force stop
+⚠️ Mobile session close had issues
+===== Gurutattva App Closed =====
+🗑️ Cleared download directory: /var/jenkins_home/workspace/Guruttava-E2E-Tests/downloads
+===== Test Teardown Completed =====
+| FAIL |
+WebDriverException: Message: Service /var/jenkins_home/.cache/selenium/chromedriver/linux64/144.0.7559.96/chromedriver unexpectedly exited. Status code was: 127
+------------------------------------------------------------------------------
+Sanchalak login to CMS application and as per the role and rights ... ===== Starting Test Setup =====
+===== Test Setup Completed =====
+🌐 Opening web browser: chrome
+🔗 Navigating to: https://gurutattvacmsnewdev.rysun.in:9090/
+===== Starting Test Teardown =====
+✅ Mobile screenshot captured: /var/jenkins_home/workspace/Guruttava-E2E-Tests/results/Screenshot/Sanchalak_login_to_CMS_application_and_as_per_the_role_and_rights_it_should_have_access_to_left_menu__News,_Event,_Dhyankendra_added_by_own,_Dhyansthali_20260123_062322.png
+⚠️ Mobile screenshot capture failed, capturing web screenshot...
+✅ Screenshot captured: /var/jenkins_home/workspace/Guruttava-E2E-Tests/results/Screenshot/Sanchalak_login_to_CMS_application_and_as_per_the_role_and_rights_it_should_have_access_to_left_menu__News,_Event,_Dhyankendra_added_by_own,_Dhyansthali_20260123_062322.png
+===== Closing Gurutattva App =====
+⚠️ Graceful termination failed, using force stop
+⚠️ Mobile session close had issues
+===== Gurutattva App Closed =====
+🗑️ Cleared download directory: /var/jenkins_home/workspace/Guruttava-E2E-Tests/downloads
+===== Test Teardown Completed =====
+| FAIL |
+WebDriverException: Message: Service /var/jenkins_home/.cache/selenium/chromedriver/linux64/144.0.7559.96/chromedriver unexpectedly exited. Status code was: 127
+------------------------------------------------------------------------------
+Login from Mobile as Sadhak and register for Dhyankendra. Compare ... ===== Starting Test Setup =====
+===== Test Setup Completed =====
+Generated Test Data for Center Name:
+Center Name: E2E_Center_Name_882
+Email: e2euser.882@test.com
+Mobile: 9188773882
+Full Address: E2E_Full_Address_882
+===== Opening Gurutattva App =====
+[ WARN ] Retrying (Retry(total=2, connect=None, read=None, redirect=None, status=None)) after connection broken by 'NewConnectionError('<urllib3.connection.HTTPConnection object at 0x73faf3e58d70>: Failed to establish a new connection: [Errno 111] Connection refused')': /session
+[ WARN ] Retrying (Retry(total=1, connect=None, read=None, redirect=None, status=None)) after connection broken by 'NewConnectionError('<urllib3.connection.HTTPConnection object at 0x73faf3e23250>: Failed to establish a new connection: [Errno 111] Connection refused')': /session
+[ WARN ] Retrying (Retry(total=0, connect=None, read=None, redirect=None, status=None)) after connection broken by 'NewConnectionError('<urllib3.connection.HTTPConnection object at 0x73faf3e23610>: Failed to establish a new connection: [Errno 111] Connection refused')': /session
+===== Starting Test Teardown =====
+✅ Mobile screenshot captured: /var/jenkins_home/workspace/Guruttava-E2E-Tests/results/Screenshot/Login_from_Mobile_as_Sadhak_and_register_for_Dhyankendra__Compare_all_the_fields_of_Mobile_with_CMS__20260123_062336.png
+⚠️ Mobile screenshot capture failed, capturing web screenshot...
+✅ Screenshot captured: /var/jenkins_home/workspace/Guruttava-E2E-Tests/results/Screenshot/Login_from_Mobile_as_Sadhak_and_register_for_Dhyankendra__Compare_all_the_fields_of_Mobile_with_CMS__20260123_062336.png
+===== Closing Gurutattva App =====
+⚠️ Graceful termination failed, using force stop
+⚠️ Mobile session close had issues
+===== Gurutattva App Closed =====
+🗑️ Cleared download directory: /var/jenkins_home/workspace/Guruttava-E2E-Tests/downloads
+===== Test Teardown Completed =====
+| FAIL |
+MaxRetryError: HTTPConnectionPool(host='localhost', port=4723): Max retries exceeded with url: /session (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x73faf3d03100>: Failed to establish a new connection: [Errno 111] Connection refused'))
+------------------------------------------------------------------------------
+Sanchalak edits any field of Dhyankendra. Super Admin/ Acharya app... ===== Starting Test Setup =====
+===== Test Setup Completed =====
+Generated Test Data for Center Name:
+Center Name: E2E_Center_Name_785
+Email: e2euser.785@test.com
+Mobile: 9188773785
+Full Address: E2E_Full_Address_785
+===== Opening Gurutattva App =====
+[ WARN ] Retrying (Retry(total=2, connect=None, read=None, redirect=None, status=None)) after connection broken by 'NewConnectionError('<urllib3.connection.HTTPConnection object at 0x73faf3d03a80>: Failed to establish a new connection: [Errno 111] Connection refused')': /session
+[ WARN ] Retrying (Retry(total=1, connect=None, read=None, redirect=None, status=None)) after connection broken by 'NewConnectionError('<urllib3.connection.HTTPConnection object at 0x73faf37567b0>: Failed to establish a new connection: [Errno 111] Connection refused')': /session
+[ WARN ] Retrying (Retry(total=0, connect=None, read=None, redirect=None, status=None)) after connection broken by 'NewConnectionError('<urllib3.connection.HTTPConnection object at 0x73faf37b4c00>: Failed to establish a new connection: [Errno 111] Connection refused')': /session
+===== Starting Test Teardown =====
+✅ Mobile screenshot captured: /var/jenkins_home/workspace/Guruttava-E2E-Tests/results/Screenshot/Sanchalak_edits_any_field_of_Dhyankendra__Super_Admin/_Acharya_approves_the_changes_requeted__Check_refleciton_in_Mobile_app__20260123_062349.png
+⚠️ Mobile screenshot capture failed, capturing web screenshot...
+✅ Screenshot captured: /var/jenkins_home/workspace/Guruttava-E2E-Tests/results/Screenshot/Sanchalak_edits_any_field_of_Dhyankendra__Super_Admin/_Acharya_approves_the_changes_requeted__Check_refleciton_in_Mobile_app__20260123_062349.png
+===== Closing Gurutattva App =====
+⚠️ Graceful termination failed, using force stop
+⚠️ Mobile session close had issues
+===== Gurutattva App Closed =====
+🗑️ Cleared download directory: /var/jenkins_home/workspace/Guruttava-E2E-Tests/downloads
+===== Test Teardown Completed =====
+| FAIL |
+MaxRetryError: HTTPConnectionPool(host='localhost', port=4723): Max retries exceeded with url: /session (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x73faf37b6f10>: Failed to establish a new connection: [Errno 111] Connection refused'))
+------------------------------------------------------------------------------
+Change the Primary Sanchalak from Dhyankendra and add other sanchalak ===== Starting Test Setup =====
+===== Test Setup Completed =====
+🌐 Opening web browser: chrome
+🔗 Navigating to: https://gurutattvacmsnewdev.rysun.in:9090/
+===== Starting Test Teardown =====
+✅ Mobile screenshot captured: /var/jenkins_home/workspace/Guruttava-E2E-Tests/results/Screenshot/Change_the_Primary_Sanchalak_from_Dhyankendra_and_add_other_sanchalak_20260123_062407.png
+⚠️ Mobile screenshot capture failed, capturing web screenshot...
+✅ Screenshot captured: /var/jenkins_home/workspace/Guruttava-E2E-Tests/results/Screenshot/Change_the_Primary_Sanchalak_from_Dhyankendra_and_add_other_sanchalak_20260123_062407.png
+===== Closing Gurutattva App =====
+⚠️ Graceful termination failed, using force stop
+⚠️ Mobile session close had issues
+===== Gurutattva App Closed =====
+🗑️ Cleared download directory: /var/jenkins_home/workspace/Guruttava-E2E-Tests/downloads
+===== Test Teardown Completed =====
+| FAIL |
+WebDriverException: Message: Service /var/jenkins_home/.cache/selenium/chromedriver/linux64/144.0.7559.96/chromedriver unexpectedly exited. Status code was: 127
+------------------------------------------------------------------------------
+Sanchalak edits any field of Dhyankendra. Super Admin/ Acharya Rej... ===== Starting Test Setup =====
+===== Test Setup Completed =====
+Generated Test Data for Center Name:
+Center Name: E2E_Center_Name_234
+Email: e2euser.234@test.com
+Mobile: 9188773234
+Full Address: E2E_Full_Address_234
+===== Opening Gurutattva App =====
+[ WARN ] Retrying (Retry(total=2, connect=None, read=None, redirect=None, status=None)) after connection broken by 'NewConnectionError('<urllib3.connection.HTTPConnection object at 0x73faf37b4f30>: Failed to establish a new connection: [Errno 111] Connection refused')': /session
+[ WARN ] Retrying (Retry(total=1, connect=None, read=None, redirect=None, status=None)) after connection broken by 'NewConnectionError('<urllib3.connection.HTTPConnection object at 0x73faf37b4e20>: Failed to establish a new connection: [Errno 111] Connection refused')': /session
+[ WARN ] Retrying (Retry(total=0, connect=None, read=None, redirect=None, status=None)) after connection broken by 'NewConnectionError('<urllib3.connection.HTTPConnection object at 0x73faf3e9dae0>: Failed to establish a new connection: [Errno 111] Connection refused')': /session
+===== Starting Test Teardown =====
+✅ Mobile screenshot captured: /var/jenkins_home/workspace/Guruttava-E2E-Tests/results/Screenshot/Sanchalak_edits_any_field_of_Dhyankendra__Super_Admin/_Acharya_Rejectes_the_changes_requeted__check_reflection_in_mobile_app__20260123_062420.png
+⚠️ Mobile screenshot capture failed, capturing web screenshot...
+✅ Screenshot captured: /var/jenkins_home/workspace/Guruttava-E2E-Tests/results/Screenshot/Sanchalak_edits_any_field_of_Dhyankendra__Super_Admin/_Acharya_Rejectes_the_changes_requeted__check_reflection_in_mobile_app__20260123_062420.png
+===== Closing Gurutattva App =====
+⚠️ Graceful termination failed, using force stop
+⚠️ Mobile session close had issues
+===== Gurutattva App Closed =====
+🗑️ Cleared download directory: /var/jenkins_home/workspace/Guruttava-E2E-Tests/downloads
+===== Test Teardown Completed =====
+| FAIL |
+MaxRetryError: HTTPConnectionPool(host='localhost', port=4723): Max retries exceeded with url: /session (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x73faf3e9ce20>: Failed to establish a new connection: [Errno 111] Connection refused'))
+------------------------------------------------------------------------------
+Super Admin changes Sanchalak1 of TC67's Dhyankendra to free Vaishali ===== Starting Test Setup =====
+===== Test Setup Completed =====
+🌐 Opening web browser: chrome
+🔗 Navigating to: https://gurutattvacmsnewdev.rysun.in:9090/
+===== Starting Test Teardown =====
+✅ Mobile screenshot captured: /var/jenkins_home/workspace/Guruttava-E2E-Tests/results/Screenshot/Super_Admin_changes_Sanchalak1_of_TC67's_Dhyankendra_to_free_Vaishali_20260123_062438.png
+⚠️ Mobile screenshot capture failed, capturing web screenshot...
+✅ Screenshot captured: /var/jenkins_home/workspace/Guruttava-E2E-Tests/results/Screenshot/Super_Admin_changes_Sanchalak1_of_TC67's_Dhyankendra_to_free_Vaishali_20260123_062438.png
+===== Closing Gurutattva App =====
+⚠️ Graceful termination failed, using force stop
+⚠️ Mobile session close had issues
+===== Gurutattva App Closed =====
+🗑️ Cleared download directory: /var/jenkins_home/workspace/Guruttava-E2E-Tests/downloads
+===== Test Teardown Completed =====
+| FAIL |
+WebDriverException: Message: Service /var/jenkins_home/.cache/selenium/chromedriver/linux64/144.0.7559.96/chromedriver unexpectedly exited. Status code was: 127
+------------------------------------------------------------------------------
+Guruttava_Android_E2E_Tests.E2EDhyankendra                            | FAIL |
+8 tests, 0 passed, 8 failed
+==============================================================================
+Guruttava_Android_E2E_Tests.E2EEvents                                         
+==============================================================================
+Verify the image upload validation in CMS for Events                  ===== Starting Test Setup =====
+===== Test Setup Completed =====
+🌐 Opening web browser: chrome
+🔗 Navigating to: https://gurutattvacmsnewdev.rysun.in:9090/
+===== Starting Test Teardown =====
+✅ Mobile screenshot captured: /var/jenkins_home/workspace/Guruttava-E2E-Tests/results/Screenshot/Verify_the_image_upload_validation_in_CMS_for_Events_20260123_062501.png
+⚠️ Mobile screenshot capture failed, capturing web screenshot...
+✅ Screenshot captured: /var/jenkins_home/workspace/Guruttava-E2E-Tests/results/Screenshot/Verify_the_image_upload_validation_in_CMS_for_Events_20260123_062501.png
+===== Closing Gurutattva App =====
+⚠️ Graceful termination failed, using force stop
+⚠️ Mobile session close had issues
+===== Gurutattva App Closed =====
+🗑️ Cleared download directory: /var/jenkins_home/workspace/Guruttava-E2E-Tests/downloads
+===== Test Teardown Completed =====
+| FAIL |
+WebDriverException: Message: Service /var/jenkins_home/.cache/selenium/chromedriver/linux64/144.0.7559.96/chromedriver unexpectedly exited. Status code was: 127
+------------------------------------------------------------------------------
+Verify that user is not able to publish event when publish date is... ===== Starting Test Setup =====
+===== Test Setup Completed =====
+🎯 Generated E2E English Events Test Data:
+🎯 Title: E2E English Events Title 6921
+🎯 Description: E2E English Events Description 6921
+🎯 Content: E2E English Events Content 6921. This is a test events content generated for automation testing purposes.
+🎯 Publish Status: Publish
+🌐 Opening web browser: chrome
+🔗 Navigating to: https://gurutattvacmsnewdev.rysun.in:9090/
+===== Starting Test Teardown =====
+✅ Mobile screenshot captured: /var/jenkins_home/workspace/Guruttava-E2E-Tests/results/Screenshot/Verify_that_user_is_not_able_to_publish_event_when_publish_date_is_selected_after_the_event_dates_20260123_062518.png
+⚠️ Mobile screenshot capture failed, capturing web screenshot...
+✅ Screenshot captured: /var/jenkins_home/workspace/Guruttava-E2E-Tests/results/Screenshot/Verify_that_user_is_not_able_to_publish_event_when_publish_date_is_selected_after_the_event_dates_20260123_062518.png
+===== Closing Gurutattva App =====
+⚠️ Graceful termination failed, using force stop
+⚠️ Mobile session close had issues
+===== Gurutattva App Closed =====
+🗑️ Cleared download directory: /var/jenkins_home/workspace/Guruttava-E2E-Tests/downloads
+===== Test Teardown Completed =====
+| FAIL |
+WebDriverException: Message: Service /var/jenkins_home/.cache/selenium/chromedriver/linux64/144.0.7559.96/chromedriver unexpectedly exited. Status code was: 127
+------------------------------------------------------------------------------
+Verify that the user is able to add a English event, publish it in... ===== Starting Test Setup =====
+===== Test Setup Completed =====
+🎯 Generated E2E English Events Test Data:
+🎯 Title: E2E English Events Title 1465
+🎯 Description: E2E English Events Description 1465
+🎯 Content: E2E English Events Content 1465. This is a test events content generated for automation testing purposes.
+🎯 Publish Status: Publish
+🌐 Opening web browser: chrome
+🔗 Navigating to: https://gurutattvacmsnewdev.rysun.in:9090/
+===== Starting Test Teardown =====
+✅ Mobile screenshot captured: /var/jenkins_home/workspace/Guruttava-E2E-Tests/results/Screenshot/Verify_that_the_user_is_able_to_add_a_English_event,_publish_it_in_the_CMS,_and_verify_the_english_event_details_on_the_mobile_app_20260123_062534.png
+⚠️ Mobile screenshot capture failed, capturing web screenshot...
+✅ Screenshot captured: /var/jenkins_home/workspace/Guruttava-E2E-Tests/results/Screenshot/Verify_that_the_user_is_able_to_add_a_English_event,_publish_it_in_the_CMS,_and_verify_the_english_event_details_on_the_mobile_app_20260123_062534.png
+===== Closing Gurutattva App =====
+⚠️ Graceful termination failed, using force stop
+⚠️ Mobile session close had issues
+===== Gurutattva App Closed =====
+🗑️ Cleared download directory: /var/jenkins_home/workspace/Guruttava-E2E-Tests/downloads
+===== Test Teardown Completed =====
+| FAIL |
+WebDriverException: Message: Service /var/jenkins_home/.cache/selenium/chromedriver/linux64/144.0.7559.96/chromedriver unexpectedly exited. Status code was: 127
+------------------------------------------------------------------------------
+Verify that the user is able to add a Hindi event, publish it in t... ===== Starting Test Setup =====
+===== Test Setup Completed =====
+🎯 Generated E2E Hindi Events Test Data:
+🎯 Title: E2E हिंदी समाचार शीर्षक 1638
+🎯 Description: E2E हिंदी समाचार विवरण 1638
+🎯 Content: E2E हिंदी समाचार सामग्री 1638. यह स्वचालन परीक्षण के लिए उत्पन्न किया गया एक परीक्षण समाचार सामग्री है।
+🎯 Publish Date: 
+🌐 Opening web browser: chrome
+🔗 Navigating to: https://gurutattvacmsnewdev.rysun.in:9090/
+===== Starting Test Teardown =====
+✅ Mobile screenshot captured: /var/jenkins_home/workspace/Guruttava-E2E-Tests/results/Screenshot/Verify_that_the_user_is_able_to_add_a_Hindi_event,_publish_it_in_the_CMS,_and_verify_the_hindi_event_details_on_the_mobile_app_20260123_062551.png
+⚠️ Mobile screenshot capture failed, capturing web screenshot...
+✅ Screenshot captured: /var/jenkins_home/workspace/Guruttava-E2E-Tests/results/Screenshot/Verify_that_the_user_is_able_to_add_a_Hindi_event,_publish_it_in_the_CMS,_and_verify_the_hindi_event_details_on_the_mobile_app_20260123_062551.png
+===== Closing Gurutattva App =====
+⚠️ Graceful termination failed, using force stop
+⚠️ Mobile session close had issues
+===== Gurutattva App Closed =====
+🗑️ Cleared download directory: /var/jenkins_home/workspace/Guruttava-E2E-Tests/downloads
+===== Test Teardown Completed =====
+| FAIL |
+WebDriverException: Message: Service /var/jenkins_home/.cache/selenium/chromedriver/linux64/144.0.7559.96/chromedriver unexpectedly exited. Status code was: 127
+------------------------------------------------------------------------------
+Test Add Event Category from CMS and Add Events under that Categor... ===== Starting Test Setup =====
+===== Test Setup Completed =====
+🎯 Generated E2E Event Category Test Data:
+🎯 Category Name: E2E Event Category 5202
+🎯 Category Description: E2E Event Category Description 5202
+🎯 Events Title: E2E English Events Title 5202
+🌐 Opening web browser: chrome
+🔗 Navigating to: https://gurutattvacmsnewdev.rysun.in:9090/
+===== Starting Test Teardown =====
+✅ Mobile screenshot captured: /var/jenkins_home/workspace/Guruttava-E2E-Tests/results/Screenshot/Test_Add_Event_Category_from_CMS_and_Add_Events_under_that_Category_20260123_062607.png
+⚠️ Mobile screenshot capture failed, capturing web screenshot...
+✅ Screenshot captured: /var/jenkins_home/workspace/Guruttava-E2E-Tests/results/Screenshot/Test_Add_Event_Category_from_CMS_and_Add_Events_under_that_Category_20260123_062607.png
+===== Closing Gurutattva App =====
+⚠️ Graceful termination failed, using force stop
+⚠️ Mobile session close had issues
+===== Gurutattva App Closed =====
+🗑️ Cleared download directory: /var/jenkins_home/workspace/Guruttava-E2E-Tests/downloads
+===== Test Teardown Completed =====
+| FAIL |
+WebDriverException: Message: Service /var/jenkins_home/.cache/selenium/chromedriver/linux64/144.0.7559.96/chromedriver unexpectedly exited. Status code was: 127
+------------------------------------------------------------------------------
+Test Unpublish Event from CMS and Verify in Mobile App :: Unpublis... ===== Starting Test Setup =====
+===== Test Setup Completed =====
+🎯 Generated E2E Event Category Test Data:
+🎯 Category Name: E2E Event Category 9090
+🎯 Category Description: E2E Event Category Description 9090
+🎯 Events Title: E2E English Events Title 9090
+🌐 Opening web browser: chrome
+🔗 Navigating to: https://gurutattvacmsnewdev.rysun.in:9090/
+===== Starting Test Teardown =====
+✅ Mobile screenshot captured: /var/jenkins_home/workspace/Guruttava-E2E-Tests/results/Screenshot/Test_Unpublish_Event_from_CMS_and_Verify_in_Mobile_App_20260123_062623.png
+⚠️ Mobile screenshot capture failed, capturing web screenshot...
+✅ Screenshot captured: /var/jenkins_home/workspace/Guruttava-E2E-Tests/results/Screenshot/Test_Unpublish_Event_from_CMS_and_Verify_in_Mobile_App_20260123_062623.png
+===== Closing Gurutattva App =====
+⚠️ Graceful termination failed, using force stop
+⚠️ Mobile session close had issues
+===== Gurutattva App Closed =====
+🗑️ Cleared download directory: /var/jenkins_home/workspace/Guruttava-E2E-Tests/downloads
+===== Test Teardown Completed =====
+| FAIL |
+WebDriverException: Message: Service /var/jenkins_home/.cache/selenium/chromedriver/linux64/144.0.7559.96/chromedriver unexpectedly exited. Status code was: 127
+------------------------------------------------------------------------------
+Test Event Category Tab In Mobile App :: In Mobile app, check for ... ===== Starting Test Setup =====
+===== Test Setup Completed =====
+📱 Attempting to open Gurutattva App (1/3)
+===== Opening Gurutattva App =====
+[ WARN ] Retrying (Retry(total=2, connect=None, read=None, redirect=None, status=None)) after connection broken by 'NewConnectionError('<urllib3.connection.HTTPConnection object at 0x73faf37b46b0>: Failed to establish a new connection: [Errno 111] Connection refused')': /session
+[ WARN ] Retrying (Retry(total=1, connect=None, read=None, redirect=None, status=None)) after connection broken by 'NewConnectionError('<urllib3.connection.HTTPConnection object at 0x73faf37b4af0>: Failed to establish a new connection: [Errno 111] Connection refused')': /session
+[ WARN ] Retrying (Retry(total=0, connect=None, read=None, redirect=None, status=None)) after connection broken by 'NewConnectionError('<urllib3.connection.HTTPConnection object at 0x73faf37b6ad0>: Failed to establish a new connection: [Errno 111] Connection refused')': /session
+⚠️ Failed to open app on attempt 1: MaxRetryError: HTTPConnectionPool(host='localhost', port=4723): Max retries exceeded with url: /session (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x73faf37b6690>: Failed to establish a new connection: [Errno 111] Connection refused'))
+🔄 Retrying in 5 seconds...
+📱 Attempting to open Gurutattva App (2/3)
+===== Opening Gurutattva App =====
+[ WARN ] Retrying (Retry(total=2, connect=None, read=None, redirect=None, status=None)) after connection broken by 'NewConnectionError('<urllib3.connection.HTTPConnection object at 0x73faf3e9c7c0>: Failed to establish a new connection: [Errno 111] Connection refused')': /session
+[ WARN ] Retrying (Retry(total=1, connect=None, read=None, redirect=None, status=None)) after connection broken by 'NewConnectionError('<urllib3.connection.HTTPConnection object at 0x73faf3e9d6a0>: Failed to establish a new connection: [Errno 111] Connection refused')': /session
+[ WARN ] Retrying (Retry(total=0, connect=None, read=None, redirect=None, status=None)) after connection broken by 'NewConnectionError('<urllib3.connection.HTTPConnection object at 0x73faf37b69c0>: Failed to establish a new connection: [Errno 111] Connection refused')': /session
+⚠️ Failed to open app on attempt 2: MaxRetryError: HTTPConnectionPool(host='localhost', port=4723): Max retries exceeded with url: /session (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x73faf37b58c0>: Failed to establish a new connection: [Errno 111] Connection refused'))
+🔄 Retrying in 5 seconds...
+📱 Attempting to open Gurutattva App (3/3)
+===== Opening Gurutattva App =====
+[ WARN ] Retrying (Retry(total=2, connect=None, read=None, redirect=None, status=None)) after connection broken by 'NewConnectionError('<urllib3.connection.HTTPConnection object at 0x73faf37b46b0>: Failed to establish a new connection: [Errno 111] Connection refused')': /session
+[ WARN ] Retrying (Retry(total=1, connect=None, read=None, redirect=None, status=None)) after connection broken by 'NewConnectionError('<urllib3.connection.HTTPConnection object at 0x73faf37b7350>: Failed to establish a new connection: [Errno 111] Connection refused')': /session
+[ WARN ] Retrying (Retry(total=0, connect=None, read=None, redirect=None, status=None)) after connection broken by 'NewConnectionError('<urllib3.connection.HTTPConnection object at 0x73faf37b5e10>: Failed to establish a new connection: [Errno 111] Connection refused')': /session
+⚠️ Failed to open app on attempt 3: MaxRetryError: HTTPConnectionPool(host='localhost', port=4723): Max retries exceeded with url: /session (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x73faf37b7ce0>: Failed to establish a new connection: [Errno 111] Connection refused'))
+❌ Failed to open Gurutattva App after 3 attempts
+===== Starting Test Teardown =====
+✅ Mobile screenshot captured: /var/jenkins_home/workspace/Guruttava-E2E-Tests/results/Screenshot/Test_Event_Category_Tab_In_Mobile_App_20260123_062647.png
+⚠️ Mobile screenshot capture failed, capturing web screenshot...
+✅ Screenshot captured: /var/jenkins_home/workspace/Guruttava-E2E-Tests/results/Screenshot/Test_Event_Category_Tab_In_Mobile_App_20260123_062647.png
+===== Closing Gurutattva App =====
+⚠️ Graceful termination failed, using force stop
+⚠️ Mobile session close had issues
+===== Gurutattva App Closed =====
+🗑️ Cleared download directory: /var/jenkins_home/workspace/Guruttava-E2E-Tests/downloads
+===== Test Teardown Completed =====
+| FAIL |
+Could not open Gurutattva App after 3 attempts
+------------------------------------------------------------------------------
+Test Check Local Event Filter Functionality :: E2E test: Create Lo... ===== Starting Test Setup =====
+===== Test Setup Completed =====
+🎯 Generated E2E English Events Test Data:
+🎯 Title: E2E English Events Title 7395
+🎯 Description: E2E English Events Description 7395
+🎯 Content: E2E English Events Content 7395. This is a test events content generated for automation testing purposes.
+🎯 Publish Status: Publish
+🌐 Opening web browser: chrome
+🔗 Navigating to: https://gurutattvacmsnewdev.rysun.in:9090/
+===== Starting Test Teardown =====
+✅ Mobile screenshot captured: /var/jenkins_home/workspace/Guruttava-E2E-Tests/results/Screenshot/Test_Check_Local_Event_Filter_Functionality_20260123_062704.png
+⚠️ Mobile screenshot capture failed, capturing web screenshot...
+✅ Screenshot captured: /var/jenkins_home/workspace/Guruttava-E2E-Tests/results/Screenshot/Test_Check_Local_Event_Filter_Functionality_20260123_062704.png
+===== Closing Gurutattva App =====
+⚠️ Graceful termination failed, using force stop
+⚠️ Mobile session close had issues
+===== Gurutattva App Closed =====
+🗑️ Cleared download directory: /var/jenkins_home/workspace/Guruttava-E2E-Tests/downloads
+===== Test Teardown Completed =====
+| FAIL |
+WebDriverException: Message: Service /var/jenkins_home/.cache/selenium/chromedriver/linux64/144.0.7559.96/chromedriver unexpectedly exited. Status code was: 127
+------------------------------------------------------------------------------
+Sanchalak adds local Event, once Acharya/Super Admin Approves it t... ===== Starting Test Setup =====
+===== Test Setup Completed =====
+🎯 Generated E2E English Events Test Data:
+🎯 Title: E2E English Events Title 4101
+🎯 Description: E2E English Events Description 4101
+🎯 Content: E2E English Events Content 4101. This is a test events content generated for automation testing purposes.
+🎯 Publish Status: Publish
+🌐 Opening web browser: chrome
+🔗 Navigating to: https://gurutattvacmsnewdev.rysun.in:9090/
+===== Starting Test Teardown =====
+✅ Mobile screenshot captured: /var/jenkins_home/workspace/Guruttava-E2E-Tests/results/Screenshot/Sanchalak_adds_local_Event,_once_Acharya/Super_Admin_Approves_it_then_only_that_Event_is_reflected_in_Mobile_app_uncer_Local_Event_section__20260123_062721.png
+⚠️ Mobile screenshot capture failed, capturing web screenshot...
+✅ Screenshot captured: /var/jenkins_home/workspace/Guruttava-E2E-Tests/results/Screenshot/Sanchalak_adds_local_Event,_once_Acharya/Super_Admin_Approves_it_then_only_that_Event_is_reflected_in_Mobile_app_uncer_Local_Event_section__20260123_062721.png
+===== Closing Gurutattva App =====
+⚠️ Graceful termination failed, using force stop
+⚠️ Mobile session close had issues
+===== Gurutattva App Closed =====
+🗑️ Cleared download directory: /var/jenkins_home/workspace/Guruttava-E2E-Tests/downloads
+===== Test Teardown Completed =====
+| FAIL |
+WebDriverException: Message: Service /var/jenkins_home/.cache/selenium/chromedriver/linux64/144.0.7559.96/chromedriver unexpectedly exited. Status code was: 127
+------------------------------------------------------------------------------
+Sanchalak adds local event and Acharya/Super Admin Rejects that ev... ===== Starting Test Setup =====
+===== Test Setup Completed =====
+🎯 Generated E2E English Events Test Data:
+🎯 Title: E2E English Events Title 9458
+🎯 Description: E2E English Events Description 9458
+🎯 Content: E2E English Events Content 9458. This is a test events content generated for automation testing purposes.
+🎯 Publish Status: Publish
+🌐 Opening web browser: chrome
+🔗 Navigating to: https://gurutattvacmsnewdev.rysun.in:9090/
+===== Starting Test Teardown =====
+✅ Mobile screenshot captured: /var/jenkins_home/workspace/Guruttava-E2E-Tests/results/Screenshot/Sanchalak_adds_local_event_and_Acharya/Super_Admin_Rejects_that_event__20260123_062737.png
+⚠️ Mobile screenshot capture failed, capturing web screenshot...
+✅ Screenshot captured: /var/jenkins_home/workspace/Guruttava-E2E-Tests/results/Screenshot/Sanchalak_adds_local_event_and_Acharya/Super_Admin_Rejects_that_event__20260123_062737.png
+===== Closing Gurutattva App =====
+⚠️ Graceful termination failed, using force stop
+⚠️ Mobile session close had issues
+===== Gurutattva App Closed =====
+🗑️ Cleared download directory: /var/jenkins_home/workspace/Guruttava-E2E-Tests/downloads
+===== Test Teardown Completed =====
+| FAIL |
+WebDriverException: Message: Service /var/jenkins_home/.cache/selenium/chromedriver/linux64/144.0.7559.96/chromedriver unexpectedly exited. Status code was: 127
+------------------------------------------------------------------------------
+Guruttava_Android_E2E_Tests.E2EEvents                                 | FAIL |
+10 tests, 0 passed, 10 failed
+==============================================================================
+Guruttava_Android_E2E_Tests.E2EHindi                                          
+==============================================================================
+Test Mobile Language Change To Hindi :: Test case to change mobile... ===== Starting Test Setup =====
+===== Test Setup Completed =====
+===== Opening Gurutattva App =====
+[ WARN ] Retrying (Retry(total=2, connect=None, read=None, redirect=None, status=None)) after connection broken by 'NewConnectionError('<urllib3.connection.HTTPConnection object at 0x73faf3e9d260>: Failed to establish a new connection: [Errno 111] Connection refused')': /session
+[ WARN ] Retrying (Retry(total=1, connect=None, read=None, redirect=None, status=None)) after connection broken by 'NewConnectionError('<urllib3.connection.HTTPConnection object at 0x73faf3e9caf0>: Failed to establish a new connection: [Errno 111] Connection refused')': /session
+[ WARN ] Retrying (Retry(total=0, connect=None, read=None, redirect=None, status=None)) after connection broken by 'NewConnectionError('<urllib3.connection.HTTPConnection object at 0x73faf3e9d040>: Failed to establish a new connection: [Errno 111] Connection refused')': /session
+🔄 Starting language reversion to English...
+🔍 Step 1: Clicking Profile icon from Home screen
+🔍 Step 2: Clicking on Language setting (Hindi)
+🔍 Step 3: Selecting English language
+🔍 Step 4: Clicking Save button
+⏳ Waiting for language change to apply...
+✅ Language successfully reverted to English
+⏳ Waiting for language change to take effect...
+✅ Language change should be effective now
+===== Starting Test Teardown =====
+✅ Mobile screenshot captured: /var/jenkins_home/workspace/Guruttava-E2E-Tests/results/Screenshot/Test_Mobile_Language_Change_To_Hindi_20260123_062813.png
+⚠️ Mobile screenshot capture failed, capturing web screenshot...
+✅ Screenshot captured: /var/jenkins_home/workspace/Guruttava-E2E-Tests/results/Screenshot/Test_Mobile_Language_Change_To_Hindi_20260123_062813.png
+===== Closing Gurutattva App =====
+⚠️ Graceful termination failed, using force stop
+⚠️ Mobile session close had issues
+===== Gurutattva App Closed =====
+🗑️ Cleared download directory: /var/jenkins_home/workspace/Guruttava-E2E-Tests/downloads
+===== Test Teardown Completed =====
+| FAIL |
+MaxRetryError: HTTPConnectionPool(host='localhost', port=4723): Max retries exceeded with url: /session (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x73faf37b7350>: Failed to establish a new connection: [Errno 111] Connection refused'))
+------------------------------------------------------------------------------
+Guruttava_Android_E2E_Tests.E2EHindi                                  | FAIL |
+1 test, 0 passed, 1 failed
+==============================================================================
+[ WARN ] Error in file '/var/jenkins_home/workspace/Guruttava-E2E-Tests/pages/E2ENamkaranPage.robot' on line 1306: The '[Return]' setting is deprecated. Use the 'RETURN' statement instead.
+[ WARN ] Error in file '/var/jenkins_home/workspace/Guruttava-E2E-Tests/pages/E2ENamkaranPage.robot' on line 1313: The '[Return]' setting is deprecated. Use the 'RETURN' statement instead.
+[ WARN ] Error in file '/var/jenkins_home/workspace/Guruttava-E2E-Tests/pages/E2ENamkaranPage.robot' on line 1356: The '[Return]' setting is deprecated. Use the 'RETURN' statement instead.
+Guruttava_Android_E2E_Tests.E2ENamkaran                                       
+==============================================================================
+Verify user is able to add Bride Namkaran with NO Option on the mo... ===== Starting Test Setup =====
+===== Test Setup Completed =====
+===== Opening Gurutattva App =====
+[ WARN ] Retrying (Retry(total=2, connect=None, read=None, redirect=None, status=None)) after connection broken by 'NewConnectionError('<urllib3.connection.HTTPConnection object at 0x73faf3e9caf0>: Failed to establish a new connection: [Errno 111] Connection refused')': /session
+[ WARN ] Retrying (Retry(total=1, connect=None, read=None, redirect=None, status=None)) after connection broken by 'NewConnectionError('<urllib3.connection.HTTPConnection object at 0x73faf3e9c270>: Failed to establish a new connection: [Errno 111] Connection refused')': /session
+[ WARN ] Retrying (Retry(total=0, connect=None, read=None, redirect=None, status=None)) after connection broken by 'NewConnectionError('<urllib3.connection.HTTPConnection object at 0x73faf3e9c7c0>: Failed to establish a new connection: [Errno 111] Connection refused')': /session
+===== Starting Test Teardown =====
+✅ Mobile screenshot captured: /var/jenkins_home/workspace/Guruttava-E2E-Tests/results/Screenshot/Verify_user_is_able_to_add_Bride_Namkaran_with_NO_Option_on_the_mobile_app_and_verify_the_details_in_CSM_20260123_062832.png
+⚠️ Mobile screenshot capture failed, capturing web screenshot...
+✅ Screenshot captured: /var/jenkins_home/workspace/Guruttava-E2E-Tests/results/Screenshot/Verify_user_is_able_to_add_Bride_Namkaran_with_NO_Option_on_the_mobile_app_and_verify_the_details_in_CSM_20260123_062832.png
+===== Closing Gurutattva App =====
+⚠️ Graceful termination failed, using force stop
+⚠️ Mobile session close had issues
+===== Gurutattva App Closed =====
+🗑️ Cleared download directory: /var/jenkins_home/workspace/Guruttava-E2E-Tests/downloads
+===== Test Teardown Completed =====
+| FAIL |
+MaxRetryError: HTTPConnectionPool(host='localhost', port=4723): Max retries exceeded with url: /session (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x73faf3e9c5a0>: Failed to establish a new connection: [Errno 111] Connection refused'))
+------------------------------------------------------------------------------
+Verify user is able to add Business Namkaran with NO Option on the... ===== Starting Test Setup =====
+===== Test Setup Completed =====
+===== Opening Gurutattva App =====
+[ WARN ] Retrying (Retry(total=2, connect=None, read=None, redirect=None, status=None)) after connection broken by 'NewConnectionError('<urllib3.connection.HTTPConnection object at 0x73faf3e9d590>: Failed to establish a new connection: [Errno 111] Connection refused')': /session
+[ WARN ] Retrying (Retry(total=1, connect=None, read=None, redirect=None, status=None)) after connection broken by 'NewConnectionError('<urllib3.connection.HTTPConnection object at 0x73faf3e9d370>: Failed to establish a new connection: [Errno 111] Connection refused')': /session
+[ WARN ] Retrying (Retry(total=0, connect=None, read=None, redirect=None, status=None)) after connection broken by 'NewConnectionError('<urllib3.connection.HTTPConnection object at 0x73faf3e9d6a0>: Failed to establish a new connection: [Errno 111] Connection refused')': /session
+===== Starting Test Teardown =====
+✅ Mobile screenshot captured: /var/jenkins_home/workspace/Guruttava-E2E-Tests/results/Screenshot/Verify_user_is_able_to_add_Business_Namkaran_with_NO_Option_on_the_mobile_app_and_verify_the_details_in_CSM_20260123_062845.png
+⚠️ Mobile screenshot capture failed, capturing web screenshot...
+✅ Screenshot captured: /var/jenkins_home/workspace/Guruttava-E2E-Tests/results/Screenshot/Verify_user_is_able_to_add_Business_Namkaran_with_NO_Option_on_the_mobile_app_and_verify_the_details_in_CSM_20260123_062845.png
+===== Closing Gurutattva App =====
+⚠️ Graceful termination failed, using force stop
+⚠️ Mobile session close had issues
+===== Gurutattva App Closed =====
+🗑️ Cleared download directory: /var/jenkins_home/workspace/Guruttava-E2E-Tests/downloads
+===== Test Teardown Completed =====
+| FAIL |
+MaxRetryError: HTTPConnectionPool(host='localhost', port=4723): Max retries exceeded with url: /session (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x73faf3e9c380>: Failed to establish a new connection: [Errno 111] Connection refused'))
+------------------------------------------------------------------------------
+Verify user is able to add House Namkaran with NO Option on the mo... ===== Starting Test Setup =====
+===== Test Setup Completed =====
+===== Opening Gurutattva App =====
+[ WARN ] Retrying (Retry(total=2, connect=None, read=None, redirect=None, status=None)) after connection broken by 'NewConnectionError('<urllib3.connection.HTTPConnection object at 0x73faf3e9d370>: Failed to establish a new connection: [Errno 111] Connection refused')': /session
+[ WARN ] Retrying (Retry(total=1, connect=None, read=None, redirect=None, status=None)) after connection broken by 'NewConnectionError('<urllib3.connection.HTTPConnection object at 0x73faf3e9d6a0>: Failed to establish a new connection: [Errno 111] Connection refused')': /session
+[ WARN ] Retrying (Retry(total=0, connect=None, read=None, redirect=None, status=None)) after connection broken by 'NewConnectionError('<urllib3.connection.HTTPConnection object at 0x73faf3e9d9d0>: Failed to establish a new connection: [Errno 111] Connection refused')': /session
+===== Starting Test Teardown =====
+✅ Mobile screenshot captured: /var/jenkins_home/workspace/Guruttava-E2E-Tests/results/Screenshot/Verify_user_is_able_to_add_House_Namkaran_with_NO_Option_on_the_mobile_app_and_verify_the_details_in_CSM_20260123_062858.png
+⚠️ Mobile screenshot capture failed, capturing web screenshot...
+✅ Screenshot captured: /var/jenkins_home/workspace/Guruttava-E2E-Tests/results/Screenshot/Verify_user_is_able_to_add_House_Namkaran_with_NO_Option_on_the_mobile_app_and_verify_the_details_in_CSM_20260123_062858.png
+===== Closing Gurutattva App =====
+⚠️ Graceful termination failed, using force stop
+⚠️ Mobile session close had issues
+===== Gurutattva App Closed =====
+🗑️ Cleared download directory: /var/jenkins_home/workspace/Guruttava-E2E-Tests/downloads
+===== Test Teardown Completed =====
+| FAIL |
+MaxRetryError: HTTPConnectionPool(host='localhost', port=4723): Max retries exceeded with url: /session (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x73faf3e9c5a0>: Failed to establish a new connection: [Errno 111] Connection refused'))
+------------------------------------------------------------------------------
+Verify user is able to add Child Namkaran with NO Option on the mo... ===== Starting Test Setup =====
+===== Test Setup Completed =====
+===== Opening Gurutattva App =====
+[ WARN ] Retrying (Retry(total=2, connect=None, read=None, redirect=None, status=None)) after connection broken by 'NewConnectionError('<urllib3.connection.HTTPConnection object at 0x73faf3e9d260>: Failed to establish a new connection: [Errno 111] Connection refused')': /session
+[ WARN ] Retrying (Retry(total=1, connect=None, read=None, redirect=None, status=None)) after connection broken by 'NewConnectionError('<urllib3.connection.HTTPConnection object at 0x73faf3e9d590>: Failed to establish a new connection: [Errno 111] Connection refused')': /session
+[ WARN ] Retrying (Retry(total=0, connect=None, read=None, redirect=None, status=None)) after connection broken by 'NewConnectionError('<urllib3.connection.HTTPConnection object at 0x73faf3e9c8d0>: Failed to establish a new connection: [Errno 111] Connection refused')': /session
+===== Starting Test Teardown =====
+✅ Mobile screenshot captured: /var/jenkins_home/workspace/Guruttava-E2E-Tests/results/Screenshot/Verify_user_is_able_to_add_Child_Namkaran_with_NO_Option_on_the_mobile_app_and_verify_the_details_in_CSM_20260123_062911.png
+⚠️ Mobile screenshot capture failed, capturing web screenshot...
+✅ Screenshot captured: /var/jenkins_home/workspace/Guruttava-E2E-Tests/results/Screenshot/Verify_user_is_able_to_add_Child_Namkaran_with_NO_Option_on_the_mobile_app_and_verify_the_details_in_CSM_20260123_062911.png
+===== Closing Gurutattva App =====
+⚠️ Graceful termination failed, using force stop
+⚠️ Mobile session close had issues
+===== Gurutattva App Closed =====
+🗑️ Cleared download directory: /var/jenkins_home/workspace/Guruttava-E2E-Tests/downloads
+===== Test Teardown Completed =====
+| FAIL |
+MaxRetryError: HTTPConnectionPool(host='localhost', port=4723): Max retries exceeded with url: /session (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x73faf3e9d7b0>: Failed to establish a new connection: [Errno 111] Connection refused'))
+------------------------------------------------------------------------------
+Verify user is able to add Bride Namkaran with YES Option on the m... ===== Starting Test Setup =====
+===== Test Setup Completed =====
+===== Opening Gurutattva App =====
+[ WARN ] Retrying (Retry(total=2, connect=None, read=None, redirect=None, status=None)) after connection broken by 'NewConnectionError('<urllib3.connection.HTTPConnection object at 0x73faf3e9d040>: Failed to establish a new connection: [Errno 111] Connection refused')': /session
+[ WARN ] Retrying (Retry(total=1, connect=None, read=None, redirect=None, status=None)) after connection broken by 'NewConnectionError('<urllib3.connection.HTTPConnection object at 0x73faf3e9caf0>: Failed to establish a new connection: [Errno 111] Connection refused')': /session
+[ WARN ] Retrying (Retry(total=0, connect=None, read=None, redirect=None, status=None)) after connection broken by 'NewConnectionError('<urllib3.connection.HTTPConnection object at 0x73faf3e9d7b0>: Failed to establish a new connection: [Errno 111] Connection refused')': /session
+===== Starting Test Teardown =====
+✅ Mobile screenshot captured: /var/jenkins_home/workspace/Guruttava-E2E-Tests/results/Screenshot/Verify_user_is_able_to_add_Bride_Namkaran_with_YES_Option_on_the_mobile_app_and_verify_the_details_in_CSM_20260123_062923.png
+⚠️ Mobile screenshot capture failed, capturing web screenshot...
+✅ Screenshot captured: /var/jenkins_home/workspace/Guruttava-E2E-Tests/results/Screenshot/Verify_user_is_able_to_add_Bride_Namkaran_with_YES_Option_on_the_mobile_app_and_verify_the_details_in_CSM_20260123_062923.png
+===== Closing Gurutattva App =====
+⚠️ Graceful termination failed, using force stop
+⚠️ Mobile session close had issues
+===== Gurutattva App Closed =====
+🗑️ Cleared download directory: /var/jenkins_home/workspace/Guruttava-E2E-Tests/downloads
+===== Test Teardown Completed =====
+| FAIL |
+MaxRetryError: HTTPConnectionPool(host='localhost', port=4723): Max retries exceeded with url: /session (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x73faf3e9d6a0>: Failed to establish a new connection: [Errno 111] Connection refused'))
+------------------------------------------------------------------------------
+Verify user is able to add Business Namkaran with YES Option on th... ===== Starting Test Setup =====
+===== Test Setup Completed =====
+===== Opening Gurutattva App =====
+[ WARN ] Retrying (Retry(total=2, connect=None, read=None, redirect=None, status=None)) after connection broken by 'NewConnectionError('<urllib3.connection.HTTPConnection object at 0x73faf3e9d590>: Failed to establish a new connection: [Errno 111] Connection refused')': /session
+[ WARN ] Retrying (Retry(total=1, connect=None, read=None, redirect=None, status=None)) after connection broken by 'NewConnectionError('<urllib3.connection.HTTPConnection object at 0x73faf3e9dae0>: Failed to establish a new connection: [Errno 111] Connection refused')': /session
+[ WARN ] Retrying (Retry(total=0, connect=None, read=None, redirect=None, status=None)) after connection broken by 'NewConnectionError('<urllib3.connection.HTTPConnection object at 0x73faf3e9d150>: Failed to establish a new connection: [Errno 111] Connection refused')': /session
+===== Starting Test Teardown =====
+✅ Mobile screenshot captured: /var/jenkins_home/workspace/Guruttava-E2E-Tests/results/Screenshot/Verify_user_is_able_to_add_Business_Namkaran_with_YES_Option_on_the_mobile_app_and_verify_the_details_in_CSM_20260123_062936.png
+⚠️ Mobile screenshot capture failed, capturing web screenshot...
+✅ Screenshot captured: /var/jenkins_home/workspace/Guruttava-E2E-Tests/results/Screenshot/Verify_user_is_able_to_add_Business_Namkaran_with_YES_Option_on_the_mobile_app_and_verify_the_details_in_CSM_20260123_062936.png
+===== Closing Gurutattva App =====
+⚠️ Graceful termination failed, using force stop
+⚠️ Mobile session close had issues
+===== Gurutattva App Closed =====
+🗑️ Cleared download directory: /var/jenkins_home/workspace/Guruttava-E2E-Tests/downloads
+===== Test Teardown Completed =====
+| FAIL |
+MaxRetryError: HTTPConnectionPool(host='localhost', port=4723): Max retries exceeded with url: /session (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x73faf3e9c7c0>: Failed to establish a new connection: [Errno 111] Connection refused'))
+------------------------------------------------------------------------------
+Verify user is able to add House Namkaran with YES Option on the m... ===== Starting Test Setup =====
+===== Test Setup Completed =====
+===== Opening Gurutattva App =====
+[ WARN ] Retrying (Retry(total=2, connect=None, read=None, redirect=None, status=None)) after connection broken by 'NewConnectionError('<urllib3.connection.HTTPConnection object at 0x73faf3e9c9e0>: Failed to establish a new connection: [Errno 111] Connection refused')': /session
+[ WARN ] Retrying (Retry(total=1, connect=None, read=None, redirect=None, status=None)) after connection broken by 'NewConnectionError('<urllib3.connection.HTTPConnection object at 0x73faf3e9ff00>: Failed to establish a new connection: [Errno 111] Connection refused')': /session
+[ WARN ] Retrying (Retry(total=0, connect=None, read=None, redirect=None, status=None)) after connection broken by 'NewConnectionError('<urllib3.connection.HTTPConnection object at 0x73faf3e9c490>: Failed to establish a new connection: [Errno 111] Connection refused')': /session
+===== Starting Test Teardown =====
+✅ Mobile screenshot captured: /var/jenkins_home/workspace/Guruttava-E2E-Tests/results/Screenshot/Verify_user_is_able_to_add_House_Namkaran_with_YES_Option_on_the_mobile_app_and_verify_the_details_in_CSM_20260123_062949.png
+⚠️ Mobile screenshot capture failed, capturing web screenshot...
+✅ Screenshot captured: /var/jenkins_home/workspace/Guruttava-E2E-Tests/results/Screenshot/Verify_user_is_able_to_add_House_Namkaran_with_YES_Option_on_the_mobile_app_and_verify_the_details_in_CSM_20260123_062949.png
+===== Closing Gurutattva App =====
+⚠️ Graceful termination failed, using force stop
+⚠️ Mobile session close had issues
+===== Gurutattva App Closed =====
+🗑️ Cleared download directory: /var/jenkins_home/workspace/Guruttava-E2E-Tests/downloads
+===== Test Teardown Completed =====
+| FAIL |
+MaxRetryError: HTTPConnectionPool(host='localhost', port=4723): Max retries exceeded with url: /session (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x73faf3e9cc00>: Failed to establish a new connection: [Errno 111] Connection refused'))
+------------------------------------------------------------------------------
+Verify user is able to add Child Namkaran with YES Option on the m... ===== Starting Test Setup =====
+===== Test Setup Completed =====
+===== Opening Gurutattva App =====
+[ WARN ] Retrying (Retry(total=2, connect=None, read=None, redirect=None, status=None)) after connection broken by 'NewConnectionError('<urllib3.connection.HTTPConnection object at 0x73faf3e9d260>: Failed to establish a new connection: [Errno 111] Connection refused')': /session
+[ WARN ] Retrying (Retry(total=1, connect=None, read=None, redirect=None, status=None)) after connection broken by 'NewConnectionError('<urllib3.connection.HTTPConnection object at 0x73faf3e9c5a0>: Failed to establish a new connection: [Errno 111] Connection refused')': /session
+[ WARN ] Retrying (Retry(total=0, connect=None, read=None, redirect=None, status=None)) after connection broken by 'NewConnectionError('<urllib3.connection.HTTPConnection object at 0x73faf3e9ff00>: Failed to establish a new connection: [Errno 111] Connection refused')': /session
+===== Starting Test Teardown =====
+✅ Mobile screenshot captured: /var/jenkins_home/workspace/Guruttava-E2E-Tests/results/Screenshot/Verify_user_is_able_to_add_Child_Namkaran_with_YES_Option_on_the_mobile_app_and_verify_the_details_in_CSM_20260123_063002.png
+⚠️ Mobile screenshot capture failed, capturing web screenshot...
+✅ Screenshot captured: /var/jenkins_home/workspace/Guruttava-E2E-Tests/results/Screenshot/Verify_user_is_able_to_add_Child_Namkaran_with_YES_Option_on_the_mobile_app_and_verify_the_details_in_CSM_20260123_063002.png
+===== Closing Gurutattva App =====
+⚠️ Graceful termination failed, using force stop
+⚠️ Mobile session close had issues
+===== Gurutattva App Closed =====
+🗑️ Cleared download directory: /var/jenkins_home/workspace/Guruttava-E2E-Tests/downloads
+===== Test Teardown Completed =====
+| FAIL |
+MaxRetryError: HTTPConnectionPool(host='localhost', port=4723): Max retries exceeded with url: /session (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x73faf3e9c490>: Failed to establish a new connection: [Errno 111] Connection refused'))
+------------------------------------------------------------------------------
+Verify that admin user is able to approve Bride Namkaran in CMS an... ===== Starting Test Setup =====
+===== Test Setup Completed =====
+===== Opening Gurutattva App =====
+[ WARN ] Retrying (Retry(total=2, connect=None, read=None, redirect=None, status=None)) after connection broken by 'NewConnectionError('<urllib3.connection.HTTPConnection object at 0x73faf3e9fbd0>: Failed to establish a new connection: [Errno 111] Connection refused')': /session
+[ WARN ] Retrying (Retry(total=1, connect=None, read=None, redirect=None, status=None)) after connection broken by 'NewConnectionError('<urllib3.connection.HTTPConnection object at 0x73faf3e9c380>: Failed to establish a new connection: [Errno 111] Connection refused')': /session
+[ WARN ] Retrying (Retry(total=0, connect=None, read=None, redirect=None, status=None)) after connection broken by 'NewConnectionError('<urllib3.connection.HTTPConnection object at 0x73faf3e9cf30>: Failed to establish a new connection: [Errno 111] Connection refused')': /session
+===== Starting Test Teardown =====
+✅ Mobile screenshot captured: /var/jenkins_home/workspace/Guruttava-E2E-Tests/results/Screenshot/Verify_that_admin_user_is_able_to_approve_Bride_Namkaran_in_CMS_and_verify_the_details_on_mobile_app_20260123_063016.png
+⚠️ Mobile screenshot capture failed, capturing web screenshot...
+✅ Screenshot captured: /var/jenkins_home/workspace/Guruttava-E2E-Tests/results/Screenshot/Verify_that_admin_user_is_able_to_approve_Bride_Namkaran_in_CMS_and_verify_the_details_on_mobile_app_20260123_063016.png
+===== Closing Gurutattva App =====
+⚠️ Graceful termination failed, using force stop
+⚠️ Mobile session close had issues
+===== Gurutattva App Closed =====
+🗑️ Cleared download directory: /var/jenkins_home/workspace/Guruttava-E2E-Tests/downloads
+===== Test Teardown Completed =====
+| FAIL |
+MaxRetryError: HTTPConnectionPool(host='localhost', port=4723): Max retries exceeded with url: /session (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x73faf3e9c9e0>: Failed to establish a new connection: [Errno 111] Connection refused'))
+------------------------------------------------------------------------------
+Verify that admin user is able to approve Business Namkaran in CMS... ===== Starting Test Setup =====
+===== Test Setup Completed =====
+===== Opening Gurutattva App =====
+[ WARN ] Retrying (Retry(total=2, connect=None, read=None, redirect=None, status=None)) after connection broken by 'NewConnectionError('<urllib3.connection.HTTPConnection object at 0x73faf3e9c490>: Failed to establish a new connection: [Errno 111] Connection refused')': /session
+[ WARN ] Retrying (Retry(total=1, connect=None, read=None, redirect=None, status=None)) after connection broken by 'NewConnectionError('<urllib3.connection.HTTPConnection object at 0x73faf3e9d9d0>: Failed to establish a new connection: [Errno 111] Connection refused')': /session
+[ WARN ] Retrying (Retry(total=0, connect=None, read=None, redirect=None, status=None)) after connection broken by 'NewConnectionError('<urllib3.connection.HTTPConnection object at 0x73faf3e9d7b0>: Failed to establish a new connection: [Errno 111] Connection refused')': /session
+===== Starting Test Teardown =====
+✅ Mobile screenshot captured: /var/jenkins_home/workspace/Guruttava-E2E-Tests/results/Screenshot/Verify_that_admin_user_is_able_to_approve_Business_Namkaran_in_CMS_and_verify_the_details_on_mobile_app_20260123_063030.png
+⚠️ Mobile screenshot capture failed, capturing web screenshot...
+✅ Screenshot captured: /var/jenkins_home/workspace/Guruttava-E2E-Tests/results/Screenshot/Verify_that_admin_user_is_able_to_approve_Business_Namkaran_in_CMS_and_verify_the_details_on_mobile_app_20260123_063030.png
+===== Closing Gurutattva App =====
+⚠️ Graceful termination failed, using force stop
+⚠️ Mobile session close had issues
+===== Gurutattva App Closed =====
+🗑️ Cleared download directory: /var/jenkins_home/workspace/Guruttava-E2E-Tests/downloads
+===== Test Teardown Completed =====
+| FAIL |
+MaxRetryError: HTTPConnectionPool(host='localhost', port=4723): Max retries exceeded with url: /session (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x73faf3e9caf0>: Failed to establish a new connection: [Errno 111] Connection refused'))
+------------------------------------------------------------------------------
+Verify that admin user is able to approve House Namkaran in CMS an... ===== Starting Test Setup =====
+===== Test Setup Completed =====
+===== Opening Gurutattva App =====
+[ WARN ] Retrying (Retry(total=2, connect=None, read=None, redirect=None, status=None)) after connection broken by 'NewConnectionError('<urllib3.connection.HTTPConnection object at 0x73faf37b5e10>: Failed to establish a new connection: [Errno 111] Connection refused')': /session
+[ WARN ] Retrying (Retry(total=1, connect=None, read=None, redirect=None, status=None)) after connection broken by 'NewConnectionError('<urllib3.connection.HTTPConnection object at 0x73faf37b5150>: Failed to establish a new connection: [Errno 111] Connection refused')': /session
+[ WARN ] Retrying (Retry(total=0, connect=None, read=None, redirect=None, status=None)) after connection broken by 'NewConnectionError('<urllib3.connection.HTTPConnection object at 0x73faf37b5480>: Failed to establish a new connection: [Errno 111] Connection refused')': /session
+===== Starting Test Teardown =====
+✅ Mobile screenshot captured: /var/jenkins_home/workspace/Guruttava-E2E-Tests/results/Screenshot/Verify_that_admin_user_is_able_to_approve_House_Namkaran_in_CMS_and_verify_the_details_on_mobile_app_20260123_063043.png
+⚠️ Mobile screenshot capture failed, capturing web screenshot...
+✅ Screenshot captured: /var/jenkins_home/workspace/Guruttava-E2E-Tests/results/Screenshot/Verify_that_admin_user_is_able_to_approve_House_Namkaran_in_CMS_and_verify_the_details_on_mobile_app_20260123_063043.png
+===== Closing Gurutattva App =====
+⚠️ Graceful termination failed, using force stop
+⚠️ Mobile session close had issues
+===== Gurutattva App Closed =====
+🗑️ Cleared download directory: /var/jenkins_home/workspace/Guruttava-E2E-Tests/downloads
+===== Test Teardown Completed =====
+| FAIL |
+MaxRetryError: HTTPConnectionPool(host='localhost', port=4723): Max retries exceeded with url: /session (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x73faf37b7020>: Failed to establish a new connection: [Errno 111] Connection refused'))
+------------------------------------------------------------------------------
+Verify that admin user is able to approve Child Namkaran in CMS an... ===== Starting Test Setup =====
+===== Test Setup Completed =====
+===== Opening Gurutattva App =====
+[ WARN ] Retrying (Retry(total=2, connect=None, read=None, redirect=None, status=None)) after connection broken by 'NewConnectionError('<urllib3.connection.HTTPConnection object at 0x73faf3e9d040>: Failed to establish a new connection: [Errno 111] Connection refused')': /session
+[ WARN ] Retrying (Retry(total=1, connect=None, read=None, redirect=None, status=None)) after connection broken by 'NewConnectionError('<urllib3.connection.HTTPConnection object at 0x73faf3e9d6a0>: Failed to establish a new connection: [Errno 111] Connection refused')': /session
+[ WARN ] Retrying (Retry(total=0, connect=None, read=None, redirect=None, status=None)) after connection broken by 'NewConnectionError('<urllib3.connection.HTTPConnection object at 0x73faf3e9f680>: Failed to establish a new connection: [Errno 111] Connection refused')': /session
+===== Starting Test Teardown =====
+✅ Mobile screenshot captured: /var/jenkins_home/workspace/Guruttava-E2E-Tests/results/Screenshot/Verify_that_admin_user_is_able_to_approve_Child_Namkaran_in_CMS_and_verify_the_details_on_mobile_app_20260123_063055.png
+⚠️ Mobile screenshot capture failed, capturing web screenshot...
+✅ Screenshot captured: /var/jenkins_home/workspace/Guruttava-E2E-Tests/results/Screenshot/Verify_that_admin_user_is_able_to_approve_Child_Namkaran_in_CMS_and_verify_the_details_on_mobile_app_20260123_063055.png
+===== Closing Gurutattva App =====
+⚠️ Graceful termination failed, using force stop
+⚠️ Mobile session close had issues
+===== Gurutattva App Closed =====
+🗑️ Cleared download directory: /var/jenkins_home/workspace/Guruttava-E2E-Tests/downloads
+===== Test Teardown Completed =====
+| FAIL |
+MaxRetryError: HTTPConnectionPool(host='localhost', port=4723): Max retries exceeded with url: /session (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x73faf4339150>: Failed to establish a new connection: [Errno 111] Connection refused'))
+------------------------------------------------------------------------------
+Verify that admin user is able to reject Bride Namkaran in CMS and... ===== Starting Test Setup =====
+===== Test Setup Completed =====
+===== Opening Gurutattva App =====
+[ WARN ] Retrying (Retry(total=2, connect=None, read=None, redirect=None, status=None)) after connection broken by 'NewConnectionError('<urllib3.connection.HTTPConnection object at 0x73faf37b5f20>: Failed to establish a new connection: [Errno 111] Connection refused')': /session
+[ WARN ] Retrying (Retry(total=1, connect=None, read=None, redirect=None, status=None)) after connection broken by 'NewConnectionError('<urllib3.connection.HTTPConnection object at 0x73faf37b4050>: Failed to establish a new connection: [Errno 111] Connection refused')': /session
+[ WARN ] Retrying (Retry(total=0, connect=None, read=None, redirect=None, status=None)) after connection broken by 'NewConnectionError('<urllib3.connection.HTTPConnection object at 0x73faf37b4d10>: Failed to establish a new connection: [Errno 111] Connection refused')': /session
+===== Starting Test Teardown =====
+✅ Mobile screenshot captured: /var/jenkins_home/workspace/Guruttava-E2E-Tests/results/Screenshot/Verify_that_admin_user_is_able_to_reject_Bride_Namkaran_in_CMS_and_verify_the_details_on_mobile_app_20260123_063108.png
+⚠️ Mobile screenshot capture failed, capturing web screenshot...
+✅ Screenshot captured: /var/jenkins_home/workspace/Guruttava-E2E-Tests/results/Screenshot/Verify_that_admin_user_is_able_to_reject_Bride_Namkaran_in_CMS_and_verify_the_details_on_mobile_app_20260123_063108.png
+===== Closing Gurutattva App =====
+⚠️ Graceful termination failed, using force stop
+⚠️ Mobile session close had issues
+===== Gurutattva App Closed =====
+🗑️ Cleared download directory: /var/jenkins_home/workspace/Guruttava-E2E-Tests/downloads
+===== Test Teardown Completed =====
+| FAIL |
+MaxRetryError: HTTPConnectionPool(host='localhost', port=4723): Max retries exceeded with url: /session (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x73faf37b59d0>: Failed to establish a new connection: [Errno 111] Connection refused'))
+------------------------------------------------------------------------------
+Verify that admin user is able to reject Business Namkaran in CMS ... ===== Starting Test Setup =====
+===== Test Setup Completed =====
+===== Opening Gurutattva App =====
+[ WARN ] Retrying (Retry(total=2, connect=None, read=None, redirect=None, status=None)) after connection broken by 'NewConnectionError('<urllib3.connection.HTTPConnection object at 0x73faf32c8490>: Failed to establish a new connection: [Errno 111] Connection refused')': /session
+[ WARN ] Retrying (Retry(total=1, connect=None, read=None, redirect=None, status=None)) after connection broken by 'NewConnectionError('<urllib3.connection.HTTPConnection object at 0x73faf32c86b0>: Failed to establish a new connection: [Errno 111] Connection refused')': /session
+[ WARN ] Retrying (Retry(total=0, connect=None, read=None, redirect=None, status=None)) after connection broken by 'NewConnectionError('<urllib3.connection.HTTPConnection object at 0x73faf32c88d0>: Failed to establish a new connection: [Errno 111] Connection refused')': /session
+===== Starting Test Teardown =====
+✅ Mobile screenshot captured: /var/jenkins_home/workspace/Guruttava-E2E-Tests/results/Screenshot/Verify_that_admin_user_is_able_to_reject_Business_Namkaran_in_CMS_and_verify_the_details_on_mobile_app_20260123_063122.png
+⚠️ Mobile screenshot capture failed, capturing web screenshot...
+✅ Screenshot captured: /var/jenkins_home/workspace/Guruttava-E2E-Tests/results/Screenshot/Verify_that_admin_user_is_able_to_reject_Business_Namkaran_in_CMS_and_verify_the_details_on_mobile_app_20260123_063122.png
+===== Closing Gurutattva App =====
+⚠️ Graceful termination failed, using force stop
+⚠️ Mobile session close had issues
+===== Gurutattva App Closed =====
+🗑️ Cleared download directory: /var/jenkins_home/workspace/Guruttava-E2E-Tests/downloads
+===== Test Teardown Completed =====
+| FAIL |
+MaxRetryError: HTTPConnectionPool(host='localhost', port=4723): Max retries exceeded with url: /session (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x73faf32c8af0>: Failed to establish a new connection: [Errno 111] Connection refused'))
+------------------------------------------------------------------------------
+Verify that admin user is able to reject House Namkaran in CMS and... ===== Starting Test Setup =====
+===== Test Setup Completed =====
+===== Opening Gurutattva App =====
+[ WARN ] Retrying (Retry(total=2, connect=None, read=None, redirect=None, status=None)) after connection broken by 'NewConnectionError('<urllib3.connection.HTTPConnection object at 0x73faf32ca250>: Failed to establish a new connection: [Errno 111] Connection refused')': /session
+[ WARN ] Retrying (Retry(total=1, connect=None, read=None, redirect=None, status=None)) after connection broken by 'NewConnectionError('<urllib3.connection.HTTPConnection object at 0x73faf32ca470>: Failed to establish a new connection: [Errno 111] Connection refused')': /session
+[ WARN ] Retrying (Retry(total=0, connect=None, read=None, redirect=None, status=None)) after connection broken by 'NewConnectionError('<urllib3.connection.HTTPConnection object at 0x73faf32ca690>: Failed to establish a new connection: [Errno 111] Connection refused')': /session
+===== Starting Test Teardown =====
+✅ Mobile screenshot captured: /var/jenkins_home/workspace/Guruttava-E2E-Tests/results/Screenshot/Verify_that_admin_user_is_able_to_reject_House_Namkaran_in_CMS_and_verify_the_details_on_mobile_app_20260123_063134.png
+⚠️ Mobile screenshot capture failed, capturing web screenshot...
+✅ Screenshot captured: /var/jenkins_home/workspace/Guruttava-E2E-Tests/results/Screenshot/Verify_that_admin_user_is_able_to_reject_House_Namkaran_in_CMS_and_verify_the_details_on_mobile_app_20260123_063134.png
+===== Closing Gurutattva App =====
+⚠️ Graceful termination failed, using force stop
+⚠️ Mobile session close had issues
+===== Gurutattva App Closed =====
+🗑️ Cleared download directory: /var/jenkins_home/workspace/Guruttava-E2E-Tests/downloads
+===== Test Teardown Completed =====
+| FAIL |
+MaxRetryError: HTTPConnectionPool(host='localhost', port=4723): Max retries exceeded with url: /session (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x73faf32ca8b0>: Failed to establish a new connection: [Errno 111] Connection refused'))
+------------------------------------------------------------------------------
+Verify that admin user is able to reject Child Namkaran in CMS and... ===== Starting Test Setup =====
+===== Test Setup Completed =====
+===== Opening Gurutattva App =====
+[ WARN ] Retrying (Retry(total=2, connect=None, read=None, redirect=None, status=None)) after connection broken by 'NewConnectionError('<urllib3.connection.HTTPConnection object at 0x73faf3e9fbd0>: Failed to establish a new connection: [Errno 111] Connection refused')': /session
+[ WARN ] Retrying (Retry(total=1, connect=None, read=None, redirect=None, status=None)) after connection broken by 'NewConnectionError('<urllib3.connection.HTTPConnection object at 0x73faf37b56a0>: Failed to establish a new connection: [Errno 111] Connection refused')': /session
+[ WARN ] Retrying (Retry(total=0, connect=None, read=None, redirect=None, status=None)) after connection broken by 'NewConnectionError('<urllib3.connection.HTTPConnection object at 0x73faf37b78a0>: Failed to establish a new connection: [Errno 111] Connection refused')': /session
+===== Starting Test Teardown =====
+✅ Mobile screenshot captured: /var/jenkins_home/workspace/Guruttava-E2E-Tests/results/Screenshot/Verify_that_admin_user_is_able_to_reject_Child_Namkaran_in_CMS_and_verify_the_details_on_mobile_app_20260123_063147.png
+⚠️ Mobile screenshot capture failed, capturing web screenshot...
+✅ Screenshot captured: /var/jenkins_home/workspace/Guruttava-E2E-Tests/results/Screenshot/Verify_that_admin_user_is_able_to_reject_Child_Namkaran_in_CMS_and_verify_the_details_on_mobile_app_20260123_063147.png
+===== Closing Gurutattva App =====
+⚠️ Graceful termination failed, using force stop
+⚠️ Mobile session close had issues
+===== Gurutattva App Closed =====
+🗑️ Cleared download directory: /var/jenkins_home/workspace/Guruttava-E2E-Tests/downloads
+===== Test Teardown Completed =====
+| FAIL |
+MaxRetryError: HTTPConnectionPool(host='localhost', port=4723): Max retries exceeded with url: /session (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x73faf37b6360>: Failed to establish a new connection: [Errno 111] Connection refused'))
+------------------------------------------------------------------------------
+Guruttava_Android_E2E_Tests.E2ENamkaran                               | FAIL |
+16 tests, 0 passed, 16 failed
+==============================================================================
+Guruttava_Android_E2E_Tests.E2ENews                                           
+==============================================================================
+Verify the image upload validation in CMS                             ===== Starting Test Setup =====
+===== Test Setup Completed =====
+🎯 Generated E2E English News Test Data:
+🎯 Title: E2E English News Title 9713
+🎯 Description: E2E English News Description 9713
+🎯 Content: E2E English News Content 9713. This is a test news content generated for automation testing purposes.
+🌐 Opening web browser: chrome
+🔗 Navigating to: https://gurutattvacmsnewdev.rysun.in:9090/
+===== Starting Test Teardown =====
+✅ Mobile screenshot captured: /var/jenkins_home/workspace/Guruttava-E2E-Tests/results/Screenshot/Verify_the_image_upload_validation_in_CMS_20260123_063210.png
+⚠️ Mobile screenshot capture failed, capturing web screenshot...
+✅ Screenshot captured: /var/jenkins_home/workspace/Guruttava-E2E-Tests/results/Screenshot/Verify_the_image_upload_validation_in_CMS_20260123_063210.png
+===== Closing Gurutattva App =====
+⚠️ Graceful termination failed, using force stop
+⚠️ Mobile session close had issues
+===== Gurutattva App Closed =====
+🗑️ Cleared download directory: /var/jenkins_home/workspace/Guruttava-E2E-Tests/downloads
+===== Test Teardown Completed =====
+| FAIL |
+WebDriverException: Message: Service /var/jenkins_home/.cache/selenium/chromedriver/linux64/144.0.7559.96/chromedriver unexpectedly exited. Status code was: 127
+------------------------------------------------------------------------------
+Verify that the user is able to add a English news, publish it in ... ===== Starting Test Setup =====
+===== Test Setup Completed =====
+🎯 Generated E2E English News Test Data:
+🎯 Title: E2E English News Title 1281
+🎯 Description: E2E English News Description 1281
+🎯 Content: E2E English News Content 1281. This is a test news content generated for automation testing purposes.
+🌐 Opening web browser: chrome
+🔗 Navigating to: https://gurutattvacmsnewdev.rysun.in:9090/
+===== Starting Test Teardown =====
+✅ Mobile screenshot captured: /var/jenkins_home/workspace/Guruttava-E2E-Tests/results/Screenshot/Verify_that_the_user_is_able_to_add_a_English_news,_publish_it_in_the_CMS,_and_verify_the_english_news_details_on_the_mobile_app_20260123_063228.png
+⚠️ Mobile screenshot capture failed, capturing web screenshot...
+✅ Screenshot captured: /var/jenkins_home/workspace/Guruttava-E2E-Tests/results/Screenshot/Verify_that_the_user_is_able_to_add_a_English_news,_publish_it_in_the_CMS,_and_verify_the_english_news_details_on_the_mobile_app_20260123_063228.png
+===== Closing Gurutattva App =====
+⚠️ Graceful termination failed, using force stop
+⚠️ Mobile session close had issues
+===== Gurutattva App Closed =====
+🗑️ Cleared download directory: /var/jenkins_home/workspace/Guruttava-E2E-Tests/downloads
+===== Test Teardown Completed =====
+| FAIL |
+WebDriverException: Message: Service /var/jenkins_home/.cache/selenium/chromedriver/linux64/144.0.7559.96/chromedriver unexpectedly exited. Status code was: 127
+------------------------------------------------------------------------------
+Verify that the user is able to add a Hindi news, publish it in th... ===== Starting Test Setup =====
+===== Test Setup Completed =====
+🎯 Generated E2E Hindi News Test Data:
+🎯 Title: E2E हिंदी समाचार शीर्षक 7102
+🎯 Description: E2E हिंदी समाचार विवरण 7102
+🎯 Content: E2E हिंदी समाचार सामग्री 7102. यह स्वचालन परीक्षण के लिए उत्पन्न किया गया एक परीक्षण समाचार सामग्री है।
+🌐 Opening web browser: chrome
+🔗 Navigating to: https://gurutattvacmsnewdev.rysun.in:9090/
+🔄 TC02 Teardown: Force reverting language to English...
+📱 Step 1: Clicking Home to make Profile tab visible
+⚠️ Could not find Home icon - continuing anyway
+📱 Step 2: Clicking Profile tab
+⚠️ Could not find Profile tab - trying xpath position
+📱 Step 3: Navigating to Language settings
+⏳ Waiting for language change to persist...
+✅ Language revert sequence completed
+🔄 TC02 Teardown completed - Normal teardown will close app
+| FAIL |
+WebDriverException: Message: Service /var/jenkins_home/.cache/selenium/chromedriver/linux64/144.0.7559.96/chromedriver unexpectedly exited. Status code was: 127
+------------------------------------------------------------------------------
+Test Unpublish News from CMS and Verify in Mobile App :: Unpublish... ===== Starting Test Setup =====
+===== Test Setup Completed =====
+🎯 Generated E2E English News Test Data:
+🎯 Title: E2E English News Title 1421
+🎯 Description: E2E English News Description 1421
+🎯 Content: E2E English News Content 1421. This is a test news content generated for automation testing purposes.
+🌐 Opening web browser: chrome
+🔗 Navigating to: https://gurutattvacmsnewdev.rysun.in:9090/
+===== Starting Test Teardown =====
+✅ Mobile screenshot captured: /var/jenkins_home/workspace/Guruttava-E2E-Tests/results/Screenshot/Test_Unpublish_News_from_CMS_and_Verify_in_Mobile_App_20260123_063321.png
+⚠️ Mobile screenshot capture failed, capturing web screenshot...
+✅ Screenshot captured: /var/jenkins_home/workspace/Guruttava-E2E-Tests/results/Screenshot/Test_Unpublish_News_from_CMS_and_Verify_in_Mobile_App_20260123_063321.png
+===== Closing Gurutattva App =====
+⚠️ Graceful termination failed, using force stop
+⚠️ Mobile session close had issues
+===== Gurutattva App Closed =====
+🗑️ Cleared download directory: /var/jenkins_home/workspace/Guruttava-E2E-Tests/downloads
+===== Test Teardown Completed =====
+| FAIL |
+WebDriverException: Message: Service /var/jenkins_home/.cache/selenium/chromedriver/linux64/144.0.7559.96/chromedriver unexpectedly exited. Status code was: 127
+------------------------------------------------------------------------------
+Test News Category Tab In Mobile App :: In Mobile app, check for C... ===== Starting Test Setup =====
+===== Test Setup Completed =====
+📱 Attempting to open Gurutattva App (1/3)
+===== Opening Gurutattva App =====
+[ WARN ] Retrying (Retry(total=2, connect=None, read=None, redirect=None, status=None)) after connection broken by 'NewConnectionError('<urllib3.connection.HTTPConnection object at 0x73faf32ca690>: Failed to establish a new connection: [Errno 111] Connection refused')': /session
+[ WARN ] Retrying (Retry(total=1, connect=None, read=None, redirect=None, status=None)) after connection broken by 'NewConnectionError('<urllib3.connection.HTTPConnection object at 0x73faf32cb350>: Failed to establish a new connection: [Errno 111] Connection refused')': /session
+[ WARN ] Retrying (Retry(total=0, connect=None, read=None, redirect=None, status=None)) after connection broken by 'NewConnectionError('<urllib3.connection.HTTPConnection object at 0x73faf32c8490>: Failed to establish a new connection: [Errno 111] Connection refused')': /session
+⚠️ Failed to open app on attempt 1: MaxRetryError: HTTPConnectionPool(host='localhost', port=4723): Max retries exceeded with url: /session (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x73faf409fce0>: Failed to establish a new connection: [Errno 111] Connection refused'))
+🔄 Retrying in 5 seconds...
+📱 Attempting to open Gurutattva App (2/3)
+===== Opening Gurutattva App =====
+[ WARN ] Retrying (Retry(total=2, connect=None, read=None, redirect=None, status=None)) after connection broken by 'NewConnectionError('<urllib3.connection.HTTPConnection object at 0x73faf409d8c0>: Failed to establish a new connection: [Errno 111] Connection refused')': /session
+[ WARN ] Retrying (Retry(total=1, connect=None, read=None, redirect=None, status=None)) after connection broken by 'NewConnectionError('<urllib3.connection.HTTPConnection object at 0x73faf4339150>: Failed to establish a new connection: [Errno 111] Connection refused')': /session
+[ WARN ] Retrying (Retry(total=0, connect=None, read=None, redirect=None, status=None)) after connection broken by 'NewConnectionError('<urllib3.connection.HTTPConnection object at 0x73faf37b6140>: Failed to establish a new connection: [Errno 111] Connection refused')': /session
+⚠️ Failed to open app on attempt 2: MaxRetryError: HTTPConnectionPool(host='localhost', port=4723): Max retries exceeded with url: /session (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x73faf37b5590>: Failed to establish a new connection: [Errno 111] Connection refused'))
+🔄 Retrying in 5 seconds...
+📱 Attempting to open Gurutattva App (3/3)
+===== Opening Gurutattva App =====
+[ WARN ] Retrying (Retry(total=2, connect=None, read=None, redirect=None, status=None)) after connection broken by 'NewConnectionError('<urllib3.connection.HTTPConnection object at 0x73faf37b79b0>: Failed to establish a new connection: [Errno 111] Connection refused')': /session
+[ WARN ] Retrying (Retry(total=1, connect=None, read=None, redirect=None, status=None)) after connection broken by 'NewConnectionError('<urllib3.connection.HTTPConnection object at 0x73faf37b6030>: Failed to establish a new connection: [Errno 111] Connection refused')': /session
+[ WARN ] Retrying (Retry(total=0, connect=None, read=None, redirect=None, status=None)) after connection broken by 'NewConnectionError('<urllib3.connection.HTTPConnection object at 0x73faf37b7790>: Failed to establish a new connection: [Errno 111] Connection refused')': /session
+⚠️ Failed to open app on attempt 3: MaxRetryError: HTTPConnectionPool(host='localhost', port=4723): Max retries exceeded with url: /session (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x73faf37b6470>: Failed to establish a new connection: [Errno 111] Connection refused'))
+❌ Failed to open Gurutattva App after 3 attempts
+===== Starting Test Teardown =====
+✅ Mobile screenshot captured: /var/jenkins_home/workspace/Guruttava-E2E-Tests/results/Screenshot/Test_News_Category_Tab_In_Mobile_App_20260123_063345.png
+⚠️ Mobile screenshot capture failed, capturing web screenshot...
+✅ Screenshot captured: /var/jenkins_home/workspace/Guruttava-E2E-Tests/results/Screenshot/Test_News_Category_Tab_In_Mobile_App_20260123_063345.png
+===== Closing Gurutattva App =====
+⚠️ Graceful termination failed, using force stop
+⚠️ Mobile session close had issues
+===== Gurutattva App Closed =====
+🗑️ Cleared download directory: /var/jenkins_home/workspace/Guruttava-E2E-Tests/downloads
+===== Test Teardown Completed =====
+| FAIL |
+Could not open Gurutattva App after 3 attempts
+------------------------------------------------------------------------------
+Test Check Local News Filter Functionality :: Check Local News Fil... ===== Starting Test Setup =====
+===== Test Setup Completed =====
+📱 Attempting to open Gurutattva App (1/3)
+===== Opening Gurutattva App =====
+[ WARN ] Retrying (Retry(total=2, connect=None, read=None, redirect=None, status=None)) after connection broken by 'NewConnectionError('<urllib3.connection.HTTPConnection object at 0x73faf37b46b0>: Failed to establish a new connection: [Errno 111] Connection refused')': /session
+[ WARN ] Retrying (Retry(total=1, connect=None, read=None, redirect=None, status=None)) after connection broken by 'NewConnectionError('<urllib3.connection.HTTPConnection object at 0x73faf37b6cf0>: Failed to establish a new connection: [Errno 111] Connection refused')': /session
+[ WARN ] Retrying (Retry(total=0, connect=None, read=None, redirect=None, status=None)) after connection broken by 'NewConnectionError('<urllib3.connection.HTTPConnection object at 0x73faf37b6be0>: Failed to establish a new connection: [Errno 111] Connection refused')': /session
+⚠️ Failed to open app on attempt 1: MaxRetryError: HTTPConnectionPool(host='localhost', port=4723): Max retries exceeded with url: /session (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x73faf37b7ac0>: Failed to establish a new connection: [Errno 111] Connection refused'))
+🔄 Retrying in 5 seconds...
+📱 Attempting to open Gurutattva App (2/3)
+===== Opening Gurutattva App =====
+[ WARN ] Retrying (Retry(total=2, connect=None, read=None, redirect=None, status=None)) after connection broken by 'NewConnectionError('<urllib3.connection.HTTPConnection object at 0x73faf32c9260>: Failed to establish a new connection: [Errno 111] Connection refused')': /session
+[ WARN ] Retrying (Retry(total=1, connect=None, read=None, redirect=None, status=None)) after connection broken by 'NewConnectionError('<urllib3.connection.HTTPConnection object at 0x73faf32c89e0>: Failed to establish a new connection: [Errno 111] Connection refused')': /session
+[ WARN ] Retrying (Retry(total=0, connect=None, read=None, redirect=None, status=None)) after connection broken by 'NewConnectionError('<urllib3.connection.HTTPConnection object at 0x73faf32cb460>: Failed to establish a new connection: [Errno 111] Connection refused')': /session
+⚠️ Failed to open app on attempt 2: MaxRetryError: HTTPConnectionPool(host='localhost', port=4723): Max retries exceeded with url: /session (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x73faf32c8d10>: Failed to establish a new connection: [Errno 111] Connection refused'))
+🔄 Retrying in 5 seconds...
+📱 Attempting to open Gurutattva App (3/3)
+===== Opening Gurutattva App =====
+[ WARN ] Retrying (Retry(total=2, connect=None, read=None, redirect=None, status=None)) after connection broken by 'NewConnectionError('<urllib3.connection.HTTPConnection object at 0x73faf32c96a0>: Failed to establish a new connection: [Errno 111] Connection refused')': /session
+[ WARN ] Retrying (Retry(total=1, connect=None, read=None, redirect=None, status=None)) after connection broken by 'NewConnectionError('<urllib3.connection.HTTPConnection object at 0x73faf37b4e20>: Failed to establish a new connection: [Errno 111] Connection refused')': /session
+[ WARN ] Retrying (Retry(total=0, connect=None, read=None, redirect=None, status=None)) after connection broken by 'NewConnectionError('<urllib3.connection.HTTPConnection object at 0x73faf37b69c0>: Failed to establish a new connection: [Errno 111] Connection refused')': /session
+⚠️ Failed to open app on attempt 3: MaxRetryError: HTTPConnectionPool(host='localhost', port=4723): Max retries exceeded with url: /session (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x73faf37b6470>: Failed to establish a new connection: [Errno 111] Connection refused'))
+❌ Failed to open Gurutattva App after 3 attempts
+===== Starting Test Teardown =====
+✅ Mobile screenshot captured: /var/jenkins_home/workspace/Guruttava-E2E-Tests/results/Screenshot/Test_Check_Local_News_Filter_Functionality_20260123_063408.png
+⚠️ Mobile screenshot capture failed, capturing web screenshot...
+✅ Screenshot captured: /var/jenkins_home/workspace/Guruttava-E2E-Tests/results/Screenshot/Test_Check_Local_News_Filter_Functionality_20260123_063408.png
+===== Closing Gurutattva App =====
+⚠️ Graceful termination failed, using force stop
+⚠️ Mobile session close had issues
+===== Gurutattva App Closed =====
+🗑️ Cleared download directory: /var/jenkins_home/workspace/Guruttava-E2E-Tests/downloads
+===== Test Teardown Completed =====
+| FAIL |
+Could not open Gurutattva App after 3 attempts
+------------------------------------------------------------------------------
+Test Sanchalak Adds Local News And Super Admin Approves It :: Sanc... ===== Starting Test Setup =====
+===== Test Setup Completed =====
+🎯 Generated E2E English News Test Data:
+🎯 Title: E2E English News Title 1123
+🎯 Description: E2E English News Description 1123
+🎯 Content: E2E English News Content 1123. This is a test news content generated for automation testing purposes.
+🎯 Step 1: Login as Sanchalak & add a new local news
+🌐 Opening web browser: chrome
+🔗 Navigating to: https://gurutattvacmsnewdev.rysun.in:9090/
+===== Starting Test Teardown =====
+✅ Mobile screenshot captured: /var/jenkins_home/workspace/Guruttava-E2E-Tests/results/Screenshot/Test_Sanchalak_Adds_Local_News_And_Super_Admin_Approves_It_20260123_063425.png
+⚠️ Mobile screenshot capture failed, capturing web screenshot...
+✅ Screenshot captured: /var/jenkins_home/workspace/Guruttava-E2E-Tests/results/Screenshot/Test_Sanchalak_Adds_Local_News_And_Super_Admin_Approves_It_20260123_063425.png
+===== Closing Gurutattva App =====
+⚠️ Graceful termination failed, using force stop
+⚠️ Mobile session close had issues
+===== Gurutattva App Closed =====
+🗑️ Cleared download directory: /var/jenkins_home/workspace/Guruttava-E2E-Tests/downloads
+===== Test Teardown Completed =====
+| FAIL |
+WebDriverException: Message: Service /var/jenkins_home/.cache/selenium/chromedriver/linux64/144.0.7559.96/chromedriver unexpectedly exited. Status code was: 127
+------------------------------------------------------------------------------
+Test Sanchalak Adds Local News And Super Admin Rejects It :: Sanch... ===== Starting Test Setup =====
+===== Test Setup Completed =====
+🎯 Generated E2E English News Test Data:
+🎯 Title: E2E English News Title 2819
+🎯 Description: E2E English News Description 2819
+🎯 Content: E2E English News Content 2819. This is a test news content generated for automation testing purposes.
+🎯 Step 1: Login as Sanchalak & add a new local news
+🌐 Opening web browser: chrome
+🔗 Navigating to: https://gurutattvacmsnewdev.rysun.in:9090/
+===== Starting Test Teardown =====
+✅ Mobile screenshot captured: /var/jenkins_home/workspace/Guruttava-E2E-Tests/results/Screenshot/Test_Sanchalak_Adds_Local_News_And_Super_Admin_Rejects_It_20260123_063442.png
+⚠️ Mobile screenshot capture failed, capturing web screenshot...
+✅ Screenshot captured: /var/jenkins_home/workspace/Guruttava-E2E-Tests/results/Screenshot/Test_Sanchalak_Adds_Local_News_And_Super_Admin_Rejects_It_20260123_063442.png
+===== Closing Gurutattva App =====
+⚠️ Graceful termination failed, using force stop
+⚠️ Mobile session close had issues
+===== Gurutattva App Closed =====
+🗑️ Cleared download directory: /var/jenkins_home/workspace/Guruttava-E2E-Tests/downloads
+===== Test Teardown Completed =====
+| FAIL |
+WebDriverException: Message: Service /var/jenkins_home/.cache/selenium/chromedriver/linux64/144.0.7559.96/chromedriver unexpectedly exited. Status code was: 127
+------------------------------------------------------------------------------
+Add News Category from CMS. Add News uder that category. check lis... ===== Starting Test Setup =====
+===== Test Setup Completed =====
+Generated random number: 196
+English Category Name: News_Category_196
+Hindi Category Name: एकीकरण परीक्षण_Category_196
+Updated English Category Name: News_Category_196_Updated Category English
+Updated Hindi Category Name: News_Category_196_अपडेटेड श्रेणी हिंदी
+🌐 Opening web browser: chrome
+🔗 Navigating to: https://gurutattvacmsnewdev.rysun.in:9090/
+===== Starting Test Teardown =====
+✅ Mobile screenshot captured: /var/jenkins_home/workspace/Guruttava-E2E-Tests/results/Screenshot/Add_News_Category_from_CMS__Add_News_uder_that_category__check_list_of_all_categories_in_the_Mobile_app_under_Category_tab__20260123_063457.png
+⚠️ Mobile screenshot capture failed, capturing web screenshot...
+✅ Screenshot captured: /var/jenkins_home/workspace/Guruttava-E2E-Tests/results/Screenshot/Add_News_Category_from_CMS__Add_News_uder_that_category__check_list_of_all_categories_in_the_Mobile_app_under_Category_tab__20260123_063457.png
+===== Closing Gurutattva App =====
+⚠️ Graceful termination failed, using force stop
+⚠️ Mobile session close had issues
+===== Gurutattva App Closed =====
+🗑️ Cleared download directory: /var/jenkins_home/workspace/Guruttava-E2E-Tests/downloads
+===== Test Teardown Completed =====
+| FAIL |
+WebDriverException: Message: Service /var/jenkins_home/.cache/selenium/chromedriver/linux64/144.0.7559.96/chromedriver unexpectedly exited. Status code was: 127
+------------------------------------------------------------------------------
+Guruttava_Android_E2E_Tests.E2ENews                                   | FAIL |
+9 tests, 0 passed, 9 failed
+==============================================================================
+Guruttava_Android_E2E_Tests.E2EPrayer                                         
+==============================================================================
+End-to-End Integration: Verify that user is able to add Prayer wit... ===== Starting Test Setup =====
+===== Test Setup Completed =====
+🎯 Generated Test Data for Prayer:
+🎯 Person: E2E_Person_Name_1561
+🎯 Full Address: E2E_Full_Address_1561
+🎯 Description: E2E_Prayer_Description_1561
+===== Opening Gurutattva App =====
+[ WARN ] Retrying (Retry(total=2, connect=None, read=None, redirect=None, status=None)) after connection broken by 'NewConnectionError('<urllib3.connection.HTTPConnection object at 0x73faf37b7df0>: Failed to establish a new connection: [Errno 111] Connection refused')': /session
+[ WARN ] Retrying (Retry(total=1, connect=None, read=None, redirect=None, status=None)) after connection broken by 'NewConnectionError('<urllib3.connection.HTTPConnection object at 0x73faf37b7ac0>: Failed to establish a new connection: [Errno 111] Connection refused')': /session
+[ WARN ] Retrying (Retry(total=0, connect=None, read=None, redirect=None, status=None)) after connection broken by 'NewConnectionError('<urllib3.connection.HTTPConnection object at 0x73faf37b6be0>: Failed to establish a new connection: [Errno 111] Connection refused')': /session
+===== Starting Test Teardown =====
+✅ Mobile screenshot captured: /var/jenkins_home/workspace/Guruttava-E2E-Tests/results/Screenshot/End-to-End_Integration:_Verify_that_user_is_able_to_add_Prayer_with_Self_Option_on_the_mobile_app_and_verify_it_in_CMS_20260123_063515.png
+⚠️ Mobile screenshot capture failed, capturing web screenshot...
+✅ Screenshot captured: /var/jenkins_home/workspace/Guruttava-E2E-Tests/results/Screenshot/End-to-End_Integration:_Verify_that_user_is_able_to_add_Prayer_with_Self_Option_on_the_mobile_app_and_verify_it_in_CMS_20260123_063515.png
+===== Closing Gurutattva App =====
+⚠️ Graceful termination failed, using force stop
+⚠️ Mobile session close had issues
+===== Gurutattva App Closed =====
+🗑️ Cleared download directory: /var/jenkins_home/workspace/Guruttava-E2E-Tests/downloads
+===== Test Teardown Completed =====
+| FAIL |
+MaxRetryError: HTTPConnectionPool(host='localhost', port=4723): Max retries exceeded with url: /session (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x73faf37b6cf0>: Failed to establish a new connection: [Errno 111] Connection refused'))
+------------------------------------------------------------------------------
+End-to-End Integration:Verify that user is able to add Prayer with... ===== Starting Test Setup =====
+===== Test Setup Completed =====
+🎯 Generated Test Data for Prayer:
+🎯 Applicant: E2E_Applicant_Name_Other_2771
+🎯 Person: E2E_Other_Name_2771
+🎯 Full Address: E2E_Other_Full_Address_2771
+🎯 Description: E2E_Prayer_Description_Other_2771
+===== Opening Gurutattva App =====
+[ WARN ] Retrying (Retry(total=2, connect=None, read=None, redirect=None, status=None)) after connection broken by 'NewConnectionError('<urllib3.connection.HTTPConnection object at 0x73faf3e9fac0>: Failed to establish a new connection: [Errno 111] Connection refused')': /session
+[ WARN ] Retrying (Retry(total=1, connect=None, read=None, redirect=None, status=None)) after connection broken by 'NewConnectionError('<urllib3.connection.HTTPConnection object at 0x73faf3e9c490>: Failed to establish a new connection: [Errno 111] Connection refused')': /session
+[ WARN ] Retrying (Retry(total=0, connect=None, read=None, redirect=None, status=None)) after connection broken by 'NewConnectionError('<urllib3.connection.HTTPConnection object at 0x73faf3e9d260>: Failed to establish a new connection: [Errno 111] Connection refused')': /session
+===== Starting Test Teardown =====
+✅ Mobile screenshot captured: /var/jenkins_home/workspace/Guruttava-E2E-Tests/results/Screenshot/End-to-End_Integration:Verify_that_user_is_able_to_add_Prayer_with_Other_Option_on_the_mobile_app_and_verify_it_in_CMS_20260123_063528.png
+⚠️ Mobile screenshot capture failed, capturing web screenshot...
+✅ Screenshot captured: /var/jenkins_home/workspace/Guruttava-E2E-Tests/results/Screenshot/End-to-End_Integration:Verify_that_user_is_able_to_add_Prayer_with_Other_Option_on_the_mobile_app_and_verify_it_in_CMS_20260123_063528.png
+===== Closing Gurutattva App =====
+⚠️ Graceful termination failed, using force stop
+⚠️ Mobile session close had issues
+===== Gurutattva App Closed =====
+🗑️ Cleared download directory: /var/jenkins_home/workspace/Guruttava-E2E-Tests/downloads
+===== Test Teardown Completed =====
+| FAIL |
+MaxRetryError: HTTPConnectionPool(host='localhost', port=4723): Max retries exceeded with url: /session (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x73faf3e9cf30>: Failed to establish a new connection: [Errno 111] Connection refused'))
+------------------------------------------------------------------------------
+Verify that user is able to export the Prayer in CMS :: End-to-end... ===== Starting Test Setup =====
+===== Test Setup Completed =====
+🎯 Generated Test Data for Prayer:
+🎯 Person: E2E_Person_Name_3682
+🎯 Full Address: E2E_Full_Address_3682
+🎯 Description: E2E_Prayer_Description_3682
+===== Opening Gurutattva App =====
+[ WARN ] Retrying (Retry(total=2, connect=None, read=None, redirect=None, status=None)) after connection broken by 'NewConnectionError('<urllib3.connection.HTTPConnection object at 0x73faf37b7df0>: Failed to establish a new connection: [Errno 111] Connection refused')': /session
+[ WARN ] Retrying (Retry(total=1, connect=None, read=None, redirect=None, status=None)) after connection broken by 'NewConnectionError('<urllib3.connection.HTTPConnection object at 0x73faf37b7ac0>: Failed to establish a new connection: [Errno 111] Connection refused')': /session
+[ WARN ] Retrying (Retry(total=0, connect=None, read=None, redirect=None, status=None)) after connection broken by 'NewConnectionError('<urllib3.connection.HTTPConnection object at 0x73faf37b79b0>: Failed to establish a new connection: [Errno 111] Connection refused')': /session
+===== Starting Test Teardown =====
+✅ Mobile screenshot captured: /var/jenkins_home/workspace/Guruttava-E2E-Tests/results/Screenshot/Verify_that_user_is_able_to_export_the_Prayer_in_CMS_20260123_063541.png
+⚠️ Mobile screenshot capture failed, capturing web screenshot...
+✅ Screenshot captured: /var/jenkins_home/workspace/Guruttava-E2E-Tests/results/Screenshot/Verify_that_user_is_able_to_export_the_Prayer_in_CMS_20260123_063541.png
+===== Closing Gurutattva App =====
+⚠️ Graceful termination failed, using force stop
+⚠️ Mobile session close had issues
+===== Gurutattva App Closed =====
+🗑️ Cleared download directory: /var/jenkins_home/workspace/Guruttava-E2E-Tests/downloads
+===== Test Teardown Completed =====
+| FAIL |
+MaxRetryError: HTTPConnectionPool(host='localhost', port=4723): Max retries exceeded with url: /session (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x73faf37b4050>: Failed to establish a new connection: [Errno 111] Connection refused'))
+------------------------------------------------------------------------------
+Guruttava_Android_E2E_Tests.E2EPrayer                                 | FAIL |
+3 tests, 0 passed, 3 failed
+==============================================================================
+Guruttava_Android_E2E_Tests.E2ERegistration                                   
+==============================================================================
+Verify that quick registration on the mobile app reflects correctl... ===== Starting Test Setup =====
+===== Test Setup Completed =====
+Generated E2E Registration Test Data:
+First Name: TestFirstName
+Last Name: TestLastName
+Email: qa.e2etest9815@gurutattva.com
+Mobile: 9960232311
+Gender: Male
+DOB: 2005
+Country: India
+State: Gujarat
+District: Ahmedabad
+City: Ahmedabad City
+Area: Ahmedabad (City)
+===== Opening Gurutattva App =====
+[ WARN ] Retrying (Retry(total=2, connect=None, read=None, redirect=None, status=None)) after connection broken by 'NewConnectionError('<urllib3.connection.HTTPConnection object at 0x73faf3e9c270>: Failed to establish a new connection: [Errno 111] Connection refused')': /session
+[ WARN ] Retrying (Retry(total=1, connect=None, read=None, redirect=None, status=None)) after connection broken by 'NewConnectionError('<urllib3.connection.HTTPConnection object at 0x73faf3e9c7c0>: Failed to establish a new connection: [Errno 111] Connection refused')': /session
+[ WARN ] Retrying (Retry(total=0, connect=None, read=None, redirect=None, status=None)) after connection broken by 'NewConnectionError('<urllib3.connection.HTTPConnection object at 0x73faf3e9cc00>: Failed to establish a new connection: [Errno 111] Connection refused')': /session
+===== Starting Test Teardown =====
+✅ Mobile screenshot captured: /var/jenkins_home/workspace/Guruttava-E2E-Tests/results/Screenshot/Verify_that_quick_registration_on_the_mobile_app_reflects_correctly_in_the_CMS_and_user_details_are_displayed_properly_in_profile_and_flip_card__20260123_063558.png
+⚠️ Mobile screenshot capture failed, capturing web screenshot...
+✅ Screenshot captured: /var/jenkins_home/workspace/Guruttava-E2E-Tests/results/Screenshot/Verify_that_quick_registration_on_the_mobile_app_reflects_correctly_in_the_CMS_and_user_details_are_displayed_properly_in_profile_and_flip_card__20260123_063558.png
+===== Closing Gurutattva App =====
+⚠️ Graceful termination failed, using force stop
+⚠️ Mobile session close had issues
+===== Gurutattva App Closed =====
+🗑️ Cleared download directory: /var/jenkins_home/workspace/Guruttava-E2E-Tests/downloads
+===== Test Teardown Completed =====
+| FAIL |
+MaxRetryError: HTTPConnectionPool(host='localhost', port=4723): Max retries exceeded with url: /session (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x73faf3e9c5a0>: Failed to establish a new connection: [Errno 111] Connection refused'))
+------------------------------------------------------------------------------
+Verify user is not able to do quick registration on mobile app wit... ===== Starting Test Setup =====
+===== Test Setup Completed =====
+===== Opening Gurutattva App =====
+[ WARN ] Retrying (Retry(total=2, connect=None, read=None, redirect=None, status=None)) after connection broken by 'NewConnectionError('<urllib3.connection.HTTPConnection object at 0x73faf3e9d150>: Failed to establish a new connection: [Errno 111] Connection refused')': /session
+[ WARN ] Retrying (Retry(total=1, connect=None, read=None, redirect=None, status=None)) after connection broken by 'NewConnectionError('<urllib3.connection.HTTPConnection object at 0x73faf3e9d7b0>: Failed to establish a new connection: [Errno 111] Connection refused')': /session
+[ WARN ] Retrying (Retry(total=0, connect=None, read=None, redirect=None, status=None)) after connection broken by 'NewConnectionError('<urllib3.connection.HTTPConnection object at 0x73faf3e9d6a0>: Failed to establish a new connection: [Errno 111] Connection refused')': /session
+===== Starting Test Teardown =====
+✅ Mobile screenshot captured: /var/jenkins_home/workspace/Guruttava-E2E-Tests/results/Screenshot/Verify_user_is_not_able_to_do_quick_registration_on_mobile_app_with_already_used_email_id_and_phone_number_20260123_063611.png
+⚠️ Mobile screenshot capture failed, capturing web screenshot...
+✅ Screenshot captured: /var/jenkins_home/workspace/Guruttava-E2E-Tests/results/Screenshot/Verify_user_is_not_able_to_do_quick_registration_on_mobile_app_with_already_used_email_id_and_phone_number_20260123_063611.png
+===== Closing Gurutattva App =====
+⚠️ Graceful termination failed, using force stop
+⚠️ Mobile session close had issues
+===== Gurutattva App Closed =====
+🗑️ Cleared download directory: /var/jenkins_home/workspace/Guruttava-E2E-Tests/downloads
+===== Test Teardown Completed =====
+| FAIL |
+MaxRetryError: HTTPConnectionPool(host='localhost', port=4723): Max retries exceeded with url: /session (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x73faf3e9fbd0>: Failed to establish a new connection: [Errno 111] Connection refused'))
+------------------------------------------------------------------------------
+Verify that the quick registration user is not able to access Even... ===== Starting Test Setup =====
+===== Test Setup Completed =====
+===== Opening Gurutattva App =====
+[ WARN ] Retrying (Retry(total=2, connect=None, read=None, redirect=None, status=None)) after connection broken by 'NewConnectionError('<urllib3.connection.HTTPConnection object at 0x73faf3e9f680>: Failed to establish a new connection: [Errno 111] Connection refused')': /session
+[ WARN ] Retrying (Retry(total=1, connect=None, read=None, redirect=None, status=None)) after connection broken by 'NewConnectionError('<urllib3.connection.HTTPConnection object at 0x73faf3e9c8d0>: Failed to establish a new connection: [Errno 111] Connection refused')': /session
+[ WARN ] Retrying (Retry(total=0, connect=None, read=None, redirect=None, status=None)) after connection broken by 'NewConnectionError('<urllib3.connection.HTTPConnection object at 0x73faf3e9d040>: Failed to establish a new connection: [Errno 111] Connection refused')': /session
+===== Starting Test Teardown =====
+✅ Mobile screenshot captured: /var/jenkins_home/workspace/Guruttava-E2E-Tests/results/Screenshot/Verify_that_the_quick_registration_user_is_not_able_to_access_Events,_Dhyan_Kendra,_and_Podcasts_,_Home_screen_on_the_mobile_app,_and_that_a_pop-up_message_is_displayed_20260123_063624.png
+⚠️ Mobile screenshot capture failed, capturing web screenshot...
+✅ Screenshot captured: /var/jenkins_home/workspace/Guruttava-E2E-Tests/results/Screenshot/Verify_that_the_quick_registration_user_is_not_able_to_access_Events,_Dhyan_Kendra,_and_Podcasts_,_Home_screen_on_the_mobile_app,_and_that_a_pop-up_message_is_displayed_20260123_063624.png
+===== Closing Gurutattva App =====
+⚠️ Graceful termination failed, using force stop
+⚠️ Mobile session close had issues
+===== Gurutattva App Closed =====
+🗑️ Cleared download directory: /var/jenkins_home/workspace/Guruttava-E2E-Tests/downloads
+===== Test Teardown Completed =====
+| FAIL |
+MaxRetryError: HTTPConnectionPool(host='localhost', port=4723): Max retries exceeded with url: /session (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x73faf3e9dae0>: Failed to establish a new connection: [Errno 111] Connection refused'))
+------------------------------------------------------------------------------
+Verify that the quick registration user is able to become a member... ===== Starting Test Setup =====
+===== Test Setup Completed =====
+===== Opening Gurutattva App =====
+[ WARN ] Retrying (Retry(total=2, connect=None, read=None, redirect=None, status=None)) after connection broken by 'NewConnectionError('<urllib3.connection.HTTPConnection object at 0x73faf3e9d040>: Failed to establish a new connection: [Errno 111] Connection refused')': /session
+[ WARN ] Retrying (Retry(total=1, connect=None, read=None, redirect=None, status=None)) after connection broken by 'NewConnectionError('<urllib3.connection.HTTPConnection object at 0x73faf3e9c9e0>: Failed to establish a new connection: [Errno 111] Connection refused')': /session
+[ WARN ] Retrying (Retry(total=0, connect=None, read=None, redirect=None, status=None)) after connection broken by 'NewConnectionError('<urllib3.connection.HTTPConnection object at 0x73faf3e9fac0>: Failed to establish a new connection: [Errno 111] Connection refused')': /session
+===== Starting Test Teardown =====
+✅ Mobile screenshot captured: /var/jenkins_home/workspace/Guruttava-E2E-Tests/results/Screenshot/Verify_that_the_quick_registration_user_is_able_to_become_a_member_on_the_mobile_app_20260123_063637.png
+⚠️ Mobile screenshot capture failed, capturing web screenshot...
+✅ Screenshot captured: /var/jenkins_home/workspace/Guruttava-E2E-Tests/results/Screenshot/Verify_that_the_quick_registration_user_is_able_to_become_a_member_on_the_mobile_app_20260123_063637.png
+===== Closing Gurutattva App =====
+⚠️ Graceful termination failed, using force stop
+⚠️ Mobile session close had issues
+===== Gurutattva App Closed =====
+🗑️ Cleared download directory: /var/jenkins_home/workspace/Guruttava-E2E-Tests/downloads
+===== Test Teardown Completed =====
+| FAIL |
+MaxRetryError: HTTPConnectionPool(host='localhost', port=4723): Max retries exceeded with url: /session (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x73faf3e9c5a0>: Failed to establish a new connection: [Errno 111] Connection refused'))
+------------------------------------------------------------------------------
+Verify that Community registration on the mobile app reflects corr... ===== Starting Test Setup =====
+===== Test Setup Completed =====
+===== Opening Gurutattva App =====
+[ WARN ] Retrying (Retry(total=2, connect=None, read=None, redirect=None, status=None)) after connection broken by 'NewConnectionError('<urllib3.connection.HTTPConnection object at 0x73faf3e9d6a0>: Failed to establish a new connection: [Errno 111] Connection refused')': /session
+[ WARN ] Retrying (Retry(total=1, connect=None, read=None, redirect=None, status=None)) after connection broken by 'NewConnectionError('<urllib3.connection.HTTPConnection object at 0x73faf3e9c7c0>: Failed to establish a new connection: [Errno 111] Connection refused')': /session
+[ WARN ] Retrying (Retry(total=0, connect=None, read=None, redirect=None, status=None)) after connection broken by 'NewConnectionError('<urllib3.connection.HTTPConnection object at 0x73faf3e9d590>: Failed to establish a new connection: [Errno 111] Connection refused')': /session
+===== Starting Test Teardown =====
+✅ Mobile screenshot captured: /var/jenkins_home/workspace/Guruttava-E2E-Tests/results/Screenshot/Verify_that_Community_registration_on_the_mobile_app_reflects_correctly_in_the_CMS_and_user_details_are_displayed_properly_in_profile_and_flip_card__20260123_063650.png
+⚠️ Mobile screenshot capture failed, capturing web screenshot...
+✅ Screenshot captured: /var/jenkins_home/workspace/Guruttava-E2E-Tests/results/Screenshot/Verify_that_Community_registration_on_the_mobile_app_reflects_correctly_in_the_CMS_and_user_details_are_displayed_properly_in_profile_and_flip_card__20260123_063650.png
+===== Closing Gurutattva App =====
+⚠️ Graceful termination failed, using force stop
+⚠️ Mobile session close had issues
+===== Gurutattva App Closed =====
+🗑️ Cleared download directory: /var/jenkins_home/workspace/Guruttava-E2E-Tests/downloads
+===== Test Teardown Completed =====
+| FAIL |
+MaxRetryError: HTTPConnectionPool(host='localhost', port=4723): Max retries exceeded with url: /session (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x73faf3e9c8d0>: Failed to establish a new connection: [Errno 111] Connection refused'))
+------------------------------------------------------------------------------
+Verify that the community registered user is able to access Events... ===== Starting Test Setup =====
+===== Test Setup Completed =====
+===== Opening Gurutattva App =====
+[ WARN ] Retrying (Retry(total=2, connect=None, read=None, redirect=None, status=None)) after connection broken by 'NewConnectionError('<urllib3.connection.HTTPConnection object at 0x73faf3e9c7c0>: Failed to establish a new connection: [Errno 111] Connection refused')': /session
+[ WARN ] Retrying (Retry(total=1, connect=None, read=None, redirect=None, status=None)) after connection broken by 'NewConnectionError('<urllib3.connection.HTTPConnection object at 0x73faf3e9d590>: Failed to establish a new connection: [Errno 111] Connection refused')': /session
+[ WARN ] Retrying (Retry(total=0, connect=None, read=None, redirect=None, status=None)) after connection broken by 'NewConnectionError('<urllib3.connection.HTTPConnection object at 0x73faf3e9c6b0>: Failed to establish a new connection: [Errno 111] Connection refused')': /session
+===== Starting Test Teardown =====
+✅ Mobile screenshot captured: /var/jenkins_home/workspace/Guruttava-E2E-Tests/results/Screenshot/Verify_that_the_community_registered_user_is_able_to_access_Events,_Dhyan_Kendra,_and_Podcasts_on_the_mobile_app,_and_ensure_that_no_pop-up_message_is_displayed_20260123_063703.png
+⚠️ Mobile screenshot capture failed, capturing web screenshot...
+✅ Screenshot captured: /var/jenkins_home/workspace/Guruttava-E2E-Tests/results/Screenshot/Verify_that_the_community_registered_user_is_able_to_access_Events,_Dhyan_Kendra,_and_Podcasts_on_the_mobile_app,_and_ensure_that_no_pop-up_message_is_displayed_20260123_063703.png
+===== Closing Gurutattva App =====
+⚠️ Graceful termination failed, using force stop
+⚠️ Mobile session close had issues
+===== Gurutattva App Closed =====
+🗑️ Cleared download directory: /var/jenkins_home/workspace/Guruttava-E2E-Tests/downloads
+===== Test Teardown Completed =====
+| FAIL |
+MaxRetryError: HTTPConnectionPool(host='localhost', port=4723): Max retries exceeded with url: /session (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x73faf3e9d040>: Failed to establish a new connection: [Errno 111] Connection refused'))
+------------------------------------------------------------------------------
+Guruttava_Android_E2E_Tests.E2ERegistration                           | FAIL |
+6 tests, 0 passed, 6 failed
+==============================================================================
+[ WARN ] Error in file '/var/jenkins_home/workspace/Guruttava-E2E-Tests/pages/E2ERoleRightPage.robot' on line 92: The '[Return]' setting is deprecated. Use the 'RETURN' statement instead.
+[ WARN ] Error in file '/var/jenkins_home/workspace/Guruttava-E2E-Tests/pages/E2ERoleRightPage.robot' on line 111: The '[Return]' setting is deprecated. Use the 'RETURN' statement instead.
+[ WARN ] Error in file '/var/jenkins_home/workspace/Guruttava-E2E-Tests/pages/E2ERoleRightPage.robot' on line 256: The '[Return]' setting is deprecated. Use the 'RETURN' statement instead.
+[ WARN ] Error in file '/var/jenkins_home/workspace/Guruttava-E2E-Tests/pages/E2ERoleRightPage.robot' on line 272: The '[Return]' setting is deprecated. Use the 'RETURN' statement instead.
+[ WARN ] Error in file '/var/jenkins_home/workspace/Guruttava-E2E-Tests/pages/E2ERoleRightPage.robot' on line 296: The '[Return]' setting is deprecated. Use the 'RETURN' statement instead.
+[ WARN ] Error in file '/var/jenkins_home/workspace/Guruttava-E2E-Tests/pages/E2ERoleRightPage.robot' on line 315: The '[Return]' setting is deprecated. Use the 'RETURN' statement instead.
+[ WARN ] Error in file '/var/jenkins_home/workspace/Guruttava-E2E-Tests/pages/E2ERoleRightPage.robot' on line 510: The '[Return]' setting is deprecated. Use the 'RETURN' statement instead.
+[ WARN ] Error in file '/var/jenkins_home/workspace/Guruttava-E2E-Tests/pages/E2ERoleRightPage.robot' on line 542: The '[Return]' setting is deprecated. Use the 'RETURN' statement instead.
+[ WARN ] Error in file '/var/jenkins_home/workspace/Guruttava-E2E-Tests/pages/E2ERoleRightPage.robot' on line 573: The '[Return]' setting is deprecated. Use the 'RETURN' statement instead.
+Guruttava_Android_E2E_Tests.E2ERoleRight                                      
+==============================================================================
+Test Prayer Coordinator Role Access :: Login as Prayer Coordinator... ===== Starting Test Setup =====
+===== Test Setup Completed =====
+🧪 Testing role access for: Prayer Coordinator
+🌐 Opening web browser: chrome
+🔗 Navigating to: https://gurutattvacmsnewdev.rysun.in:9090/
+===== Starting Test Teardown =====
+✅ Mobile screenshot captured: /var/jenkins_home/workspace/Guruttava-E2E-Tests/results/Screenshot/Test_Prayer_Coordinator_Role_Access_20260123_063722.png
+⚠️ Mobile screenshot capture failed, capturing web screenshot...
+✅ Screenshot captured: /var/jenkins_home/workspace/Guruttava-E2E-Tests/results/Screenshot/Test_Prayer_Coordinator_Role_Access_20260123_063722.png
+===== Closing Gurutattva App =====
+⚠️ Graceful termination failed, using force stop
+⚠️ Mobile session close had issues
+===== Gurutattva App Closed =====
+🗑️ Cleared download directory: /var/jenkins_home/workspace/Guruttava-E2E-Tests/downloads
+===== Test Teardown Completed =====
+| FAIL |
+WebDriverException: Message: Service /var/jenkins_home/.cache/selenium/chromedriver/linux64/144.0.7559.96/chromedriver unexpectedly exited. Status code was: 127
+------------------------------------------------------------------------------
+Test Global Event Coordinator Role Access :: Login as Global Event... ===== Starting Test Setup =====
+===== Test Setup Completed =====
+🧪 Testing role access for: Global Event Coordinator
+🌐 Opening web browser: chrome
+🔗 Navigating to: https://gurutattvacmsnewdev.rysun.in:9090/
+===== Starting Test Teardown =====
+✅ Mobile screenshot captured: /var/jenkins_home/workspace/Guruttava-E2E-Tests/results/Screenshot/Test_Global_Event_Coordinator_Role_Access_20260123_063738.png
+⚠️ Mobile screenshot capture failed, capturing web screenshot...
+✅ Screenshot captured: /var/jenkins_home/workspace/Guruttava-E2E-Tests/results/Screenshot/Test_Global_Event_Coordinator_Role_Access_20260123_063738.png
+===== Closing Gurutattva App =====
+⚠️ Graceful termination failed, using force stop
+⚠️ Mobile session close had issues
+===== Gurutattva App Closed =====
+🗑️ Cleared download directory: /var/jenkins_home/workspace/Guruttava-E2E-Tests/downloads
+===== Test Teardown Completed =====
+| FAIL |
+WebDriverException: Message: Service /var/jenkins_home/.cache/selenium/chromedriver/linux64/144.0.7559.96/chromedriver unexpectedly exited. Status code was: 127
+------------------------------------------------------------------------------
+Test Acharya Role Access :: Login as Acharya and validate menu acc... ===== Starting Test Setup =====
+===== Test Setup Completed =====
+🧪 Testing role access for: Acharya
+🌐 Opening web browser: chrome
+🔗 Navigating to: https://gurutattvacmsnewdev.rysun.in:9090/
+===== Starting Test Teardown =====
+✅ Mobile screenshot captured: /var/jenkins_home/workspace/Guruttava-E2E-Tests/results/Screenshot/Test_Acharya_Role_Access_20260123_063754.png
+⚠️ Mobile screenshot capture failed, capturing web screenshot...
+✅ Screenshot captured: /var/jenkins_home/workspace/Guruttava-E2E-Tests/results/Screenshot/Test_Acharya_Role_Access_20260123_063754.png
+===== Closing Gurutattva App =====
+⚠️ Graceful termination failed, using force stop
+⚠️ Mobile session close had issues
+===== Gurutattva App Closed =====
+🗑️ Cleared download directory: /var/jenkins_home/workspace/Guruttava-E2E-Tests/downloads
+===== Test Teardown Completed =====
+| FAIL |
+WebDriverException: Message: Service /var/jenkins_home/.cache/selenium/chromedriver/linux64/144.0.7559.96/chromedriver unexpectedly exited. Status code was: 127
+------------------------------------------------------------------------------
+Test Maha Acharya Role Access :: Login as Maha Acharya and validat... ===== Starting Test Setup =====
+===== Test Setup Completed =====
+🧪 Testing role access for: Maha Acharya
+🌐 Opening web browser: chrome
+🔗 Navigating to: https://gurutattvacmsnewdev.rysun.in:9090/
+===== Starting Test Teardown =====
+✅ Mobile screenshot captured: /var/jenkins_home/workspace/Guruttava-E2E-Tests/results/Screenshot/Test_Maha_Acharya_Role_Access_20260123_063810.png
+⚠️ Mobile screenshot capture failed, capturing web screenshot...
+✅ Screenshot captured: /var/jenkins_home/workspace/Guruttava-E2E-Tests/results/Screenshot/Test_Maha_Acharya_Role_Access_20260123_063810.png
+===== Closing Gurutattva App =====
+⚠️ Graceful termination failed, using force stop
+⚠️ Mobile session close had issues
+===== Gurutattva App Closed =====
+🗑️ Cleared download directory: /var/jenkins_home/workspace/Guruttava-E2E-Tests/downloads
+===== Test Teardown Completed =====
+| FAIL |
+WebDriverException: Message: Service /var/jenkins_home/.cache/selenium/chromedriver/linux64/144.0.7559.96/chromedriver unexpectedly exited. Status code was: 127
+------------------------------------------------------------------------------
+Test Namkaran Coordinator Role Access :: Login as Namkaran Coordin... ===== Starting Test Setup =====
+===== Test Setup Completed =====
+🧪 Testing role access for: Namkaran Coordinator
+🌐 Opening web browser: chrome
+🔗 Navigating to: https://gurutattvacmsnewdev.rysun.in:9090/
+===== Starting Test Teardown =====
+✅ Mobile screenshot captured: /var/jenkins_home/workspace/Guruttava-E2E-Tests/results/Screenshot/Test_Namkaran_Coordinator_Role_Access_20260123_063828.png
+⚠️ Mobile screenshot capture failed, capturing web screenshot...
+✅ Screenshot captured: /var/jenkins_home/workspace/Guruttava-E2E-Tests/results/Screenshot/Test_Namkaran_Coordinator_Role_Access_20260123_063828.png
+===== Closing Gurutattva App =====
+⚠️ Graceful termination failed, using force stop
+⚠️ Mobile session close had issues
+===== Gurutattva App Closed =====
+🗑️ Cleared download directory: /var/jenkins_home/workspace/Guruttava-E2E-Tests/downloads
+===== Test Teardown Completed =====
+| FAIL |
+WebDriverException: Message: Service /var/jenkins_home/.cache/selenium/chromedriver/linux64/144.0.7559.96/chromedriver unexpectedly exited. Status code was: 127
+------------------------------------------------------------------------------
+Guruttava_Android_E2E_Tests.E2ERoleRight                              | FAIL |
+5 tests, 0 passed, 5 failed
+==============================================================================
+Guruttava_Android_E2E_Tests                                           | FAIL |
+78 tests, 0 passed, 78 failed
+==============================================================================
+Output:  /var/jenkins_home/workspace/Guruttava-E2E-Tests/robot-results/output.xml
+XUnit:   /var/jenkins_home/workspace/Guruttava-E2E-Tests/robot-results/robot-results/xunit.xml
+Log:     /var/jenkins_home/workspace/Guruttava-E2E-Tests/robot-results/log.html
+Report:  /var/jenkins_home/workspace/Guruttava-E2E-Tests/robot-results/report.html
+Robot Framework exit code: 78
+Parsing test results and uploading to platform...
+Triggering AI analysis for failures...
+{
+  "error": "Missing required field: build_id"
+}
+=========================================
+Guruttava Tests completed!
+Platform: Android
+Results uploaded to project_id: 2
+=========================================
+Build step 'Execute shell' marked build as failure
+Archiving artifacts
+Recording test results
+No test report files were found. Configuration error?
+[Checks API] No suitable checks publisher found.
+Finished: FAILURE
