@@ -1,0 +1,1172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Multi-Project Architecture Guide - DDN AI Platform</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 50px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 3em;
+            margin-bottom: 15px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .header p {
+            font-size: 1.3em;
+            opacity: 0.95;
+        }
+
+        .nav {
+            background: #2d3748;
+            padding: 15px 50px;
+            display: flex;
+            gap: 30px;
+            overflow-x: auto;
+        }
+
+        .nav a {
+            color: white;
+            text-decoration: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            transition: all 0.3s;
+            white-space: nowrap;
+        }
+
+        .nav a:hover {
+            background: #4a5568;
+            transform: translateY(-2px);
+        }
+
+        .content {
+            padding: 50px;
+        }
+
+        .section {
+            margin-bottom: 60px;
+        }
+
+        .section h2 {
+            color: #667eea;
+            font-size: 2.2em;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 3px solid #667eea;
+        }
+
+        .section h3 {
+            color: #764ba2;
+            font-size: 1.8em;
+            margin: 30px 0 20px 0;
+        }
+
+        .info-box {
+            background: #f7fafc;
+            border-left: 5px solid #667eea;
+            padding: 25px;
+            margin: 20px 0;
+            border-radius: 8px;
+        }
+
+        .info-box.success {
+            background: #f0fdf4;
+            border-left-color: #10b981;
+        }
+
+        .info-box.warning {
+            background: #fffbeb;
+            border-left-color: #f59e0b;
+        }
+
+        .info-box.error {
+            background: #fef2f2;
+            border-left-color: #ef4444;
+        }
+
+        .architecture-diagram {
+            background: #1a202c;
+            color: #e2e8f0;
+            padding: 30px;
+            border-radius: 12px;
+            margin: 30px 0;
+            font-family: 'Courier New', monospace;
+            overflow-x: auto;
+        }
+
+        .flow-step {
+            background: white;
+            border: 2px solid #667eea;
+            border-radius: 12px;
+            padding: 25px;
+            margin: 20px 0;
+            position: relative;
+        }
+
+        .flow-step::before {
+            content: attr(data-step);
+            position: absolute;
+            top: -15px;
+            left: 20px;
+            background: #667eea;
+            color: white;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 0.9em;
+        }
+
+        .flow-step h4 {
+            color: #667eea;
+            font-size: 1.4em;
+            margin-bottom: 15px;
+            margin-top: 10px;
+        }
+
+        .code-block {
+            background: #1a202c;
+            color: #e2e8f0;
+            padding: 25px;
+            border-radius: 12px;
+            margin: 20px 0;
+            overflow-x: auto;
+            position: relative;
+        }
+
+        .code-block::before {
+            content: attr(data-lang);
+            position: absolute;
+            top: 10px;
+            right: 15px;
+            background: #667eea;
+            color: white;
+            padding: 3px 10px;
+            border-radius: 5px;
+            font-size: 0.8em;
+            text-transform: uppercase;
+        }
+
+        .code-block pre {
+            margin: 0;
+            font-family: 'Courier New', monospace;
+            font-size: 0.95em;
+            line-height: 1.5;
+        }
+
+        .project-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 25px;
+            border-radius: 12px;
+            margin: 15px 0;
+        }
+
+        .project-card h4 {
+            font-size: 1.5em;
+            margin-bottom: 10px;
+        }
+
+        .project-card ul {
+            list-style: none;
+            padding-left: 0;
+        }
+
+        .project-card li {
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.2);
+        }
+
+        .project-card li:last-child {
+            border-bottom: none;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 25px 0;
+            background: white;
+            box-shadow: 0 2px 15px rgba(0,0,0,0.1);
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        th {
+            background: #667eea;
+            color: white;
+            padding: 15px;
+            text-align: left;
+            font-weight: 600;
+        }
+
+        td {
+            padding: 15px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        tr:hover {
+            background: #f7fafc;
+        }
+
+        .tag {
+            display: inline-block;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.85em;
+            font-weight: 600;
+            margin-right: 8px;
+        }
+
+        .tag.success {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        .tag.error {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .tag.warning {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .tag.info {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+
+        .api-request {
+            background: #0d1117;
+            color: #58a6ff;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 15px 0;
+            font-family: 'Courier New', monospace;
+            border: 1px solid #30363d;
+        }
+
+        .api-request .method {
+            color: #3fb950;
+            font-weight: bold;
+        }
+
+        .api-request .url {
+            color: #58a6ff;
+        }
+
+        .api-request .header {
+            color: #79c0ff;
+        }
+
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin: 30px 0;
+        }
+
+        @media (max-width: 768px) {
+            .grid-2 {
+                grid-template-columns: 1fr;
+            }
+
+            .content {
+                padding: 20px;
+            }
+
+            .header h1 {
+                font-size: 2em;
+            }
+        }
+
+        .screenshot {
+            border: 3px solid #667eea;
+            border-radius: 12px;
+            padding: 20px;
+            background: #f7fafc;
+            margin: 20px 0;
+        }
+
+        .button {
+            display: inline-block;
+            background: #667eea;
+            color: white;
+            padding: 12px 25px;
+            border-radius: 8px;
+            text-decoration: none;
+            transition: all 0.3s;
+            font-weight: 600;
+        }
+
+        .button:hover {
+            background: #764ba2;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .comparison {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin: 30px 0;
+        }
+
+        .comparison-item {
+            padding: 25px;
+            border-radius: 12px;
+        }
+
+        .comparison-item.before {
+            background: #fee2e2;
+            border: 2px solid #ef4444;
+        }
+
+        .comparison-item.after {
+            background: #d1fae5;
+            border: 2px solid #10b981;
+        }
+
+        .comparison-item h4 {
+            margin-bottom: 15px;
+            font-size: 1.3em;
+        }
+
+        .footer {
+            background: #2d3748;
+            color: white;
+            padding: 30px 50px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1>🚀 Multi-Project Architecture Guide</h1>
+            <p>Complete Guide: How One Company Manages Multiple Projects (DDN, Guruttava, etc.)</p>
+        </div>
+
+        <!-- Navigation -->
+        <div class="nav">
+            <a href="#overview">Overview</a>
+            <a href="#architecture">Architecture</a>
+            <a href="#user-flow">User Flow</a>
+            <a href="#frontend">Frontend</a>
+            <a href="#backend">Backend</a>
+            <a href="#example">Real Example</a>
+            <a href="#migration">Migration</a>
+        </div>
+
+        <!-- Content -->
+        <div class="content">
+
+            <!-- Overview Section -->
+            <section id="overview" class="section">
+                <h2>📋 Overview</h2>
+
+                <div class="info-box warning">
+                    <h3>Current Problem</h3>
+                    <p><strong>Your system is hardcoded to ONE project only:</strong></p>
+                    <ul style="margin-left: 20px; margin-top: 10px;">
+                        <li>✗ Jira Project Key: KAN (hardcoded)</li>
+                        <li>✗ GitHub Repo: Sushrut-01/ddn-test-data (hardcoded)</li>
+                        <li>✗ MongoDB Database: ddn_tests (single database)</li>
+                        <li>✗ No way to add Guruttava or other projects</li>
+                    </ul>
+                </div>
+
+                <div class="info-box success">
+                    <h3>Solution: Multi-Tenant Architecture</h3>
+                    <p><strong>Transform your system to support unlimited projects:</strong></p>
+                    <ul style="margin-left: 20px; margin-top: 10px;">
+                        <li>✓ Support DDN, Guruttava, and any future projects</li>
+                        <li>✓ Each project has its own Jira, GitHub, configurations</li>
+                        <li>✓ Complete data isolation between projects</li>
+                        <li>✓ Users can have different roles in different projects</li>
+                        <li>✓ Easy project switching in frontend</li>
+                    </ul>
+                </div>
+
+                <h3>Company Structure Example</h3>
+                <div class="grid-2">
+                    <div class="project-card">
+                        <h4>🎯 Project 1: DDN</h4>
+                        <ul>
+                            <li><strong>Team:</strong> Alice (Admin), Bob (Developer)</li>
+                            <li><strong>Jira Project:</strong> KAN</li>
+                            <li><strong>GitHub:</strong> Sushrut-01/ddn-test-data</li>
+                            <li><strong>Data:</strong> 5,000 test failures</li>
+                            <li><strong>CI/CD:</strong> Jenkins pipeline</li>
+                        </ul>
+                    </div>
+
+                    <div class="project-card">
+                        <h4>🎯 Project 2: Guruttava</h4>
+                        <ul>
+                            <li><strong>Team:</strong> Alice (Admin), Charlie (Dev), Diana (Viewer)</li>
+                            <li><strong>Jira Project:</strong> GURU</li>
+                            <li><strong>GitHub:</strong> xyz-corp/guruttava-repo</li>
+                            <li><strong>Data:</strong> 2,000 test failures</li>
+                            <li><strong>CI/CD:</strong> GitHub Actions</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="info-box">
+                    <h4>Key Concepts</h4>
+                    <table>
+                        <tr>
+                            <th>Concept</th>
+                            <th>Description</th>
+                        </tr>
+                        <tr>
+                            <td><span class="tag info">Multi-Tenancy</span></td>
+                            <td>Each project is completely isolated (data, config, permissions)</td>
+                        </tr>
+                        <tr>
+                            <td><span class="tag info">Project Selector</span></td>
+                            <td>Frontend dropdown to switch between projects</td>
+                        </tr>
+                        <tr>
+                            <td><span class="tag info">RBAC</span></td>
+                            <td>Role-Based Access Control - Users have roles per project</td>
+                        </tr>
+                        <tr>
+                            <td><span class="tag info">Context Propagation</span></td>
+                            <td>project_id flows through all API calls automatically</td>
+                        </tr>
+                    </table>
+                </div>
+            </section>
+
+            <!-- Architecture Section -->
+            <section id="architecture" class="section">
+                <h2>🏗️ Architecture Design</h2>
+
+                <h3>Database Schema</h3>
+                <div class="architecture-diagram">
+<pre>
+┌─────────────────────────────────────────────────────────────────┐
+│                      PROJECTS TABLE                              │
+│  ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓  │
+│  ┃ id  │ slug      │ name        │ description  │ status   ┃  │
+│  ┣━━━━━╋━━━━━━━━━━━╋━━━━━━━━━━━━━╋━━━━━━━━━━━━━━╋━━━━━━━━━━┫  │
+│  ┃ 1   │ ddn       │ DDN Project │ Main project │ active   ┃  │
+│  ┃ 2   │ guruttava │ Guruttava   │ New project  │ active   ┃  │
+│  ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛  │
+└─────────────────────────────────────────────────────────────────┘
+                            │
+            ┌───────────────┼───────────────┐
+            │               │               │
+            v               v               v
+┌─────────────────┐  ┌──────────────┐  ┌─────────────────────┐
+│ USER_PROJECTS   │  │ PROJECT_     │  │ FAILURE_ANALYSIS    │
+│                 │  │ CONFIGURATIONS│  │                     │
+│ - user_id       │  │               │  │ - id                │
+│ - project_id    │  │ - project_id  │  │ - project_id ◄─────┼─ KEY!
+│ - role          │  │ - jira_key    │  │ - build_id          │
+│                 │  │ - github_repo │  │ - error_message     │
+└─────────────────┘  │ - ci_config   │  │ - classification    │
+                     └──────────────┘  └─────────────────────┘
+</pre>
+                </div>
+
+                <div class="comparison">
+                    <div class="comparison-item before">
+                        <h4>❌ Before (Single Project)</h4>
+                        <div class="code-block" data-lang="sql">
+<pre>
+SELECT * FROM failure_analysis
+ORDER BY created_at DESC
+LIMIT 50;
+
+-- Returns ALL failures from
+-- ALL projects mixed together
+</pre>
+                        </div>
+                    </div>
+
+                    <div class="comparison-item after">
+                        <h4>✅ After (Multi-Project)</h4>
+                        <div class="code-block" data-lang="sql">
+<pre>
+SELECT * FROM failure_analysis
+WHERE project_id = 1  -- DDN only
+ORDER BY created_at DESC
+LIMIT 50;
+
+-- Returns ONLY DDN failures
+-- Guruttava data isolated
+</pre>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- User Flow Section -->
+            <section id="user-flow" class="section">
+                <h2>👤 Complete User Flow</h2>
+
+                <h3>Scenario: Alice Logs In and Works on Multiple Projects</h3>
+
+                <div class="flow-step" data-step="Step 1">
+                    <h4>Login & Authentication</h4>
+                    <p>Alice logs in with her credentials:</p>
+
+                    <div class="screenshot">
+                        <strong>Login Screen:</strong><br><br>
+                        <div style="border: 1px solid #ccc; padding: 20px; background: white; border-radius: 8px;">
+                            Email: <input type="text" value="alice@xyzcorp.com" style="padding: 8px; width: 250px; margin-left: 10px;" readonly><br><br>
+                            Password: <input type="password" value="********" style="padding: 8px; width: 250px; margin-left: 10px;" readonly><br><br>
+                            <button style="background: #667eea; color: white; padding: 10px 30px; border: none; border-radius: 5px; cursor: pointer;">Login</button>
+                        </div>
+                    </div>
+
+                    <div class="api-request">
+<span class="method">POST</span> <span class="url">/api/auth/login</span>
+<span class="header">Content-Type: application/json</span>
+
+{
+  "email": "alice@xyzcorp.com",
+  "password": "********"
+}
+                    </div>
+
+                    <div class="code-block" data-lang="json">
+<pre>
+// Backend Response
+{
+  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "user": {
+    "id": 1,
+    "email": "alice@xyzcorp.com",
+    "name": "Alice",
+    "global_role": "admin"
+  },
+  "projects": [
+    {
+      "id": 1,
+      "slug": "ddn",
+      "name": "DDN Project",
+      "my_role": "project_admin",
+      "recent_failure_count": 45
+    },
+    {
+      "id": 2,
+      "slug": "guruttava",
+      "name": "Guruttava",
+      "my_role": "project_admin",
+      "recent_failure_count": 23
+    },
+    {
+      "id": 3,
+      "slug": "mobile",
+      "name": "Mobile App",
+      "my_role": "project_admin",
+      "recent_failure_count": 12
+    }
+  ]
+}
+</pre>
+                    </div>
+                </div>
+
+                <div class="flow-step" data-step="Step 2">
+                    <h4>Project Selection</h4>
+                    <p>Alice sees a dropdown with all her projects:</p>
+
+                    <div class="screenshot">
+                        <strong>Header with Project Selector:</strong><br><br>
+                        <div style="background: #2d3748; color: white; padding: 15px; border-radius: 8px;">
+                            <select style="padding: 10px; font-size: 16px; border-radius: 5px; width: 250px;">
+                                <option>🎯 DDN Project (Admin)</option>
+                                <option>🎯 Guruttava (Admin)</option>
+                                <option>🎯 Mobile App (Admin)</option>
+                            </select>
+                            &nbsp;&nbsp;
+                            <a href="#" style="color: white; margin-left: 20px;">Failures</a>
+                            <a href="#" style="color: white; margin-left: 20px;">Builds</a>
+                            <a href="#" style="color: white; margin-left: 20px;">Analytics</a>
+                        </div>
+                    </div>
+
+                    <div class="code-block" data-lang="javascript">
+<pre>
+// Frontend stores selected project
+localStorage.setItem('current_project_id', 1);  // DDN selected
+localStorage.setItem('current_project_slug', 'ddn');
+
+// All subsequent API calls will use project_id = 1
+</pre>
+                    </div>
+                </div>
+
+                <div class="flow-step" data-step="Step 3">
+                    <h4>View Failures (DDN Project)</h4>
+                    <p>Alice views failures - sees ONLY DDN data:</p>
+
+                    <div class="api-request">
+<span class="method">GET</span> <span class="url">/api/projects/1/failures?limit=50</span>
+<span class="header">Authorization: Bearer eyJhbGciOiJIUzI1NiIs...</span>
+                    </div>
+
+                    <div class="info-box success">
+                        <h4>Backend Processing:</h4>
+                        <ol style="margin-left: 20px;">
+                            <li><strong>Extract project_id from URL:</strong> project_id = 1</li>
+                            <li><strong>Verify user access:</strong> Check if Alice has access to project 1</li>
+                            <li><strong>Query database:</strong> SELECT * FROM failure_analysis WHERE project_id = 1</li>
+                            <li><strong>Return data:</strong> ONLY failures from DDN project</li>
+                        </ol>
+                    </div>
+
+                    <div class="screenshot">
+                        <strong>Failures Page (DDN Project):</strong><br><br>
+                        <div style="border: 1px solid #e2e8f0; padding: 20px; background: white; border-radius: 8px;">
+                            <h3 style="color: #667eea;">Failures - DDN Project</h3>
+                            <p style="color: #666;">Showing 50 failures</p><br>
+
+                            <div style="border: 1px solid #667eea; padding: 15px; margin-bottom: 10px; border-radius: 5px;">
+                                <strong>Build #123 - test_user_login FAILED</strong><br>
+                                <span class="tag error">Authentication Error</span>
+                                <span class="tag">Confidence: 95%</span>
+                            </div>
+
+                            <div style="border: 1px solid #667eea; padding: 15px; border-radius: 5px;">
+                                <strong>Build #122 - test_checkout FAILED</strong><br>
+                                <span class="tag warning">Database Error</span>
+                                <span class="tag">Confidence: 88%</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flow-step" data-step="Step 4">
+                    <h4>Switch to Guruttava Project</h4>
+                    <p>Alice switches to Guruttava - sees completely different data:</p>
+
+                    <div class="code-block" data-lang="javascript">
+<pre>
+// User selects "Guruttava" from dropdown
+handleProjectChange({
+  id: 2,
+  slug: 'guruttava',
+  name: 'Guruttava'
+});
+
+// Updates localStorage
+localStorage.setItem('current_project_id', 2);
+
+// Reloads page with new project context
+window.location.reload();
+</pre>
+                    </div>
+
+                    <div class="api-request">
+<span class="method">GET</span> <span class="url">/api/projects/2/failures?limit=50</span>
+<span class="header">Authorization: Bearer eyJhbGciOiJIUzI1NiIs...</span>
+                    </div>
+
+                    <div class="info-box success">
+                        <h4>✅ Result:</h4>
+                        <p>Alice now sees ONLY Guruttava failures. DDN data is completely hidden!</p>
+                    </div>
+                </div>
+
+                <div class="flow-step" data-step="Step 5">
+                    <h4>Create Jira Issue (Project-Specific)</h4>
+                    <p>Alice creates a Jira issue in Guruttava's Jira project:</p>
+
+                    <div class="api-request">
+<span class="method">POST</span> <span class="url">/api/projects/2/jira/create-issue</span>
+<span class="header">Authorization: Bearer eyJhbGciOiJIUzI1NiIs...</span>
+<span class="header">Content-Type: application/json</span>
+
+{
+  "summary": "Payment gateway timeout",
+  "priority": "High"
+}
+                    </div>
+
+                    <div class="code-block" data-lang="python">
+<pre>
+# Backend automatically:
+# 1. Gets Guruttava's Jira config (jira_project_key = 'GURU')
+# 2. Creates issue in GURU project (NOT in DDN's KAN project)
+# 3. Returns: GURU-789
+
+SELECT jira_project_key FROM project_configurations
+WHERE project_id = 2;
+-- Result: 'GURU'
+
+jira.create_issue({
+  'project': {'key': 'GURU'},  # Guruttava's Jira
+  'summary': 'Payment gateway timeout',
+  'priority': 'High'
+})
+-- Creates: GURU-789
+</pre>
+                    </div>
+
+                    <div class="info-box success">
+                        <h4>✅ Result:</h4>
+                        <p>Issue created in <strong>GURU-789</strong> (Guruttava's Jira), NOT in KAN (DDN's Jira)!</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Frontend Implementation -->
+            <section id="frontend" class="section">
+                <h2>💻 Frontend Implementation</h2>
+
+                <h3>1. Project Selector Component</h3>
+                <div class="code-block" data-lang="jsx">
+<pre>
+// src/components/ProjectSelector.jsx
+
+import React, { useState, useEffect } from 'react';
+import { getProjects } from '../services/api';
+
+export default function ProjectSelector() {
+    const [projects, setProjects] = useState([]);
+    const [currentProject, setCurrentProject] = useState(null);
+
+    useEffect(() => {
+        loadProjects();
+    }, []);
+
+    const loadProjects = async () => {
+        const response = await getProjects();
+        setProjects(response.projects);
+
+        // Restore last selected project
+        const storedProjectId = localStorage.getItem('current_project_id');
+        if (storedProjectId) {
+            const project = response.projects.find(
+                p => p.id === parseInt(storedProjectId)
+            );
+            if (project) setCurrentProject(project);
+        }
+    };
+
+    const handleProjectChange = (projectId) => {
+        const project = projects.find(p => p.id === parseInt(projectId));
+
+        // Update localStorage
+        localStorage.setItem('current_project_id', project.id);
+        localStorage.setItem('current_project_slug', project.slug);
+
+        // Reload page
+        window.location.reload();
+    };
+
+    return (
+        &lt;div className="project-selector"&gt;
+            &lt;select onChange={(e) => handleProjectChange(e.target.value)}&gt;
+                {projects.map(project => (
+                    &lt;option key={project.id} value={project.id}&gt;
+                        {project.name} ({project.my_role})
+                    &lt;/option&gt;
+                ))}
+            &lt;/select&gt;
+        &lt;/div&gt;
+    );
+}
+</pre>
+                </div>
+
+                <h3>2. API Service with Project Context</h3>
+                <div class="code-block" data-lang="javascript">
+<pre>
+// src/services/api.js
+
+// Helper to get current project ID
+export const getCurrentProjectId = () => {
+    const projectId = localStorage.getItem('current_project_id');
+    if (!projectId) {
+        throw new Error('No project selected');
+    }
+    return parseInt(projectId);
+};
+
+// Failures API (project-scoped)
+export const failuresAPI = {
+    getList: (params = {}) => {
+        const projectId = getCurrentProjectId();
+        return axios.get(
+            `${API_BASE_URL}/api/projects/${projectId}/failures`,
+            { params }
+        );
+    }
+};
+
+// Jira API (project-scoped)
+export const jiraAPI = {
+    createIssue: (data) => {
+        const projectId = getCurrentProjectId();
+        return axios.post(
+            `${API_BASE_URL}/api/projects/${projectId}/jira/create-issue`,
+            data
+        );
+    }
+};
+</pre>
+                </div>
+
+                <h3>3. Page Component Example</h3>
+                <div class="code-block" data-lang="jsx">
+<pre>
+// src/pages/FailuresPage.jsx
+
+import { failuresAPI } from '../services/api';
+
+function FailuresPage() {
+    const [failures, setFailures] = useState([]);
+
+    useEffect(() => {
+        loadFailures();
+    }, []);
+
+    const loadFailures = async () => {
+        // Automatically uses current project from localStorage
+        const response = await failuresAPI.getList({ limit: 50 });
+        setFailures(response.failures);
+    };
+
+    return (
+        &lt;div&gt;
+            &lt;h1&gt;Failures&lt;/h1&gt;
+            {failures.map(failure => (
+                &lt;FailureCard key={failure.id} failure={failure} /&gt;
+            ))}
+        &lt;/div&gt;
+    );
+}
+</pre>
+                </div>
+            </section>
+
+            <!-- Backend Implementation -->
+            <section id="backend" class="section">
+                <h2>⚙️ Backend Implementation</h2>
+
+                <h3>1. Project Access Middleware</h3>
+                <div class="code-block" data-lang="python">
+<pre>
+# implementation/middleware/project_context.py
+
+def require_project_access(required_role=None):
+    """Decorator to validate project access"""
+    def decorator(f):
+        @wraps(f)
+        def decorated_function(*args, **kwargs):
+            # 1. Extract project_id from URL
+            project_id = kwargs.get('project_id')
+
+            # 2. Get user from JWT token
+            token = request.headers.get('Authorization')
+            payload = jwt.decode(token, JWT_SECRET)
+            user_id = payload['user_id']
+
+            # 3. Check if user has access to this project
+            cur.execute("""
+                SELECT role FROM user_projects
+                WHERE user_id = %s AND project_id = %s
+            """, (user_id, project_id))
+
+            result = cur.fetchone()
+            if not result:
+                return jsonify({'error': 'Access denied'}), 403
+
+            # 4. Store in request context
+            g.project_id = project_id
+            g.user_id = user_id
+            g.project_role = result[0]
+
+            return f(*args, **kwargs)
+        return decorated_function
+    return decorator
+</pre>
+                </div>
+
+                <h3>2. Project-Scoped API Endpoints</h3>
+                <div class="code-block" data-lang="python">
+<pre>
+# implementation/dashboard_api_full.py
+
+@app.route('/api/projects/&lt;int:project_id&gt;/failures', methods=['GET'])
+@require_project_access(required_role='viewer')
+def get_project_failures(project_id):
+    """Get failures for specific project"""
+
+    limit = int(request.args.get('limit', 50))
+
+    # Query ONLY this project's failures
+    cur.execute("""
+        SELECT * FROM failure_analysis
+        WHERE project_id = %s
+        ORDER BY created_at DESC
+        LIMIT %s
+    """, (project_id, limit))
+
+    failures = [dict(row) for row in cur.fetchall()]
+
+    return jsonify({
+        'failures': failures,
+        'project_id': project_id
+    })
+
+@app.route('/api/projects/&lt;int:project_id&gt;/jira/create-issue', methods=['POST'])
+@require_project_access(required_role='developer')
+def create_jira_issue(project_id):
+    """Create Jira issue in project's Jira"""
+
+    # Get project-specific Jira config
+    cur.execute("""
+        SELECT jira_project_key, jira_url, jira_token
+        FROM project_configurations
+        WHERE project_id = %s
+    """, (project_id,))
+
+    config = cur.fetchone()
+    jira_key = config['jira_project_key']  # e.g., 'GURU' for Guruttava
+
+    # Create issue in project's Jira
+    jira = JIRA(server=config['jira_url'], ...)
+    new_issue = jira.create_issue({
+        'project': {'key': jira_key},
+        'summary': request.json['summary']
+    })
+
+    return jsonify({'jira_key': new_issue.key})
+</pre>
+                </div>
+            </section>
+
+            <!-- Real Example -->
+            <section id="example" class="section">
+                <h2>🎯 Real-World Example</h2>
+
+                <h3>Team Working on Multiple Projects</h3>
+
+                <table>
+                    <tr>
+                        <th>User</th>
+                        <th>Projects</th>
+                        <th>What They See</th>
+                    </tr>
+                    <tr>
+                        <td><strong>Alice (Admin)</strong></td>
+                        <td>
+                            <span class="tag success">DDN (Admin)</span>
+                            <span class="tag success">Guruttava (Admin)</span>
+                            <span class="tag success">Mobile App (Admin)</span>
+                        </td>
+                        <td>Can switch between all projects, sees data for selected project only</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Bob (Developer)</strong></td>
+                        <td>
+                            <span class="tag info">DDN (Developer)</span>
+                        </td>
+                        <td>Only sees DDN project, cannot access Guruttava</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Charlie (Developer)</strong></td>
+                        <td>
+                            <span class="tag info">Guruttava (Developer)</span>
+                        </td>
+                        <td>Only sees Guruttava project, cannot access DDN</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Diana (Viewer)</strong></td>
+                        <td>
+                            <span class="tag warning">Guruttava (Viewer)</span>
+                        </td>
+                        <td>Can view Guruttava failures but cannot create Jira issues</td>
+                    </tr>
+                </table>
+
+                <h3>Data Isolation Example</h3>
+                <div class="info-box">
+                    <h4>Bob tries to access Guruttava data:</h4>
+                    <div class="api-request">
+<span class="method">GET</span> <span class="url">/api/projects/2/failures</span>
+<span class="header">Authorization: Bearer bob_token</span>
+                    </div>
+                    <div class="code-block" data-lang="json">
+<pre>
+// Backend Response
+{
+  "error": "Access denied to this project",
+  "status": 403
+}
+
+// Bob only has access to project_id=1 (DDN)
+// He cannot see project_id=2 (Guruttava) data
+</pre>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Migration Guide -->
+            <section id="migration" class="section">
+                <h2>🔄 Migration Guide</h2>
+
+                <h3>Steps to Transform Your System</h3>
+
+                <div class="flow-step" data-step="Phase 1">
+                    <h4>Database Migration (Week 1-2)</h4>
+                    <ul style="margin-left: 20px;">
+                        <li>Create new tables: <code>projects</code>, <code>user_projects</code>, <code>project_configurations</code></li>
+                        <li>Add <code>project_id</code> column to all existing tables</li>
+                        <li>Create default "DDN" project</li>
+                        <li>Backfill existing data with default project_id</li>
+                    </ul>
+                    <a href="#" class="button">Run Migration Script</a>
+                </div>
+
+                <div class="flow-step" data-step="Phase 2">
+                    <h4>Backend API Update (Week 3-4)</h4>
+                    <ul style="margin-left: 20px;">
+                        <li>Create <code>require_project_access</code> middleware</li>
+                        <li>Update all endpoints to use <code>/api/projects/&lt;id&gt;/...</code> pattern</li>
+                        <li>Add project filtering to all database queries</li>
+                        <li>Implement project-specific Jira/GitHub configs</li>
+                    </ul>
+                </div>
+
+                <div class="flow-step" data-step="Phase 3">
+                    <h4>Frontend Update (Week 5-6)</h4>
+                    <ul style="margin-left: 20px;">
+                        <li>Create <code>ProjectSelector</code> component</li>
+                        <li>Update all API calls to include project_id</li>
+                        <li>Add project context to localStorage</li>
+                        <li>Test project switching functionality</li>
+                    </ul>
+                </div>
+
+                <div class="flow-step" data-step="Phase 4">
+                    <h4>Testing & Deployment (Week 7-8)</h4>
+                    <ul style="margin-left: 20px;">
+                        <li>Test data isolation between projects</li>
+                        <li>Verify role-based access control</li>
+                        <li>Create "Guruttava" project and test</li>
+                        <li>Deploy to production</li>
+                    </ul>
+                </div>
+
+                <div class="info-box success">
+                    <h3>🎉 After Migration</h3>
+                    <p><strong>Your system will support:</strong></p>
+                    <ul style="margin-left: 20px; margin-top: 10px;">
+                        <li>✅ Unlimited projects (DDN, Guruttava, Project X, etc.)</li>
+                        <li>✅ Complete data isolation</li>
+                        <li>✅ Per-project Jira, GitHub, CI/CD configs</li>
+                        <li>✅ Role-based access per project</li>
+                        <li>✅ Easy project switching in UI</li>
+                    </ul>
+                </div>
+            </section>
+
+            <!-- Quick Reference -->
+            <section class="section">
+                <h2>📚 Quick Reference</h2>
+
+                <div class="grid-2">
+                    <div class="info-box">
+                        <h4>Frontend Checklist</h4>
+                        <ul style="margin-left: 20px;">
+                            <li>☑ Add ProjectSelector component to header</li>
+                            <li>☑ Store current_project_id in localStorage</li>
+                            <li>☑ Update all API calls to include project_id</li>
+                            <li>☑ Add project switching functionality</li>
+                            <li>☑ Display current project name in UI</li>
+                        </ul>
+                    </div>
+
+                    <div class="info-box">
+                        <h4>Backend Checklist</h4>
+                        <ul style="margin-left: 20px;">
+                            <li>☑ Create project access middleware</li>
+                            <li>☑ Update endpoints: /api/projects/&lt;id&gt;/...</li>
+                            <li>☑ Add WHERE project_id = ? to all queries</li>
+                            <li>☑ Implement project-specific configs</li>
+                            <li>☑ Add project activity logging</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <h3>Key Files to Modify</h3>
+                <table>
+                    <tr>
+                        <th>File</th>
+                        <th>Changes Needed</th>
+                    </tr>
+                    <tr>
+                        <td><code>dashboard_api_full.py</code></td>
+                        <td>Add project_id to all endpoints, implement middleware</td>
+                    </tr>
+                    <tr>
+                        <td><code>jira_integration_service.py</code></td>
+                        <td>Dynamic Jira config lookup per project</td>
+                    </tr>
+                    <tr>
+                        <td><code>dashboard-ui/src/App.jsx</code></td>
+                        <td>Add ProjectSelector component</td>
+                    </tr>
+                    <tr>
+                        <td><code>dashboard-ui/src/services/api.js</code></td>
+                        <td>Update all API calls with project context</td>
+                    </tr>
+                    <tr>
+                        <td><code>postgresql_schema.sql</code></td>
+                        <td>Add projects table and project_id columns</td>
+                    </tr>
+                </table>
+            </section>
+
+        </div>
+
+        <!-- Footer -->
+        <div class="footer">
+            <h3>🚀 Ready to Transform Your System?</h3>
+            <p style="margin-top: 15px;">Follow this guide to enable multi-project support in your DDN AI Platform</p>
+            <p style="margin-top: 10px; opacity: 0.8;">
+                Migration scripts: <code>implementation/migrations/001_add_multi_project_support.sql</code>
+            </p>
+        </div>
+    </div>
+</body>
+</html>

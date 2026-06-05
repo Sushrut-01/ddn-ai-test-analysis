@@ -68,11 +68,13 @@ GitHub Commit → Jenkins Build → npm test → Test Fails → AUTO-saves to Mo
 
 ## 🚀 How to Use (For Client)
 
-### Step 1: Make sure MongoDB is running
+### Step 1: Provide MongoDB connection (Atlas recommended)
 ```cmd
-# MongoDB should be on localhost:27017
-# If not running, start it
-mongod
+# Set your MongoDB connection string in the environment variable MONGODB_URI.
+# Example (PowerShell):
+# $env:MONGODB_URI = 'mongodb+srv://<user>:<pass>@cluster0.xxxxx.mongodb.net/ddn_tests?retryWrites=true&w=majority'
+# For local development you may run a local MongoDB and set MONGODB_URI to
+# 'mongodb://localhost:27017/ddn_tests', but production and CI should use Atlas.
 ```
 
 ### Step 2: Make sure Jenkins is running
@@ -200,7 +202,7 @@ After AI analyzes a failure:
                        ▼
               ┌─────────────────┐
               │    MongoDB      │
-              │  (localhost)    │
+              │  (set via MONGODB_URI)    │
               │  ddn_tests DB   │
               │ test_failures   │
               └────────┬────────┘
@@ -285,13 +287,13 @@ No webhooks, no APIs, no configuration!
 
 ---
 
-## 🛠️ Environment Variables (All Optional!)
+## 🛠️ Environment Variables
 
-Default values work out of the box. Override only if needed:
+The project requires the `MONGODB_URI` environment variable. MongoDB Atlas is recommended for production and CI. Example:
 
 ```env
-# MongoDB (Optional - defaults work!)
-MONGODB_URI=mongodb://localhost:27017/ddn_tests
+# Required: set to your MongoDB connection string (Atlas recommended)
+MONGODB_URI=mongodb+srv://<user>:<pass>@cluster0.xxxxx.mongodb.net/ddn_tests?retryWrites=true&w=majority
 MONGODB_DATABASE=ddn_tests
 MONGODB_COLLECTION_FAILURES=test_failures
 ```
@@ -314,7 +316,7 @@ MONGODB_COLLECTION_FAILURES=test_failures
 ## 🎉 Summary for Client
 
 ### What You Need to Do:
-1. **Make sure MongoDB is running** (localhost:27017)
+1. **Provide a MongoDB connection** via the `MONGODB_URI` environment variable (MongoDB Atlas recommended)
 2. **Make sure Jenkins is running** (localhost:8081)
 3. **That's it!**
 
@@ -330,7 +332,7 @@ MONGODB_COLLECTION_FAILURES=test_failures
 - ❌ Configure Jenkins jobs
 - ❌ Set up webhooks
 - ❌ Modify GitHub repository
-- ❌ Install extra services (just MongoDB + Jenkins)
+- ❌ Install extra services (just provide MongoDB (Atlas) + Jenkins)
 - ❌ Write any configuration files
 
 ---

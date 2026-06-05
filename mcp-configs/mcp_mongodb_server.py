@@ -28,7 +28,7 @@ logger = logging.getLogger(__name__)
 app = Flask(__name__)
 
 # MongoDB connection
-MONGODB_URI = os.getenv("MONGODB_URI", "mongodb://localhost:27017/ddn")
+MONGODB_URI = os.getenv("MONGODB_URI")
 mongo_client = None
 db = None
 
@@ -37,6 +37,9 @@ def get_mongo_connection():
     global mongo_client, db
 
     if mongo_client is None:
+        if not MONGODB_URI:
+            logger.error("❌ MONGODB_URI is not set. Configure MongoDB Atlas connection string in the environment as MONGODB_URI.")
+            raise RuntimeError("MONGODB_URI not configured")
         try:
             mongo_client = MongoClient(MONGODB_URI, serverSelectionTimeoutMS=5000)
             # Test connection

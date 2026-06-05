@@ -1,0 +1,23 @@
+# DDN AI - Layer 3: Worker/Background Dependencies
+# Install: pip install -r requirements-worker.txt
+# Use case: Celery workers, scheduled tasks, production
+# Prerequisite: requirements-base.txt + requirements-ml.txt
+
+# Include base and ML layers
+-r requirements-base.txt
+-r requirements-ml.txt
+
+# Async Task Processing
+celery==5.3.4
+flower==2.0.1
+
+# Scheduling
+APScheduler==3.10.4
+schedule==1.2.0
+
+# Monitoring & Tracing
+langfuse>=2.0.0
+
+# Production
+gunicorn==23.0.0
+gevent==24.11.1

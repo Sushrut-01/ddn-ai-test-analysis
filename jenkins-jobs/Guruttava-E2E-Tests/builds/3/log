@@ -1,0 +1,85 @@
+Started by timer
+Running as SYSTEM
+Building in workspace /var/jenkins_home/workspace/Guruttava-E2E-Tests
+[Guruttava-E2E-Tests] $ /bin/bash /tmp/jenkins6564447308454621414.sh
+=========================================
+Guruttava E2E Tests (Robot Framework)
+Build: 3
+Job: Guruttava-E2E-Tests
+Platform: Android
+Test Type: Smoke
+=========================================
+Project ID: 2 | Slug: guruttava
+Checking out code from https://github.com/Sushrut-01/gurutattva-e2e-automation (branch: Sushrut-laptop)...
+HEAD is now at 2d288d7 feat: add Jenkins pipeline to run all E2E suites sequentially (PROJECT_ID=2, Multi-Project)
+Removing resources/DockerChromeLibrary.py
+Git Branch: Sushrut-laptop | Commit: 2d288d73cc10e6006e222d80af955d53a97f6623
+Installing Robot Framework and dependencies...
+Creating Docker Chrome library wrapper (proven web solution)...
+✅ Docker Chrome library created
+Running E2E tests from: tests/E2E*.robot
+Appium Server: http://host.docker.internal:4723
+Configuring Chrome for headless mode in Docker...
+Installing ChromeDriver...
+Chrome Binary: /usr/bin/google-chrome
+ChromeDriver: /usr/bin/chromedriver
+Chrome Options: --headless --no-sandbox --disable-dev-shm-usage --disable-gpu --disable-software-rasterizer --disable-extensions --remote-debugging-port=9222 --user-data-dir=/tmp/chrome-user-data --window-size=1920,1080 --single-process
+Running Android E2E tests
+Test Type: Smoke
+Executing Robot Framework E2E tests (E2E* files only)...
+==============================================================================
+Guruttava_Android_E2E_Tests                                                   
+==============================================================================
+[ WARN ] Error in file '/var/jenkins_home/workspace/Guruttava-E2E-Tests/pages/E2EAudioPage.robot' on line 4800: The '[Return]' setting is deprecated. Use the 'RETURN' statement instead.
+[ WARN ] Error in file '/var/jenkins_home/workspace/Guruttava-E2E-Tests/pages/E2EAudioPage.robot' on line 4946: The '[Return]' setting is deprecated. Use the 'RETURN' statement instead.
+[ WARN ] Error in file '/var/jenkins_home/workspace/Guruttava-E2E-Tests/pages/E2EAudioPage.robot' on line 4962: The '[Return]' setting is deprecated. Use the 'RETURN' statement instead.
+[ WARN ] Error in file '/var/jenkins_home/workspace/Guruttava-E2E-Tests/pages/E2EAudioPage.robot' on line 4993: The '[Return]' setting is deprecated. Use the 'RETURN' statement instead.
+[ WARN ] Error in file '/var/jenkins_home/workspace/Guruttava-E2E-Tests/pages/E2EAudioPage.robot' on line 5533: The '[Return]' setting is deprecated. Use the 'RETURN' statement instead.
+[ WARN ] Error in file '/var/jenkins_home/workspace/Guruttava-E2E-Tests/pages/E2EAudioPage.robot' on line 5644: The '[Return]' setting is deprecated. Use the 'RETURN' statement instead.
+[ WARN ] Error in file '/var/jenkins_home/workspace/Guruttava-E2E-Tests/pages/E2ENewsPage.robot' on line 798: The '[Return]' setting is deprecated. Use the 'RETURN' statement instead.
+Guruttava_Android_E2E_Tests.E2EAudio                                          
+==============================================================================
+End-to-End Integration Create and Publish Music Track in Web CRM a... ===== Starting Test Setup =====
+===== Test Setup Completed =====
+🎯 Generated E2E Test Data:
+🎯 Category: E2E_Category_1803
+🎯 SubCategory: E2E_SubCategory_1803
+🎯 Audio Track: E2E_Track_1803
+🎯 Author: E2E_Author_1803
+🌐 Opening web browser: chrome
+🔗 Navigating to: https://gurutattvacmsnewdev.rysun.in:9090/
+===== Starting Test Teardown =====
+✅ Mobile screenshot captured: /var/jenkins_home/workspace/Guruttava-E2E-Tests/results/Screenshot/End-to-End_Integration_Create_and_Publish_Music_Track_in_Web_CRM_and_Verify_Playback_in_Mobile_App_20260119_182629.png
+⚠️ Mobile screenshot capture failed, capturing web screenshot...
+✅ Screenshot captured: /var/jenkins_home/workspace/Guruttava-E2E-Tests/results/Screenshot/End-to-End_Integration_Create_and_Publish_Music_Track_in_Web_CRM_and_Verify_Playback_in_Mobile_App_20260119_182629.png
+===== Closing Gurutattva App =====
+⚠️ Graceful termination failed, using force stop
+⚠️ Mobile session close had issues
+===== Gurutattva App Closed =====
+🗑️ Cleared download directory: /var/jenkins_home/workspace/Guruttava-E2E-Tests/downloads
+===== Test Teardown Completed =====
+| FAIL |
+NoSuchDriverException: Message: Unable to obtain driver for chrome; For documentation on this error, please visit: https://www.selenium.dev/documentation/webdriver/troubleshooting/errors/driver_location
+------------------------------------------------------------------------------
+Unpublish Music Track And Validate In Mobile App :: Unpublish the ... ===== Starting Test Setup =====
+===== Test Setup Completed =====
+🌐 Opening web browser: chrome
+🔗 Navigating to: https://gurutattvacmsnewdev.rysun.in:9090/
+Second signal will force exit.
+===== Starting Test Teardown =====
+✅ Mobile screenshot captured: /var/jenkins_home/workspace/Guruttava-E2E-Tests/results/Screenshot/Unpublish_Music_Track_And_Validate_In_Mobile_App_20260119_183157.png
+⚠️ Mobile screenshot capture failed, capturing web screenshot...
+✅ Screenshot captured: /var/jenkins_home/workspace/Guruttava-E2E-Tests/results/Screenshot/Unpublish_Music_Track_And_Validate_In_Mobile_App_20260119_183157.png
+===== Closing Gurutattva App =====
+⚠️ Graceful termination failed, using force stop
+⚠️ Mobile session close had issues
+===== Gurutattva App Closed =====
+Execution forcefully stopped.
+Build was aborted
+Aborted by [8mha:////4EpfYfbky4XNr3ZHUwfn27mdugp3gN5/h9+9fm6Vbh41AAAAmR+LCAAAAAAAAP9b85aBtbiIQTGjNKU4P08vOT+vOD8nVc83PyU1x6OyILUoJzMv2y+/JJUBAhiZGBgqihhk0NSjKDWzXb3RdlLBUSYGJk8GtpzUvPSSDB8G5tKinBIGIZ+sxLJE/ZzEvHT94JKizLx0a6BxUmjGOUNodHsLgAz2EgZe/dLi1CL90rzsvPzyPAATbMabwgAAAA==[0munknown
+Archiving artifacts
+Recording test results
+No test report files were found. Configuration error?
+None of the test reports contained any result
+[Checks API] No suitable checks publisher found.
+Finished: ABORTED

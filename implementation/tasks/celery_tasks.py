@@ -370,6 +370,143 @@ def cleanup_old_results(hours: int = 24):
 
 
 # ============================================================================
+# TASK: ASYNC AUDIT LOGGING
+# ============================================================================
+
+@app.task(name='tasks.log_audit_async')
+def log_audit_async(
+    action: str,
+    resource_type: str,
+    resource_id: str,
+    user_email: str = 'system',
+    details: str = None,
+    status: str = 'success',
+    ip_address: str = None
+) -> Dict[str, Any]:
+    """
+    Asynchronous audit logging task
+
+    Args:
+        action: Action performed (create, update, delete, etc.)
+        resource_type: Type of resource (failure, analysis, config, etc.)
+        resource_id: ID of the resource
+        user_email: User performing the action
+        details: JSON string with additional details
+        status: Status of the action
+        ip_address: IP address of the request
+
+    Returns:
+        Dict with logging result
+    """
+    try:
+        import psycopg2
+        import json
+
+        # Database connection
+        conn = psycopg2.connect(
+            host=os.getenv('POSTGRES_HOST', 'localhost'),
+            port=os.getenv('POSTGRES_PORT', 5432),
+            database=os.getenv('POSTGRES_DB', 'ddn_ai_analysis'),
+            user=os.getenv('POSTGRES_USER', 'postgres'),
+            password=os.getenv('POSTGRES_PASSWORD', 'password')
+        )
+
+        cursor = conn.cursor()
+
+        # Insert audit log entry
+        cursor.execute("""
+            INSERT INTO audit_log
+            (timestamp, user_email, action, resource_type, resource_id, details, status, ip_address)
+            VALUES (NOW(), %s, %s, %s, %s, %s, %s, %s)
+        """, (user_email, action, resource_type, resource_id, details, status, ip_address))
+
+        conn.commit()
+        cursor.close()
+        conn.close()
+
+        logger.info(f"✓ Audit log: {user_email} {action} {resource_type}/{resource_id}")
+
+        return {
+            'status': 'success',
+            'action': action,
+            'resource_type': resource_type,
+            'resource_id': resource_id,
+            'timestamp': datetime.now().isoformat()
+        }
+
+    except Exception as e:
+        logger.error(f"✗ Audit log failed: {str(e)}")
+        return {
+            'status': 'failed',
+            'error': str(e),
+            'timestamp': datetime.now().isoformat()
+        }
+
+
+@app.task(name='tasks.log_audit_batch_async')
+def log_audit_batch_async(audit_entries: list) -> Dict[str, Any]:
+    """
+    Batch asynchronous audit logging task
+
+    Args:
+        audit_entries: List of audit log entry dicts
+            Each entry should have: action, resource_type, resource_id, user_email, etc.
+
+    Returns:
+        Dict with batch logging result
+    """
+    try:
+        import psycopg2
+
+        # Database connection
+        conn = psycopg2.connect(
+            host=os.getenv('POSTGRES_HOST', 'localhost'),
+            port=os.getenv('POSTGRES_PORT', 5432),
+            database=os.getenv('POSTGRES_DB', 'ddn_ai_analysis'),
+            user=os.getenv('POSTGRES_USER', 'postgres'),
+            password=os.getenv('POSTGRES_PASSWORD', 'password')
+        )
+
+        cursor = conn.cursor()
+
+        # Batch insert audit log entries
+        for entry in audit_entries:
+            cursor.execute("""
+                INSERT INTO audit_log
+                (timestamp, user_email, action, resource_type, resource_id, details, status, ip_address)
+                VALUES (NOW(), %s, %s, %s, %s, %s, %s, %s)
+            """, (
+                entry.get('user_email', 'system'),
+                entry.get('action'),
+                entry.get('resource_type'),
+                entry.get('resource_id'),
+                entry.get('details'),
+                entry.get('status', 'success'),
+                entry.get('ip_address')
+            ))
+
+        conn.commit()
+        cursor.close()
+        conn.close()
+
+        logger.info(f"✓ Batch audit log: {len(audit_entries)} entries")
+
+        return {
+            'status': 'success',
+            'entries_logged': len(audit_entries),
+            'timestamp': datetime.now().isoformat()
+        }
+
+    except Exception as e:
+        logger.error(f"✗ Batch audit log failed: {str(e)}")
+        return {
+            'status': 'failed',
+            'error': str(e),
+            'timestamp': datetime.now().isoformat()
+        }
+
+
+# ============================================================================
 # TEST HARNESS
 # ============================================================================
 

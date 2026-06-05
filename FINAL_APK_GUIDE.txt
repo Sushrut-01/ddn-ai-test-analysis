@@ -1,0 +1,183 @@
+╔════════════════════════════════════════════════════════════════════════════╗
+║                      ✅ YOUR APK IS READY - FINAL GUIDE                    ║
+╚════════════════════════════════════════════════════════════════════════════╝
+
+
+📦 WHAT YOU HAVE
+================
+
+✅ Installed APK: DDN AI Mobile App (25 MB)
+✅ Real Backend: Running in Docker on port 8005
+✅ Real Data: Available and waiting
+
+
+🎯 THE ISSUE
+============
+
+Settings screen is read-only - can't edit IP address in app
+Settings screen doesn't allow manual entry of API endpoint URL
+
+
+✅ THE SOLUTION - 5 MINUTES
+===========================
+
+Edit source code → Rebuild APK → Reinstall
+(Hardcode your real IP directly in the code)
+
+
+📋 STEP-BY-STEP
+===============
+
+STEP 1: Find Your IP (1 min)
+----------------------------
+
+Windows CMD:
+   ipconfig
+
+Find: IPv4 Address (e.g., 192.168.1.5)
+
+
+STEP 2: Edit File (2 min)
+------------------------
+
+File: C:\DDN-AI-Project-Documentation\ddn_ai_mobile\lib\core\constants\api_endpoints.dart
+
+Line 13, change:
+   From: static const String _computerIp = 'localhost';
+   To:   static const String _computerIp = '192.168.1.5';  (YOUR IP)
+
+Save
+
+
+STEP 3: Rebuild APK (2 min)
+---------------------------
+
+Terminal:
+   cd C:\DDN-AI-Project-Documentation\ddn_ai_mobile
+   flutter build apk --release
+
+Output:
+   build\app\outputs\flutter-apk\app-release.apk
+
+
+STEP 4: Install (1 min)
+-----------------------
+
+Terminal:
+   adb uninstall com.example.ddn_ai_mobile
+   adb install build\app\outputs\flutter-apk\app-release.apk
+
+Open app → REAL DATA! 🎉
+
+
+═════════════════════════════════════════════════════════════════════════════
+
+CURRENT APK LOCATION
+====================
+
+C:\DDN-AI-Project-Documentation\ddn_ai_mobile_release.apk (25 MB)
+
+Status: Installed, running, but needs IP configuration
+
+
+DETAILED GUIDE
+==============
+
+See file: QUICK_API_FIX.txt (in this directory)
+
+
+═════════════════════════════════════════════════════════════════════════════
+
+WHAT YOU'LL SEE AFTER:
+
+✅ Dashboard Tab → Real test failures
+✅ Analysis Tab → AI root cause analysis  
+✅ Chat Tab → Message about failures
+✅ Analytics Tab → Failure charts and statistics
+✅ Notifications Tab → Real system messages
+✅ Settings Tab → Dark mode, preferences
+✅ ALL WITH REAL DATA! 🎉
+
+
+═════════════════════════════════════════════════════════════════════════════
+
+COMMANDS REFERENCE
+
+Find IP:
+   ipconfig
+
+Edit file:
+   C:\DDN-AI-Project-Documentation\ddn_ai_mobile\lib\core\constants\api_endpoints.dart
+   Change line 13 only
+
+Rebuild:
+   cd C:\DDN-AI-Project-Documentation\ddn_ai_mobile
+   flutter clean
+   flutter pub get
+   flutter build apk --release
+
+Install:
+   adb uninstall com.example.ddn_ai_mobile
+   adb install build\app\outputs\flutter-apk\app-release.apk
+
+
+═════════════════════════════════════════════════════════════════════════════
+
+FAQ
+
+Q: Why can't I edit IP in Settings?
+A: Current build doesn't have editable Settings field
+   This guide shows how to hardcode it instead
+
+Q: How long does rebuild take?
+A: 2-5 minutes usually
+
+Q: Do I need special tools?
+A: Just: Flutter SDK, Android SDK, ADB (you have these)
+
+Q: Can I use the current APK?
+A: Yes, but would need workaround for Settings
+   Rebuilding is cleaner
+
+Q: What if rebuild fails?
+A: Check: Did you enter IP correctly? (No typos?)
+   Is Flutter installed? (flutter --version)
+
+Q: Can I change IP later?
+A: Yes, just rebuild with new IP
+
+
+═════════════════════════════════════════════════════════════════════════════
+
+YOUR IP EXAMPLE
+
+If your ipconfig shows:
+   
+   Ethernet adapter Ethernet:
+      IPv4 Address. . . . . . . . . . . : 192.168.1.100
+
+Then use: 192.168.1.100
+
+In code, change line 13 to:
+   static const String _computerIp = '192.168.1.100';
+
+
+═════════════════════════════════════════════════════════════════════════════
+
+READY? FOLLOW THESE 5 STEPS:
+
+1. Open CMD → ipconfig → Copy your IPv4 Address
+2. Open: C:\DDN-AI-Project-Documentation\ddn_ai_mobile\lib\core\constants\api_endpoints.dart
+3. Find line 13, replace 'localhost' with your IP
+4. Save file
+5. Terminal: cd C:\DDN-AI-Project-Documentation\ddn_ai_mobile && flutter build apk --release
+6. Install: adb uninstall com.example.ddn_ai_mobile && adb install build\app\outputs\flutter-apk\app-release.apk
+7. Open app
+8. REAL DATA LOADS! 🎉
+
+
+═════════════════════════════════════════════════════════════════════════════
+
+That's it! Your app is ready, just needs IP configuration!
+
+═════════════════════════════════════════════════════════════════════════════

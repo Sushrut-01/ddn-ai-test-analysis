@@ -1,0 +1,189 @@
+╔════════════════════════════════════════════════════════════════════════════╗
+║  🚀 SIMPLE FIX: EDIT SOURCE CODE & REBUILD APK WITH YOUR REAL IP          ║
+╚════════════════════════════════════════════════════════════════════════════╝
+
+
+⚡ QUICKEST SOLUTION - 5 MINUTES
+================================
+
+Since the Settings feature isn't editable in the current APK,
+let's hardcode your IP directly in the source code and rebuild!
+
+
+STEP 1: Find Your IP (1 minute)
+===============================
+
+Open CMD/PowerShell:
+   ipconfig
+
+Look for:
+   IPv4 Address. . . . . . . . . . . : XXX.XXX.X.X
+
+Example:
+   IPv4 Address. . . . . . . . . . . : 192.168.1.5
+
+COPY THIS IP!
+
+
+STEP 2: Edit Source Code (2 minutes)
+====================================
+
+File to edit:
+   C:\DDN-AI-Project-Documentation\ddn_ai_mobile\lib\core\constants\api_endpoints.dart
+
+Find this line:
+   static const String _computerIp = 'localhost';
+
+Replace 'localhost' with YOUR IP:
+   static const String _computerIp = '192.168.1.5';
+
+EXAMPLE:
+   Old: static const String _computerIp = 'localhost';
+   New: static const String _computerIp = '192.168.1.5';
+
+Save the file!
+
+
+STEP 3: Rebuild APK (2 minutes)
+===============================
+
+Open Terminal/CMD in project folder:
+   cd C:\DDN-AI-Project-Documentation\ddn_ai_mobile
+   
+Rebuild:
+   flutter build apk --release
+
+New APK created at:
+   C:\DDN-AI-Project-Documentation\ddn_ai_mobile\build\app\outputs\flutter-apk\app-release.apk
+
+
+STEP 4: Reinstall on Device
+============================
+
+Uninstall old:
+   adb uninstall com.example.ddn_ai_mobile
+
+Install new:
+   adb install C:\DDN-AI-Project-Documentation\ddn_ai_mobile\build\app\outputs\flutter-apk\app-release.apk
+
+Open app → REAL DATA LOADS! 🎉
+
+
+═════════════════════════════════════════════════════════════════════════════
+
+EXACT STEPS TO EDIT FILE:
+
+1. Open File:
+   C:\DDN-AI-Project-Documentation\ddn_ai_mobile\lib\core\constants\api_endpoints.dart
+
+2. Find Line 13:
+   static const String _computerIp = 'localhost';
+
+3. Change to YOUR IP (example):
+   static const String _computerIp = '192.168.1.5';
+
+4. Save (Ctrl+S)
+
+5. Done!
+
+
+═════════════════════════════════════════════════════════════════════════════
+
+COMPLETE EXAMPLE:
+
+Your IP from ipconfig: 192.168.1.5
+
+Line before:
+   static const String _computerIp = 'localhost';
+
+Line after:
+   static const String _computerIp = '192.168.1.5';
+
+That's it!
+
+
+═════════════════════════════════════════════════════════════════════════════
+
+REBUILD COMMANDS:
+
+From project folder:
+   cd C:\DDN-AI-Project-Documentation\ddn_ai_mobile
+
+Clean:
+   flutter clean
+
+Get deps:
+   flutter pub get
+
+Build:
+   flutter build apk --release
+
+Install:
+   adb install build\app\outputs\flutter-apk\app-release.apk
+
+═════════════════════════════════════════════════════════════════════════════
+
+WHAT HAPPENS AFTER:
+
+✓ App starts
+✓ Connects to Docker backend at http://[YOUR_IP]:8005/api
+✓ REAL DATA LOADS
+✓ You see failures, analysis, chat, analytics - EVERYTHING!
+
+
+═════════════════════════════════════════════════════════════════════════════
+
+DON'T WANT TO REBUILD?
+
+Alternative: Keep current APK, manually change endpoint in app...
+
+But Settings feature is limited in current build.
+Rebuilding is faster and better!
+
+
+═════════════════════════════════════════════════════════════════════════════
+
+STILL NEED THE OLD APK?
+
+APK File: C:\DDN-AI-Project-Documentation\ddn_ai_mobile_release.apk (25 MB)
+
+Works with:
+   - Default localhost (for emulator)
+   - Needs manual IP configuration in Settings (if available)
+   - Limited editing capability
+
+
+BETTER: Rebuild with your IP hardcoded!
+
+
+═════════════════════════════════════════════════════════════════════════════
+
+GOT QUESTIONS?
+
+Q: Do I need to reconnect device?
+A: Yes, uninstall old APK first, then install new one
+
+Q: Will rebuild take long?
+A: 2-3 minutes usually
+
+Q: What if rebuild fails?
+A: Check error message, likely a typo in the IP address
+
+Q: Can I change IP later?
+A: Would need to rebuild again
+   (Or we can make Settings editable later)
+
+═════════════════════════════════════════════════════════════════════════════
+
+SUMMARY:
+
+1. Get your IP from ipconfig
+2. Edit api_endpoints.dart line 13
+3. Change 'localhost' to your IP
+4. Save
+5. Run: flutter build apk --release
+6. Install new APK
+7. Open app
+8. REAL DATA! 🎉
+
+═════════════════════════════════════════════════════════════════════════════

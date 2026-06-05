@@ -1,0 +1,17 @@
+{
+  "name": "ddn-ai-project-documentation",
+  "version": "1.0.0",
+  "description": "**Complete Dashboard-Centric System with MongoDB Integration**",
+  "main": "index.js",
+  "directories": {
+    "test": "tests"
+  },
+  "scripts": {},
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@playwright/test": "^1.56.1",
+    "@types/node": "^24.10.1"
+  }
+}

@@ -185,3 +185,36 @@ rancher-desktop.log
 deployment-test-report.txt
 RANCHER-INSTALL-SUMMARY.md
 RANCHER-SETUP-COMPLETE.txt
+
+# Playwright
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/
+/playwright/.auth/
+
+# Separate Git Repositories (have their own GitHub repos)
+ddn-jenkins-testing/
+ddn-playwright-automation/
+
+# Claude Code temporary files and directories
+tmpclaude-*
+implementation/dashboard-ui/tmpclaude-*
+implementation/tmpclaude-*
+
+# Mobile app builds
+*.apk
+*.aab
+*.ipa
+
+# Jenkins job configuration files (generated)
+*-config.xml
+*-config-v*.xml
+DDN-Test-Job-*.xml
+
+# Local batch/shell scripts
+*.bat
+*.cmd
+
+# Claude settings (user-specific)
+.claude/settings.local.json

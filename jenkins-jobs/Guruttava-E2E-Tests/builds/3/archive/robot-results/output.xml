@@ -1,0 +1,1432 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<robot generator="Robot 7.3.2 (Python 3.13.5 on linux)" generated="2026-01-19T18:19:34.212399" rpa="false" schemaversion="5">
+<suite id="s1" name="Guruttava_Android_E2E_Tests">
+<suite id="s1-s1" name="E2EAudio" source="/var/jenkins_home/workspace/Guruttava-E2E-Tests/tests/E2EAudio.robot">
+<test id="s1-s1-t1" name="End-to-End Integration Create and Publish Music Track in Web CRM and Verify Playback in Mobile App" line="24">
+<kw name="Test Setup" owner="test_setup_teardown" type="SETUP">
+<kw name="Log To Console" owner="BuiltIn">
+<arg>===== Starting Test Setup =====</arg>
+<doc>Logs the given message to the console.</doc>
+<status status="PASS" start="2026-01-19T18:21:17.714676" elapsed="0.000548"/>
+</kw>
+<kw name="Register Keyword To Run On Failure" owner="Web">
+<msg time="2026-01-19T18:21:17.716323" level="INFO">No Operation will be run on failure.</msg>
+<arg>No Operation</arg>
+<doc>Sets the keyword to execute, when a SeleniumLibrary keyword fails.</doc>
+<status status="PASS" start="2026-01-19T18:21:17.715716" elapsed="0.000757"/>
+</kw>
+<kw name="Register Keyword To Run On Failure" owner="Mobile">
+<msg time="2026-01-19T18:21:17.825396" level="INFO">No Operation will be run on failure.</msg>
+<arg>No Operation</arg>
+<doc>Sets the keyword to be executed when an AppiumLibrary keyword fails.</doc>
+<status status="PASS" start="2026-01-19T18:21:17.716807" elapsed="0.108896"/>
+</kw>
+<kw name="Run Keyword And Ignore Error" owner="BuiltIn">
+<kw name="Web Close All Browsers" owner="libraries">
+<kw name="Close All Browsers" owner="Web">
+<doc>Closes all open browsers and resets the browser cache.</doc>
+<status status="PASS" start="2026-01-19T18:21:17.828010" elapsed="0.000345"/>
+</kw>
+<status status="PASS" start="2026-01-19T18:21:17.827219" elapsed="0.001336"/>
+</kw>
+<arg>Web Close All Browsers</arg>
+<doc>Runs the given keyword with the given arguments and ignores possible error.</doc>
+<status status="PASS" start="2026-01-19T18:21:17.826245" elapsed="0.002434"/>
+</kw>
+<kw name="Sleep" owner="BuiltIn">
+<msg time="2026-01-19T18:21:18.840711" level="INFO">Slept 1 second.</msg>
+<arg>1s</arg>
+<doc>Pauses the test executed for the given time.</doc>
+<status status="PASS" start="2026-01-19T18:21:17.829070" elapsed="1.011888"/>
+</kw>
+<kw name="Run Keyword And Ignore Error" owner="BuiltIn">
+<kw name="Mobile Close Application" owner="libraries">
+<kw name="Close Application" owner="Mobile">
+<kw name="No Operation" owner="BuiltIn">
+<doc>Does absolutely nothing.</doc>
+<status status="PASS" start="2026-01-19T18:21:18.843444" elapsed="0.000379"/>
+</kw>
+<msg time="2026-01-19T18:21:18.844147" level="FAIL">No application is open</msg>
+<doc>Closes the current application and the webdriver session.</doc>
+<status status="FAIL" start="2026-01-19T18:21:18.842534" elapsed="0.333403">No application is open</status>
+</kw>
+<status status="FAIL" start="2026-01-19T18:21:18.841913" elapsed="0.334527">No application is open</status>
+</kw>
+<arg>Mobile Close Application</arg>
+<doc>Runs the given keyword with the given arguments and ignores possible error.</doc>
+<status status="PASS" start="2026-01-19T18:21:18.841376" elapsed="0.335312"/>
+</kw>
+<kw name="Sleep" owner="BuiltIn">
+<msg time="2026-01-19T18:21:21.178168" level="INFO">Slept 2 seconds.</msg>
+<arg>2s</arg>
+<doc>Pauses the test executed for the given time.</doc>
+<status status="PASS" start="2026-01-19T18:21:19.177457" elapsed="2.000922"/>
+</kw>
+<kw name="Log To Console" owner="BuiltIn">
+<arg>===== Test Setup Completed =====</arg>
+<doc>Logs the given message to the console.</doc>
+<status status="PASS" start="2026-01-19T18:21:21.178942" elapsed="0.000729"/>
+</kw>
+<doc>Setup for each test case - ensures clean state</doc>
+<status status="PASS" start="2026-01-19T18:21:17.702188" elapsed="3.477843"/>
+</kw>
+<kw name="Generate E2E Test Data" owner="E2EAudioPage">
+<kw name="Evaluate" owner="BuiltIn">
+<msg time="2026-01-19T18:21:21.182904" level="INFO">${random_num} = 1803</msg>
+<var>${random_num}</var>
+<arg>random.randint(1000, 9999)</arg>
+<arg>random</arg>
+<doc>Evaluates the given expression in Python and returns the result.</doc>
+<status status="PASS" start="2026-01-19T18:21:21.182289" elapsed="0.000688"/>
+</kw>
+<kw name="Set Suite Variable" owner="BuiltIn">
+<msg time="2026-01-19T18:21:21.183897" level="INFO">${E2E_RANDOM_NUMBER} = 1803</msg>
+<arg>${E2E_RANDOM_NUMBER}</arg>
+<arg>${random_num}</arg>
+<doc>Makes a variable available everywhere within the scope of the current suite.</doc>
+<status status="PASS" start="2026-01-19T18:21:21.183368" elapsed="0.000651"/>
+</kw>
+<kw name="Set Suite Variable" owner="BuiltIn">
+<msg time="2026-01-19T18:21:21.184960" level="INFO">${E2E_CATEGORY_NAME} = E2E_Category_1803</msg>
+<arg>${E2E_CATEGORY_NAME}</arg>
+<arg>E2E_Category_${random_num}</arg>
+<doc>Makes a variable available everywhere within the scope of the current suite.</doc>
+<status status="PASS" start="2026-01-19T18:21:21.184372" elapsed="0.000733"/>
+</kw>
+<kw name="Set Suite Variable" owner="BuiltIn">
+<msg time="2026-01-19T18:21:21.185955" level="INFO">${E2E_SUBCATEGORY_NAME} = E2E_SubCategory_1803</msg>
+<arg>${E2E_SUBCATEGORY_NAME}</arg>
+<arg>E2E_SubCategory_${random_num}</arg>
+<doc>Makes a variable available everywhere within the scope of the current suite.</doc>
+<status status="PASS" start="2026-01-19T18:21:21.185485" elapsed="0.000572"/>
+</kw>
+<kw name="Set Suite Variable" owner="BuiltIn">
+<msg time="2026-01-19T18:21:21.186869" level="INFO">${E2E_AUDIO_TRACK_TITLE} = E2E_Track_1803</msg>
+<arg>${E2E_AUDIO_TRACK_TITLE}</arg>
+<arg>E2E_Track_${random_num}</arg>
+<doc>Makes a variable available everywhere within the scope of the current suite.</doc>
+<status status="PASS" start="2026-01-19T18:21:21.186461" elapsed="0.000546"/>
+</kw>
+<kw name="Set Suite Variable" owner="BuiltIn">
+<msg time="2026-01-19T18:21:21.187866" level="INFO">${E2E_AUTHOR_NAME} = E2E_Author_1803</msg>
+<arg>${E2E_AUTHOR_NAME}</arg>
+<arg>E2E_Author_${random_num}</arg>
+<doc>Makes a variable available everywhere within the scope of the current suite.</doc>
+<status status="PASS" start="2026-01-19T18:21:21.187360" elapsed="0.000637"/>
+</kw>
+<kw name="Log To Console" owner="BuiltIn">
+<arg>🎯 Generated E2E Test Data:</arg>
+<doc>Logs the given message to the console.</doc>
+<status status="PASS" start="2026-01-19T18:21:21.188341" elapsed="0.000339"/>
+</kw>
+<kw name="Log To Console" owner="BuiltIn">
+<arg>🎯 Category: ${E2E_CATEGORY_NAME}</arg>
+<doc>Logs the given message to the console.</doc>
+<status status="PASS" start="2026-01-19T18:21:21.189143" elapsed="0.010291"/>
+</kw>
+<kw name="Log To Console" owner="BuiltIn">
+<arg>🎯 SubCategory: ${E2E_SUBCATEGORY_NAME}</arg>
+<doc>Logs the given message to the console.</doc>
+<status status="PASS" start="2026-01-19T18:21:21.199854" elapsed="0.000451"/>
+</kw>
+<kw name="Log To Console" owner="BuiltIn">
+<arg>🎯 Audio Track: ${E2E_AUDIO_TRACK_TITLE}</arg>
+<doc>Logs the given message to the console.</doc>
+<status status="PASS" start="2026-01-19T18:21:21.200915" elapsed="0.000486"/>
+</kw>
+<kw name="Log To Console" owner="BuiltIn">
+<arg>🎯 Author: ${E2E_AUTHOR_NAME}</arg>
+<doc>Logs the given message to the console.</doc>
+<status status="PASS" start="2026-01-19T18:21:21.201778" elapsed="0.000400"/>
+</kw>
+<doc>Generates unique test data for end-to-end validation</doc>
+<status status="PASS" start="2026-01-19T18:21:21.181518" elapsed="0.020823"/>
+</kw>
+<kw name="Open Web Browser" owner="web_keywords">
+<kw name="Log To Console" owner="BuiltIn">
+<arg>🌐 Opening web browser: ${WEB_BROWSER}</arg>
+<doc>Logs the given message to the console.</doc>
+<status status="PASS" start="2026-01-19T18:21:21.203597" elapsed="0.000352"/>
+</kw>
+<kw name="Log To Console" owner="BuiltIn">
+<arg>🔗 Navigating to: ${WEB_BASE_URL}</arg>
+<doc>Logs the given message to the console.</doc>
+<status status="PASS" start="2026-01-19T18:21:21.204314" elapsed="0.000382"/>
+</kw>
+<kw name="Web Open Browser" owner="libraries">
+<kw name="Open Browser" owner="Web">
+<msg time="2026-01-19T18:21:21.216512" level="INFO">Opening browser 'chrome' to base url 'https://gurutattvacmsnewdev.rysun.in:9090/'.</msg>
+<kw name="No Operation" owner="BuiltIn">
+<doc>Does absolutely nothing.</doc>
+<status status="PASS" start="2026-01-19T18:26:27.403670" elapsed="0.000764"/>
+</kw>
+<msg time="2026-01-19T18:26:27.411145" level="FAIL">NoSuchDriverException: Message: Unable to obtain driver for chrome; For documentation on this error, please visit: https://www.selenium.dev/documentation/webdriver/troubleshooting/errors/driver_location
+</msg>
+<arg>${url}</arg>
+<arg>${browser}</arg>
+<arg>${alias}</arg>
+<arg>${remote_url}</arg>
+<arg>&amp;{kwargs}</arg>
+<doc>Opens a new browser instance to the optional ``url``.</doc>
+<status status="FAIL" start="2026-01-19T18:21:21.215826" elapsed="307.818873">NoSuchDriverException: Message: Unable to obtain driver for chrome; For documentation on this error, please visit: https://www.selenium.dev/documentation/webdriver/troubleshooting/errors/driver_location
+</status>
+</kw>
+<arg>${WEB_BASE_URL}</arg>
+<arg>${WEB_BROWSER}</arg>
+<status status="FAIL" start="2026-01-19T18:21:21.205213" elapsed="307.829805">NoSuchDriverException: Message: Unable to obtain driver for chrome; For documentation on this error, please visit: https://www.selenium.dev/documentation/webdriver/troubleshooting/errors/driver_location
+</status>
+</kw>
+<kw name="Web Maximize Browser Window" owner="libraries">
+<status status="NOT RUN" start="2026-01-19T18:26:29.035437" elapsed="0.000053"/>
+</kw>
+<kw name="Web Set Selenium Implicit Wait" owner="libraries">
+<arg>${WEB_IMPLICIT_WAIT}</arg>
+<status status="NOT RUN" start="2026-01-19T18:26:29.035745" elapsed="0.000057"/>
+</kw>
+<kw name="Log To Console" owner="BuiltIn">
+<arg>✅ Web browser opened successfully</arg>
+<doc>Logs the given message to the console.</doc>
+<status status="NOT RUN" start="2026-01-19T18:26:29.036030" elapsed="0.000054"/>
+</kw>
+<kw name="Run Keyword And Return Status" owner="BuiltIn">
+<var>${ssl_warning_present}</var>
+<arg>Web Wait Until Page Contains Element</arg>
+<arg>id=details-button</arg>
+<arg>3s</arg>
+<doc>Runs the given keyword with given arguments and returns the status as a Boolean value.</doc>
+<status status="NOT RUN" start="2026-01-19T18:26:29.036419" elapsed="0.000090"/>
+</kw>
+<if>
+<branch type="IF" condition="${ssl_warning_present}">
+<kw name="Log To Console" owner="BuiltIn">
+<arg>⚠️ SSL Certificate warning detected, clicking Advanced...</arg>
+<doc>Logs the given message to the console.</doc>
+<status status="NOT RUN" start="2026-01-19T18:26:29.037434" elapsed="0.000081"/>
+</kw>
+<kw name="Web Click Element" owner="libraries">
+<arg>id=details-button</arg>
+<status status="NOT RUN" start="2026-01-19T18:26:29.037874" elapsed="0.000111"/>
+</kw>
+<kw name="Sleep" owner="BuiltIn">
+<arg>1s</arg>
+<doc>Pauses the test executed for the given time.</doc>
+<status status="NOT RUN" start="2026-01-19T18:26:29.038333" elapsed="0.000081"/>
+</kw>
+<kw name="Web Click Element" owner="libraries">
+<arg>id=proceed-link</arg>
+<status status="NOT RUN" start="2026-01-19T18:26:29.038771" elapsed="0.000076"/>
+</kw>
+<kw name="Sleep" owner="BuiltIn">
+<arg>2s</arg>
+<doc>Pauses the test executed for the given time.</doc>
+<status status="NOT RUN" start="2026-01-19T18:26:29.039100" elapsed="0.000120"/>
+</kw>
+<kw name="Log To Console" owner="BuiltIn">
+<arg>✅ Proceeded past SSL warning</arg>
+<doc>Logs the given message to the console.</doc>
+<status status="NOT RUN" start="2026-01-19T18:26:29.039460" elapsed="0.000049"/>
+</kw>
+<status status="NOT RUN" start="2026-01-19T18:26:29.036984" elapsed="0.002589"/>
+</branch>
+<status status="NOT RUN" start="2026-01-19T18:26:29.036759" elapsed="0.002904"/>
+</if>
+<kw name="Delete All Cookies" owner="Web">
+<doc>Deletes all cookies.</doc>
+<status status="NOT RUN" start="2026-01-19T18:26:29.039910" elapsed="0.000057"/>
+</kw>
+<kw name="Execute Javascript" owner="Web">
+<arg>window.localStorage.clear();</arg>
+<doc>Executes the given JavaScript code with possible arguments.</doc>
+<status status="NOT RUN" start="2026-01-19T18:26:29.040264" elapsed="0.000071"/>
+</kw>
+<kw name="Execute Javascript" owner="Web">
+<arg>window.sessionStorage.clear();</arg>
+<doc>Executes the given JavaScript code with possible arguments.</doc>
+<status status="NOT RUN" start="2026-01-19T18:26:29.040573" elapsed="0.000062"/>
+</kw>
+<kw name="Log To Console" owner="BuiltIn">
+<arg>✅ Cookies and cache cleared</arg>
+<doc>Logs the given message to the console.</doc>
+<status status="NOT RUN" start="2026-01-19T18:26:29.040957" elapsed="0.000057"/>
+</kw>
+<kw name="Wait For Page To Be Ready" owner="web_keywords">
+<doc>Waits for page to be fully loaded including JavaScript</doc>
+<status status="NOT RUN" start="2026-01-19T18:26:29.041393" elapsed="0.000071"/>
+</kw>
+<kw name="Log To Console" owner="BuiltIn">
+<arg>✅ Page is fully loaded and ready</arg>
+<doc>Logs the given message to the console.</doc>
+<status status="NOT RUN" start="2026-01-19T18:26:29.050587" elapsed="0.000133"/>
+</kw>
+<doc>Opens web browser and navigates to Gurutattva website</doc>
+<status status="FAIL" start="2026-01-19T18:21:21.202894" elapsed="307.848131">NoSuchDriverException: Message: Unable to obtain driver for chrome; For documentation on this error, please visit: https://www.selenium.dev/documentation/webdriver/troubleshooting/errors/driver_location
+</status>
+</kw>
+<kw name="Login in with valid credentials" owner="web_keywords">
+<doc>Logs in to web application with valid credentials</doc>
+<status status="NOT RUN" start="2026-01-19T18:26:29.051674" elapsed="0.000118"/>
+</kw>
+<kw name="Click on the Master Management Menu" owner="CRM_AudioCategoryPage">
+<doc>Clicks on the Master Management menu in the web application (DEPRECATED - redirects to Audio menu)</doc>
+<status status="NOT RUN" start="2026-01-19T18:26:29.052488" elapsed="0.000107"/>
+</kw>
+<kw name="Click on the Manage Audio Categories Submenu" owner="CRM_AudioCategoryPage">
+<doc>Clicks on the Manage Categories submenu under Audio menu (Updated for new UI)</doc>
+<status status="NOT RUN" start="2026-01-19T18:26:29.053239" elapsed="0.000116"/>
+</kw>
+<kw name="Create New Music Category" owner="E2EAudioPage">
+<status status="NOT RUN" start="2026-01-19T18:26:29.053877" elapsed="0.000097"/>
+</kw>
+<kw name="Create New Music SubCategory" owner="E2EAudioPage">
+<status status="NOT RUN" start="2026-01-19T18:26:29.054778" elapsed="0.000121"/>
+</kw>
+<kw name="Add a new Author for Music" owner="E2EAudioPage">
+<status status="NOT RUN" start="2026-01-19T18:26:29.055297" elapsed="0.000095"/>
+</kw>
+<kw name="Create New Audio Track" owner="E2EAudioPage">
+<status status="NOT RUN" start="2026-01-19T18:26:29.055791" elapsed="0.000136"/>
+</kw>
+<kw name="Publish Music Track" owner="E2EAudioPage">
+<doc>Publishes or activates the newly created music track (using exact pattern from PASSING Podcast publish)</doc>
+<status status="NOT RUN" start="2026-01-19T18:26:29.056286" elapsed="0.000073"/>
+</kw>
+<kw name="Close Web Browser" owner="web_keywords">
+<doc>Closes web browser</doc>
+<status status="NOT RUN" start="2026-01-19T18:26:29.056682" elapsed="0.000070"/>
+</kw>
+<kw name="Open Gurutattva App" owner="keywords">
+<doc>Opens Gurutattva app with proper session creation</doc>
+<status status="NOT RUN" start="2026-01-19T18:26:29.067020" elapsed="0.000111"/>
+</kw>
+<kw name="Handle First Time Setup" owner="loginPage">
+<status status="NOT RUN" start="2026-01-19T18:26:29.070325" elapsed="0.000130"/>
+</kw>
+<kw name="Launch Mobile App And Login" owner="E2EAudioPage">
+<doc>Handles login - EXACTLY matches TC07 Pre-Registration Setup approach
+Flow: Check for Home screen → if found, logout → then login</doc>
+<status status="NOT RUN" start="2026-01-19T18:26:29.071288" elapsed="0.000112"/>
+</kw>
+<kw name="Verify Track &amp; Category On Home Page In Audio Of The Day Section" owner="E2EAudioPage">
+<status status="NOT RUN" start="2026-01-19T18:26:29.071855" elapsed="0.000091"/>
+</kw>
+<kw name="Verify Track On Audio Page In Recently Added Section" owner="E2EAudioPage">
+<status status="NOT RUN" start="2026-01-19T18:26:29.072290" elapsed="0.010368"/>
+</kw>
+<kw name="Verify Track within the newly created category and subcategory" owner="E2EAudioPage">
+<status status="NOT RUN" start="2026-01-19T18:26:29.083248" elapsed="0.000111"/>
+</kw>
+<kw name="Search And Select Newly Created Track" owner="E2EAudioPage">
+<status status="NOT RUN" start="2026-01-19T18:26:29.083996" elapsed="0.002223"/>
+</kw>
+<kw name="Close Gurutattva App" owner="keywords">
+<doc>Safely closes app with proper cleanup sequence</doc>
+<status status="NOT RUN" start="2026-01-19T18:26:29.086859" elapsed="0.000097"/>
+</kw>
+<kw name="Test Teardown" owner="test_setup_teardown" type="TEARDOWN">
+<kw name="Log To Console" owner="BuiltIn">
+<arg>===== Starting Test Teardown =====</arg>
+<doc>Logs the given message to the console.</doc>
+<status status="PASS" start="2026-01-19T18:26:29.088553" elapsed="0.000496"/>
+</kw>
+<kw name="Run Keyword If Test Failed" owner="BuiltIn">
+<kw name="Take Screenshot On Failure" owner="test_setup_teardown">
+<try>
+<branch type="TRY">
+<kw name="Create Directory" owner="OperatingSystem">
+<msg time="2026-01-19T18:26:29.138040" level="INFO" html="true">Directory '&lt;a href="file:///var/jenkins_home/workspace/Guruttava-E2E-Tests/results/Screenshot"&gt;/var/jenkins_home/workspace/Guruttava-E2E-Tests/results/Screenshot&lt;/a&gt;' already exists.</msg>
+<arg>${SCREENSHOT_DIR}</arg>
+<doc>Creates the specified directory.</doc>
+<status status="PASS" start="2026-01-19T18:26:29.100146" elapsed="0.038124"/>
+</kw>
+<kw name="Get Current Date" owner="DateTime">
+<msg time="2026-01-19T18:26:29.143891" level="INFO">${timestamp} = 20260119_182629</msg>
+<var>${timestamp}</var>
+<arg>result_format=%Y%m%d_%H%M%S</arg>
+<doc>Returns current local or UTC time with an optional increment.</doc>
+<status status="PASS" start="2026-01-19T18:26:29.138886" elapsed="0.005095"/>
+</kw>
+<kw name="Replace String" owner="String">
+<msg time="2026-01-19T18:26:29.144805" level="INFO">${safe_test_name} = End-to-End_Integration_Create_and_Publish_Music_Track_in_Web_CRM_and_Verify_Playback_in_Mobile_App</msg>
+<var>${safe_test_name}</var>
+<arg>${test_name}</arg>
+<arg>${SPACE}</arg>
+<arg>_</arg>
+<doc>Replaces ``search_for`` in the given ``string`` with ``replace_with``.</doc>
+<status status="PASS" start="2026-01-19T18:26:29.144369" elapsed="0.000613"/>
+</kw>
+<kw name="Replace String" owner="String">
+<msg time="2026-01-19T18:26:29.145888" level="INFO">${safe_test_name} = End-to-End_Integration_Create_and_Publish_Music_Track_in_Web_CRM_and_Verify_Playback_in_Mobile_App</msg>
+<var>${safe_test_name}</var>
+<arg>${safe_test_name}</arg>
+<arg>.</arg>
+<arg>_</arg>
+<doc>Replaces ``search_for`` in the given ``string`` with ``replace_with``.</doc>
+<status status="PASS" start="2026-01-19T18:26:29.145394" elapsed="0.000567"/>
+</kw>
+<kw name="Set Variable" owner="BuiltIn">
+<msg time="2026-01-19T18:26:29.146779" level="INFO">${filename} = /var/jenkins_home/workspace/Guruttava-E2E-Tests/results/Screenshot/End-to-End_Integration_Create_and_Publish_Music_Track_in_Web_CRM_and_Verify_Playback_in_Mobile_App_20260119_182629.png</msg>
+<var>${filename}</var>
+<arg>${SCREENSHOT_DIR}/${safe_test_name}_${timestamp}.png</arg>
+<doc>Returns the given values which can then be assigned to a variables.</doc>
+<status status="PASS" start="2026-01-19T18:26:29.146323" elapsed="0.000521"/>
+</kw>
+<kw name="Custom Capture Screenshot" owner="libraries">
+<kw name="Run Keyword And Return Status" owner="BuiltIn">
+<kw name="Capture Page Screenshot" owner="Mobile">
+<kw name="No Operation" owner="BuiltIn">
+<doc>Does absolutely nothing.</doc>
+<status status="PASS" start="2026-01-19T18:26:29.179654" elapsed="0.000294"/>
+</kw>
+<msg time="2026-01-19T18:26:29.180242" level="FAIL">No application is open</msg>
+<arg>${filename}</arg>
+<doc>Takes a screenshot of the current page and embeds it into the log.</doc>
+<status status="FAIL" start="2026-01-19T18:26:29.148679" elapsed="0.253626">No application is open</status>
+</kw>
+<msg time="2026-01-19T18:26:29.402639" level="INFO">${mobile_status} = False</msg>
+<var>${mobile_status}</var>
+<arg>Mobile.Capture Page Screenshot</arg>
+<arg>${filename}</arg>
+<doc>Runs the given keyword with given arguments and returns the status as a Boolean value.</doc>
+<status status="PASS" start="2026-01-19T18:26:29.148239" elapsed="0.254464"/>
+</kw>
+<kw name="Log To Console" owner="BuiltIn">
+<arg>✅ Mobile screenshot captured: ${filename}</arg>
+<doc>Logs the given message to the console.</doc>
+<status status="PASS" start="2026-01-19T18:26:29.403108" elapsed="0.000491"/>
+</kw>
+<if>
+<branch type="IF" condition="not ${mobile_status}">
+<kw name="Log To Console" owner="BuiltIn">
+<arg>⚠️ Mobile screenshot capture failed, capturing web screenshot...</arg>
+<doc>Logs the given message to the console.</doc>
+<status status="PASS" start="2026-01-19T18:26:29.404396" elapsed="0.000329"/>
+</kw>
+<kw name="Capture Page Screenshot" owner="Web">
+<msg time="2026-01-19T18:26:29.405625" level="INFO">Cannot capture screenshot because no browser is open.</msg>
+<arg>${filename}</arg>
+<doc>Takes a screenshot of the current page and embeds it into a log file.</doc>
+<status status="PASS" start="2026-01-19T18:26:29.405218" elapsed="0.000531"/>
+</kw>
+<status status="PASS" start="2026-01-19T18:26:29.403824" elapsed="0.002031"/>
+</branch>
+<status status="PASS" start="2026-01-19T18:26:29.403767" elapsed="0.002172"/>
+</if>
+<arg>${filename}</arg>
+<status status="PASS" start="2026-01-19T18:26:29.147346" elapsed="0.258699"/>
+</kw>
+<kw name="Log To Console" owner="BuiltIn">
+<arg>✅ Screenshot captured: ${filename}</arg>
+<doc>Logs the given message to the console.</doc>
+<status status="PASS" start="2026-01-19T18:26:29.406438" elapsed="0.000508"/>
+</kw>
+<kw name="Log" owner="BuiltIn">
+<msg time="2026-01-19T18:26:29.407717" level="INFO" html="true">&lt;a href="/var/jenkins_home/workspace/Guruttava-E2E-Tests/results/Screenshot/End-to-End_Integration_Create_and_Publish_Music_Track_in_Web_CRM_and_Verify_Playback_in_Mobile_App_20260119_182629.png"&gt;Screenshot for End-to-End Integration Create and Publish Music Track in Web CRM and Verify Playback in Mobile App&lt;/a&gt;</msg>
+<arg>&lt;a href="${filename}"&gt;Screenshot for ${test_name}&lt;/a&gt;</arg>
+<arg>HTML</arg>
+<doc>Logs the given message with the given level.</doc>
+<status status="PASS" start="2026-01-19T18:26:29.407307" elapsed="0.000525"/>
+</kw>
+<status status="PASS" start="2026-01-19T18:26:29.099658" elapsed="0.308283"/>
+</branch>
+<branch type="EXCEPT" assign="${error}">
+<kw name="Log To Console" owner="BuiltIn">
+<arg>⚠️ Screenshot capture failed: ${error}</arg>
+<doc>Logs the given message to the console.</doc>
+<status status="NOT RUN" start="2026-01-19T18:26:29.408423" elapsed="0.000113"/>
+</kw>
+<try>
+<branch type="TRY">
+<kw name="Set Variable" owner="BuiltIn">
+<var>${alt_filename}</var>
+<arg>${SCREENSHOT_DIR}/failed_${test_name}.png</arg>
+<doc>Returns the given values which can then be assigned to a variables.</doc>
+<status status="NOT RUN" start="2026-01-19T18:26:29.409146" elapsed="0.000098"/>
+</kw>
+<kw name="Capture Page Screenshot" owner="Mobile">
+<arg>${alt_filename}</arg>
+<doc>Takes a screenshot of the current page and embeds it into the log.</doc>
+<status status="NOT RUN" start="2026-01-19T18:26:29.409559" elapsed="0.000086"/>
+</kw>
+<kw name="Log To Console" owner="BuiltIn">
+<arg>✅ Alternative screenshot captured: ${alt_filename}</arg>
+<doc>Logs the given message to the console.</doc>
+<status status="NOT RUN" start="2026-01-19T18:26:29.409961" elapsed="0.000076"/>
+</kw>
+<status status="NOT RUN" start="2026-01-19T18:26:29.408755" elapsed="0.001373"/>
+</branch>
+<branch type="EXCEPT" assign="${alt_error}">
+<kw name="Log To Console" owner="BuiltIn">
+<arg>❌ All screenshot methods failed: ${alt_error}</arg>
+<doc>Logs the given message to the console.</doc>
+<status status="NOT RUN" start="2026-01-19T18:26:29.410550" elapsed="0.000082"/>
+</kw>
+<status status="NOT RUN" start="2026-01-19T18:26:29.410248" elapsed="0.000477"/>
+</branch>
+<status status="NOT RUN" start="2026-01-19T18:26:29.408678" elapsed="0.002193"/>
+</try>
+<status status="NOT RUN" start="2026-01-19T18:26:29.408090" elapsed="0.002840"/>
+</branch>
+<status status="PASS" start="2026-01-19T18:26:29.099542" elapsed="0.311458"/>
+</try>
+<arg>${TEST NAME}</arg>
+<status status="PASS" start="2026-01-19T18:26:29.090125" elapsed="0.330227"/>
+</kw>
+<arg>Take Screenshot On Failure</arg>
+<arg>${TEST NAME}</arg>
+<doc>Runs the given keyword with the given arguments, if the test failed.</doc>
+<status status="PASS" start="2026-01-19T18:26:29.089430" elapsed="0.331181"/>
+</kw>
+<kw name="Run Keyword And Ignore Error" owner="BuiltIn">
+<kw name="Web Close All Browsers" owner="libraries">
+<kw name="Close All Browsers" owner="Web">
+<doc>Closes all open browsers and resets the browser cache.</doc>
+<status status="PASS" start="2026-01-19T18:26:29.428822" elapsed="0.000435"/>
+</kw>
+<status status="PASS" start="2026-01-19T18:26:29.427586" elapsed="0.001839"/>
+</kw>
+<arg>Web Close All Browsers</arg>
+<doc>Runs the given keyword with the given arguments and ignores possible error.</doc>
+<status status="PASS" start="2026-01-19T18:26:29.427012" elapsed="0.002514"/>
+</kw>
+<kw name="Sleep" owner="BuiltIn">
+<msg time="2026-01-19T18:26:30.437098" level="INFO">Slept 1 second.</msg>
+<arg>1s</arg>
+<doc>Pauses the test executed for the given time.</doc>
+<status status="PASS" start="2026-01-19T18:26:29.429880" elapsed="1.007395"/>
+</kw>
+<kw name="Run Keyword And Ignore Error" owner="BuiltIn">
+<kw name="Close Gurutattva App" owner="keywords">
+<kw name="Log To Console" owner="BuiltIn">
+<arg>===== Closing Gurutattva App =====</arg>
+<doc>Logs the given message to the console.</doc>
+<status status="PASS" start="2026-01-19T18:26:30.439166" elapsed="0.000766"/>
+</kw>
+<kw name="Run Keyword And Return Status" owner="BuiltIn">
+<kw name="Mobile Terminate Application" owner="libraries">
+<kw name="Terminate Application" owner="Mobile">
+<kw name="No Operation" owner="BuiltIn">
+<doc>Does absolutely nothing.</doc>
+<status status="PASS" start="2026-01-19T18:26:30.444343" elapsed="0.000326"/>
+</kw>
+<msg time="2026-01-19T18:26:30.444996" level="FAIL">No application is open</msg>
+<arg>${app_id}</arg>
+<doc>Terminates the given app on the device.</doc>
+<status status="FAIL" start="2026-01-19T18:26:30.443721" elapsed="0.047037">No application is open</status>
+</kw>
+<arg>${APP_PACKAGE}</arg>
+<status status="FAIL" start="2026-01-19T18:26:30.441150" elapsed="0.050144">No application is open</status>
+</kw>
+<msg time="2026-01-19T18:26:30.491954" level="INFO">${status} = False</msg>
+<var>${status}</var>
+<arg>Mobile Terminate Application</arg>
+<arg>${APP_PACKAGE}</arg>
+<doc>Runs the given keyword with given arguments and returns the status as a Boolean value.</doc>
+<status status="PASS" start="2026-01-19T18:26:30.440370" elapsed="0.051775"/>
+</kw>
+<if>
+<branch type="IF" condition="${status}">
+<kw name="Log To Console" owner="BuiltIn">
+<arg>✅ App terminated gracefully</arg>
+<doc>Logs the given message to the console.</doc>
+<status status="NOT RUN" start="2026-01-19T18:26:30.493113" elapsed="0.000201"/>
+</kw>
+<kw name="Sleep" owner="BuiltIn">
+<arg>2s</arg>
+<doc>Pauses the test executed for the given time.</doc>
+<status status="NOT RUN" start="2026-01-19T18:26:30.493889" elapsed="0.000198"/>
+</kw>
+<status status="NOT RUN" start="2026-01-19T18:26:30.492464" elapsed="0.001856"/>
+</branch>
+<branch type="ELSE">
+<kw name="Log To Console" owner="BuiltIn">
+<arg>⚠️ Graceful termination failed, using force stop</arg>
+<doc>Logs the given message to the console.</doc>
+<status status="PASS" start="2026-01-19T18:26:30.495130" elapsed="0.011136"/>
+</kw>
+<kw name="Run Keyword And Ignore Error" owner="BuiltIn">
+<kw name="Run Process" owner="Process">
+<msg time="2026-01-19T18:26:30.508991" level="INFO">Starting process:
+adb shell am force-stop com.org.gurutattva.app</msg>
+<msg time="2026-01-19T18:26:30.513998" level="INFO">Waiting for process to complete.</msg>
+<msg time="2026-01-19T18:26:30.515880" level="INFO">Process completed.</msg>
+<arg>adb</arg>
+<arg>shell</arg>
+<arg>am</arg>
+<arg>force-stop</arg>
+<arg>${APP_PACKAGE}</arg>
+<arg>shell=True</arg>
+<doc>Runs a process and waits for it to complete.</doc>
+<status status="PASS" start="2026-01-19T18:26:30.507943" elapsed="0.008120"/>
+</kw>
+<arg>Run Process</arg>
+<arg>adb</arg>
+<arg>shell</arg>
+<arg>am</arg>
+<arg>force-stop</arg>
+<arg>${APP_PACKAGE}</arg>
+<arg>shell=True</arg>
+<doc>Runs the given keyword with the given arguments and ignores possible error.</doc>
+<status status="PASS" start="2026-01-19T18:26:30.507059" elapsed="0.009177"/>
+</kw>
+<kw name="Sleep" owner="BuiltIn">
+<msg time="2026-01-19T18:26:32.517206" level="INFO">Slept 2 seconds.</msg>
+<arg>2s</arg>
+<doc>Pauses the test executed for the given time.</doc>
+<status status="PASS" start="2026-01-19T18:26:30.516579" elapsed="2.000847"/>
+</kw>
+<status status="PASS" start="2026-01-19T18:26:30.494508" elapsed="2.023039"/>
+</branch>
+<status status="PASS" start="2026-01-19T18:26:30.492403" elapsed="2.025223"/>
+</if>
+<kw name="Run Keyword And Return Status" owner="BuiltIn">
+<kw name="Mobile Close Application" owner="libraries">
+<kw name="Close Application" owner="Mobile">
+<kw name="No Operation" owner="BuiltIn">
+<doc>Does absolutely nothing.</doc>
+<status status="PASS" start="2026-01-19T18:26:32.519552" elapsed="0.000262"/>
+</kw>
+<msg time="2026-01-19T18:26:32.520066" level="FAIL">No application is open</msg>
+<doc>Closes the current application and the webdriver session.</doc>
+<status status="FAIL" start="2026-01-19T18:26:32.519042" elapsed="0.215956">No application is open</status>
+</kw>
+<status status="FAIL" start="2026-01-19T18:26:32.518428" elapsed="0.216896">No application is open</status>
+</kw>
+<msg time="2026-01-19T18:26:32.735528" level="INFO">${close_status} = False</msg>
+<var>${close_status}</var>
+<arg>Mobile Close Application</arg>
+<doc>Runs the given keyword with given arguments and returns the status as a Boolean value.</doc>
+<status status="PASS" start="2026-01-19T18:26:32.517939" elapsed="0.217648"/>
+</kw>
+<if>
+<branch type="IF" condition="${close_status}">
+<kw name="Log To Console" owner="BuiltIn">
+<arg>✅ Mobile session closed</arg>
+<doc>Logs the given message to the console.</doc>
+<status status="NOT RUN" start="2026-01-19T18:26:32.736217" elapsed="0.000080"/>
+</kw>
+<status status="NOT RUN" start="2026-01-19T18:26:32.735778" elapsed="0.000613"/>
+</branch>
+<branch type="ELSE">
+<kw name="Log To Console" owner="BuiltIn">
+<arg>⚠️ Mobile session close had issues</arg>
+<doc>Logs the given message to the console.</doc>
+<status status="PASS" start="2026-01-19T18:26:32.736757" elapsed="0.000566"/>
+</kw>
+<status status="PASS" start="2026-01-19T18:26:32.736468" elapsed="0.001000"/>
+</branch>
+<status status="PASS" start="2026-01-19T18:26:32.735726" elapsed="0.001955"/>
+</if>
+<kw name="Run Keyword And Ignore Error" owner="BuiltIn">
+<kw name="Run Process" owner="Process">
+<msg time="2026-01-19T18:26:32.739117" level="INFO">Starting process:
+adb shell pkill -f com.org.gurutattva.app</msg>
+<msg time="2026-01-19T18:26:32.740393" level="INFO">Waiting for process to complete.</msg>
+<msg time="2026-01-19T18:26:32.760366" level="INFO">Process completed.</msg>
+<arg>adb</arg>
+<arg>shell</arg>
+<arg>pkill</arg>
+<arg>-f</arg>
+<arg>${APP_PACKAGE}</arg>
+<arg>shell=True</arg>
+<doc>Runs a process and waits for it to complete.</doc>
+<status status="PASS" start="2026-01-19T18:26:32.738611" elapsed="0.021933"/>
+</kw>
+<arg>Run Process</arg>
+<arg>adb</arg>
+<arg>shell</arg>
+<arg>pkill</arg>
+<arg>-f</arg>
+<arg>${APP_PACKAGE}</arg>
+<arg>shell=True</arg>
+<doc>Runs the given keyword with the given arguments and ignores possible error.</doc>
+<status status="PASS" start="2026-01-19T18:26:32.738018" elapsed="0.022733"/>
+</kw>
+<kw name="Sleep" owner="BuiltIn">
+<msg time="2026-01-19T18:26:33.761693" level="INFO">Slept 1 second.</msg>
+<arg>1s</arg>
+<doc>Pauses the test executed for the given time.</doc>
+<status status="PASS" start="2026-01-19T18:26:32.761168" elapsed="1.000728"/>
+</kw>
+<kw name="Log To Console" owner="BuiltIn">
+<arg>===== Gurutattva App Closed =====</arg>
+<doc>Logs the given message to the console.</doc>
+<status status="PASS" start="2026-01-19T18:26:33.762315" elapsed="0.000447"/>
+</kw>
+<doc>Safely closes app with proper cleanup sequence</doc>
+<status status="PASS" start="2026-01-19T18:26:30.438445" elapsed="3.324531"/>
+</kw>
+<arg>Close Gurutattva App</arg>
+<doc>Runs the given keyword with the given arguments and ignores possible error.</doc>
+<status status="PASS" start="2026-01-19T18:26:30.437747" elapsed="3.325351"/>
+</kw>
+<kw name="Run Keyword And Ignore Error" owner="BuiltIn">
+<kw name="Mobile Close Application" owner="libraries">
+<kw name="Close Application" owner="Mobile">
+<kw name="No Operation" owner="BuiltIn">
+<doc>Does absolutely nothing.</doc>
+<status status="PASS" start="2026-01-19T18:26:33.765843" elapsed="0.001329"/>
+</kw>
+<msg time="2026-01-19T18:26:33.767480" level="FAIL">No application is open</msg>
+<doc>Closes the current application and the webdriver session.</doc>
+<status status="FAIL" start="2026-01-19T18:26:33.765323" elapsed="0.061737">No application is open</status>
+</kw>
+<status status="FAIL" start="2026-01-19T18:26:33.763999" elapsed="0.063418">No application is open</status>
+</kw>
+<arg>Mobile Close Application</arg>
+<doc>Runs the given keyword with the given arguments and ignores possible error.</doc>
+<status status="PASS" start="2026-01-19T18:26:33.763451" elapsed="0.064155"/>
+</kw>
+<kw name="Sleep" owner="BuiltIn">
+<msg time="2026-01-19T18:26:36.828589" level="INFO">Slept 3 seconds.</msg>
+<arg>3s</arg>
+<doc>Pauses the test executed for the given time.</doc>
+<status status="PASS" start="2026-01-19T18:26:33.827944" elapsed="3.000832"/>
+</kw>
+<kw name="Run Keyword And Ignore Error" owner="BuiltIn">
+<kw name="Run" owner="OperatingSystem">
+<msg time="2026-01-19T18:26:36.830979" level="INFO">Running command 'adb shell am force-stop com.org.gurutattva.app 2&gt;&amp;1'.</msg>
+<arg>adb shell am force-stop ${APP_PACKAGE}</arg>
+<doc>Runs the given command in the system and returns the output.</doc>
+<status status="PASS" start="2026-01-19T18:26:36.829788" elapsed="0.045685"/>
+</kw>
+<arg>Run</arg>
+<arg>adb shell am force-stop ${APP_PACKAGE}</arg>
+<doc>Runs the given keyword with the given arguments and ignores possible error.</doc>
+<status status="PASS" start="2026-01-19T18:26:36.829373" elapsed="0.046335"/>
+</kw>
+<kw name="Sleep" owner="BuiltIn">
+<msg time="2026-01-19T18:26:38.876666" level="INFO">Slept 2 seconds.</msg>
+<arg>2s</arg>
+<doc>Pauses the test executed for the given time.</doc>
+<status status="PASS" start="2026-01-19T18:26:36.876073" elapsed="2.001008"/>
+</kw>
+<kw name="Run Keyword And Ignore Error" owner="BuiltIn">
+<kw name="Cleanup Downloaded Files" owner="libraries">
+<kw name="Get Download Directory" owner="libraries">
+<if>
+<branch type="IF" condition="'${custom_path}' != '${EMPTY}'">
+<kw name="Normalize Path" owner="OperatingSystem">
+<var>${download_dir}</var>
+<arg>${custom_path}</arg>
+<doc>Normalizes the given path.</doc>
+<status status="NOT RUN" start="2026-01-19T18:26:38.891536" elapsed="0.000095"/>
+</kw>
+<status status="NOT RUN" start="2026-01-19T18:26:38.890902" elapsed="0.000824"/>
+</branch>
+<branch type="ELSE">
+<kw name="Normalize Path" owner="OperatingSystem">
+<msg time="2026-01-19T18:26:38.892577" level="INFO">${download_dir} = /var/jenkins_home/workspace/Guruttava-E2E-Tests/downloads</msg>
+<var>${download_dir}</var>
+<arg>${EXECDIR}/downloads</arg>
+<doc>Normalizes the given path.</doc>
+<status status="PASS" start="2026-01-19T18:26:38.892149" elapsed="0.000496"/>
+</kw>
+<status status="PASS" start="2026-01-19T18:26:38.891804" elapsed="0.000943"/>
+</branch>
+<status status="PASS" start="2026-01-19T18:26:38.890837" elapsed="0.001979"/>
+</if>
+<return>
+<value>${download_dir}</value>
+<status status="PASS" start="2026-01-19T18:26:38.892958" elapsed="0.000173"/>
+</return>
+<msg time="2026-01-19T18:26:38.893469" level="INFO">${download_dir} = /var/jenkins_home/workspace/Guruttava-E2E-Tests/downloads</msg>
+<var>${download_dir}</var>
+<arg>${custom_path}</arg>
+<doc>Returns the path to the downloads directory</doc>
+<status status="PASS" start="2026-01-19T18:26:38.879258" elapsed="0.014270"/>
+</kw>
+<if>
+<branch type="IF" condition="'${filename}' == '${EMPTY}'">
+<kw name="Clear Download Directory" owner="libraries">
+<kw name="Get Download Directory" owner="libraries">
+<if>
+<branch type="IF" condition="'${custom_path}' != '${EMPTY}'">
+<kw name="Normalize Path" owner="OperatingSystem">
+<var>${download_dir}</var>
+<arg>${custom_path}</arg>
+<doc>Normalizes the given path.</doc>
+<status status="NOT RUN" start="2026-01-19T18:26:38.896843" elapsed="0.000163"/>
+</kw>
+<status status="NOT RUN" start="2026-01-19T18:26:38.896191" elapsed="0.001008"/>
+</branch>
+<branch type="ELSE">
+<kw name="Normalize Path" owner="OperatingSystem">
+<msg time="2026-01-19T18:26:38.906907" level="INFO">${download_dir} = /var/jenkins_home/workspace/Guruttava-E2E-Tests/downloads</msg>
+<var>${download_dir}</var>
+<arg>${EXECDIR}/downloads</arg>
+<doc>Normalizes the given path.</doc>
+<status status="PASS" start="2026-01-19T18:26:38.897722" elapsed="0.009275"/>
+</kw>
+<status status="PASS" start="2026-01-19T18:26:38.897289" elapsed="0.009827"/>
+</branch>
+<status status="PASS" start="2026-01-19T18:26:38.896133" elapsed="0.011123"/>
+</if>
+<return>
+<value>${download_dir}</value>
+<status status="PASS" start="2026-01-19T18:26:38.907348" elapsed="0.000110"/>
+</return>
+<msg time="2026-01-19T18:26:38.907816" level="INFO">${download_dir} = /var/jenkins_home/workspace/Guruttava-E2E-Tests/downloads</msg>
+<var>${download_dir}</var>
+<arg>${custom_path}</arg>
+<doc>Returns the path to the downloads directory</doc>
+<status status="PASS" start="2026-01-19T18:26:38.895442" elapsed="0.012501"/>
+</kw>
+<kw name="List Files In Directory" owner="OperatingSystem">
+<msg time="2026-01-19T18:26:38.908702" level="INFO" html="true">Listing contents of directory '&lt;a href="file:///var/jenkins_home/workspace/Guruttava-E2E-Tests/downloads"&gt;/var/jenkins_home/workspace/Guruttava-E2E-Tests/downloads&lt;/a&gt;'.</msg>
+<msg time="2026-01-19T18:26:38.966567" level="INFO">${files} = None</msg>
+<msg time="2026-01-19T18:26:38.966694" level="FAIL">Directory '/var/jenkins_home/workspace/Guruttava-E2E-Tests/downloads' does not exist.</msg>
+<var>${files}</var>
+<arg>${download_dir}</arg>
+<doc>Wrapper for `List Directory` that returns only files.</doc>
+<status status="FAIL" start="2026-01-19T18:26:38.908329" elapsed="0.058513">Directory '/var/jenkins_home/workspace/Guruttava-E2E-Tests/downloads' does not exist.</status>
+</kw>
+<for flavor="IN">
+<iter>
+<kw name="Remove File" owner="OperatingSystem">
+<arg>${download_dir}/${file}</arg>
+<doc>Removes a file with the given path.</doc>
+<status status="NOT RUN" start="2026-01-19T18:26:38.967834" elapsed="0.000074"/>
+</kw>
+<var name="${file}"/>
+<status status="NOT RUN" start="2026-01-19T18:26:38.967501" elapsed="0.000488"/>
+</iter>
+<msg time="2026-01-19T18:26:38.968097" level="FAIL">Value of variable '@{files}' is not list or list-like.</msg>
+<var>${file}</var>
+<value>@{files}</value>
+<status status="FAIL" start="2026-01-19T18:26:38.967113" elapsed="0.001109">Value of variable '@{files}' is not list or list-like.</status>
+</for>
+<kw name="Log To Console" owner="BuiltIn">
+<arg>🗑️ Cleared download directory: ${download_dir}</arg>
+<doc>Logs the given message to the console.</doc>
+<status status="PASS" start="2026-01-19T18:26:38.968653" elapsed="0.000534"/>
+</kw>
+<arg>${custom_path}</arg>
+<doc>Removes all files from the downloads directory</doc>
+<status status="FAIL" start="2026-01-19T18:26:38.894395" elapsed="0.075130">Several failures occurred:
+
+1) Directory '/var/jenkins_home/workspace/Guruttava-E2E-Tests/downloads' does not exist.
+
+2) Value of variable '@{files}' is not list or list-like.</status>
+</kw>
+<status status="FAIL" start="2026-01-19T18:26:38.893698" elapsed="0.076003">Several failures occurred:
+
+1) Directory '/var/jenkins_home/workspace/Guruttava-E2E-Tests/downloads' does not exist.
+
+2) Value of variable '@{files}' is not list or list-like.</status>
+</branch>
+<branch type="ELSE">
+<kw name="Join Path" owner="OperatingSystem">
+<var>${file_path}</var>
+<arg>${download_dir}</arg>
+<arg>${filename}</arg>
+<doc>Joins the given path part(s) to the given base path.</doc>
+<status status="NOT RUN" start="2026-01-19T18:26:38.970158" elapsed="0.000117"/>
+</kw>
+<kw name="Remove File" owner="OperatingSystem">
+<arg>${file_path}</arg>
+<doc>Removes a file with the given path.</doc>
+<status status="NOT RUN" start="2026-01-19T18:26:38.970594" elapsed="0.000073"/>
+</kw>
+<kw name="Log To Console" owner="BuiltIn">
+<arg>🗑️ Removed downloaded file: ${filename}</arg>
+<doc>Logs the given message to the console.</doc>
+<status status="NOT RUN" start="2026-01-19T18:26:38.970953" elapsed="0.000073"/>
+</kw>
+<status status="NOT RUN" start="2026-01-19T18:26:38.969806" elapsed="0.014876"/>
+</branch>
+<status status="FAIL" start="2026-01-19T18:26:38.893657" elapsed="0.091289">Several failures occurred:
+
+1) Directory '/var/jenkins_home/workspace/Guruttava-E2E-Tests/downloads' does not exist.
+
+2) Value of variable '@{files}' is not list or list-like.</status>
+</if>
+<doc>Removes downloaded files, optionally specific file or all files</doc>
+<status status="FAIL" start="2026-01-19T18:26:38.878133" elapsed="0.107209">Several failures occurred:
+
+1) Directory '/var/jenkins_home/workspace/Guruttava-E2E-Tests/downloads' does not exist.
+
+2) Value of variable '@{files}' is not list or list-like.</status>
+</kw>
+<arg>Cleanup Downloaded Files</arg>
+<doc>Runs the given keyword with the given arguments and ignores possible error.</doc>
+<status status="PASS" start="2026-01-19T18:26:38.877501" elapsed="0.108043"/>
+</kw>
+<kw name="Log To Console" owner="BuiltIn">
+<arg>===== Test Teardown Completed =====</arg>
+<doc>Logs the given message to the console.</doc>
+<status status="PASS" start="2026-01-19T18:26:38.985986" elapsed="0.000456"/>
+</kw>
+<doc>Teardown for each test case - ensures app is closed even on failure</doc>
+<status status="PASS" start="2026-01-19T18:26:29.087737" elapsed="9.898932"/>
+</kw>
+<doc>End-to-end test: Create a music track in Web CRM, publish it, and verify playback in the mobile app.</doc>
+<tag>audio</tag>
+<tag>e2e</tag>
+<tag>tc01</tag>
+<status status="FAIL" start="2026-01-19T18:21:17.686013" elapsed="321.300827">NoSuchDriverException: Message: Unable to obtain driver for chrome; For documentation on this error, please visit: https://www.selenium.dev/documentation/webdriver/troubleshooting/errors/driver_location
+</status>
+</test>
+<test id="s1-s1-t2" name="Unpublish Music Track And Validate In Mobile App" line="53">
+<kw name="Test Setup" owner="test_setup_teardown" type="SETUP">
+<kw name="Log To Console" owner="BuiltIn">
+<arg>===== Starting Test Setup =====</arg>
+<doc>Logs the given message to the console.</doc>
+<status status="PASS" start="2026-01-19T18:26:38.989580" elapsed="0.000344"/>
+</kw>
+<kw name="Register Keyword To Run On Failure" owner="Web">
+<msg time="2026-01-19T18:26:38.990652" level="INFO">No Operation will be run on failure.</msg>
+<arg>No Operation</arg>
+<doc>Sets the keyword to execute, when a SeleniumLibrary keyword fails.</doc>
+<status status="PASS" start="2026-01-19T18:26:38.990291" elapsed="0.000488"/>
+</kw>
+<kw name="Register Keyword To Run On Failure" owner="Mobile">
+<msg time="2026-01-19T18:26:39.069616" level="INFO">No Operation will be run on failure.</msg>
+<arg>No Operation</arg>
+<doc>Sets the keyword to be executed when an AppiumLibrary keyword fails.</doc>
+<status status="PASS" start="2026-01-19T18:26:38.991104" elapsed="0.078724"/>
+</kw>
+<kw name="Run Keyword And Ignore Error" owner="BuiltIn">
+<kw name="Web Close All Browsers" owner="libraries">
+<kw name="Close All Browsers" owner="Web">
+<doc>Closes all open browsers and resets the browser cache.</doc>
+<status status="PASS" start="2026-01-19T18:26:39.071602" elapsed="0.000310"/>
+</kw>
+<status status="PASS" start="2026-01-19T18:26:39.070848" elapsed="0.001265"/>
+</kw>
+<arg>Web Close All Browsers</arg>
+<doc>Runs the given keyword with the given arguments and ignores possible error.</doc>
+<status status="PASS" start="2026-01-19T18:26:39.070299" elapsed="0.001936"/>
+</kw>
+<kw name="Sleep" owner="BuiltIn">
+<msg time="2026-01-19T18:26:40.073109" level="INFO">Slept 1 second.</msg>
+<arg>1s</arg>
+<doc>Pauses the test executed for the given time.</doc>
+<status status="PASS" start="2026-01-19T18:26:39.072561" elapsed="1.000750"/>
+</kw>
+<kw name="Run Keyword And Ignore Error" owner="BuiltIn">
+<kw name="Mobile Close Application" owner="libraries">
+<kw name="Close Application" owner="Mobile">
+<kw name="No Operation" owner="BuiltIn">
+<doc>Does absolutely nothing.</doc>
+<status status="PASS" start="2026-01-19T18:26:40.121514" elapsed="0.000273"/>
+</kw>
+<msg time="2026-01-19T18:26:40.122009" level="FAIL">No application is open</msg>
+<doc>Closes the current application and the webdriver session.</doc>
+<status status="FAIL" start="2026-01-19T18:26:40.121004" elapsed="0.321594">No application is open</status>
+</kw>
+<status status="FAIL" start="2026-01-19T18:26:40.074165" elapsed="0.368732">No application is open</status>
+</kw>
+<arg>Mobile Close Application</arg>
+<doc>Runs the given keyword with the given arguments and ignores possible error.</doc>
+<status status="PASS" start="2026-01-19T18:26:40.073712" elapsed="0.369343"/>
+</kw>
+<kw name="Sleep" owner="BuiltIn">
+<msg time="2026-01-19T18:26:42.443931" level="INFO">Slept 2 seconds.</msg>
+<arg>2s</arg>
+<doc>Pauses the test executed for the given time.</doc>
+<status status="PASS" start="2026-01-19T18:26:40.443367" elapsed="2.000741"/>
+</kw>
+<kw name="Log To Console" owner="BuiltIn">
+<arg>===== Test Setup Completed =====</arg>
+<doc>Logs the given message to the console.</doc>
+<status status="PASS" start="2026-01-19T18:26:42.444567" elapsed="0.000502"/>
+</kw>
+<doc>Setup for each test case - ensures clean state</doc>
+<status status="PASS" start="2026-01-19T18:26:38.988697" elapsed="3.456632"/>
+</kw>
+<kw name="Open Web Browser" owner="web_keywords">
+<kw name="Log To Console" owner="BuiltIn">
+<arg>🌐 Opening web browser: ${WEB_BROWSER}</arg>
+<doc>Logs the given message to the console.</doc>
+<status status="PASS" start="2026-01-19T18:26:42.446728" elapsed="0.000402"/>
+</kw>
+<kw name="Log To Console" owner="BuiltIn">
+<arg>🔗 Navigating to: ${WEB_BASE_URL}</arg>
+<doc>Logs the given message to the console.</doc>
+<status status="PASS" start="2026-01-19T18:26:42.447556" elapsed="0.000430"/>
+</kw>
+<kw name="Web Open Browser" owner="libraries">
+<kw name="Open Browser" owner="Web">
+<msg time="2026-01-19T18:26:42.463442" level="INFO">Opening browser 'chrome' to base url 'https://gurutattvacmsnewdev.rysun.in:9090/'.</msg>
+<kw name="No Operation" owner="BuiltIn">
+<doc>Does absolutely nothing.</doc>
+<status status="PASS" start="2026-01-19T18:31:56.669760" elapsed="0.011999"/>
+</kw>
+<msg time="2026-01-19T18:31:56.682281" level="FAIL">NoSuchDriverException: Message: Unable to obtain driver for chrome; For documentation on this error, please visit: https://www.selenium.dev/documentation/webdriver/troubleshooting/errors/driver_location
+</msg>
+<arg>${url}</arg>
+<arg>${browser}</arg>
+<arg>${alias}</arg>
+<arg>${remote_url}</arg>
+<arg>&amp;{kwargs}</arg>
+<doc>Opens a new browser instance to the optional ``url``.</doc>
+<status status="FAIL" start="2026-01-19T18:26:42.449831" elapsed="314.765281">NoSuchDriverException: Message: Unable to obtain driver for chrome; For documentation on this error, please visit: https://www.selenium.dev/documentation/webdriver/troubleshooting/errors/driver_location
+</status>
+</kw>
+<arg>${WEB_BASE_URL}</arg>
+<arg>${WEB_BROWSER}</arg>
+<status status="FAIL" start="2026-01-19T18:26:42.448454" elapsed="314.767452">NoSuchDriverException: Message: Unable to obtain driver for chrome; For documentation on this error, please visit: https://www.selenium.dev/documentation/webdriver/troubleshooting/errors/driver_location
+</status>
+</kw>
+<kw name="Web Maximize Browser Window" owner="libraries">
+<status status="NOT RUN" start="2026-01-19T18:31:57.216834" elapsed="0.000187"/>
+</kw>
+<kw name="Web Set Selenium Implicit Wait" owner="libraries">
+<arg>${WEB_IMPLICIT_WAIT}</arg>
+<status status="NOT RUN" start="2026-01-19T18:31:57.217574" elapsed="0.000110"/>
+</kw>
+<kw name="Log To Console" owner="BuiltIn">
+<arg>✅ Web browser opened successfully</arg>
+<doc>Logs the given message to the console.</doc>
+<status status="NOT RUN" start="2026-01-19T18:31:57.218153" elapsed="0.000134"/>
+</kw>
+<kw name="Run Keyword And Return Status" owner="BuiltIn">
+<var>${ssl_warning_present}</var>
+<arg>Web Wait Until Page Contains Element</arg>
+<arg>id=details-button</arg>
+<arg>3s</arg>
+<doc>Runs the given keyword with given arguments and returns the status as a Boolean value.</doc>
+<status status="NOT RUN" start="2026-01-19T18:31:57.218842" elapsed="0.000098"/>
+</kw>
+<if>
+<branch type="IF" condition="${ssl_warning_present}">
+<kw name="Log To Console" owner="BuiltIn">
+<arg>⚠️ SSL Certificate warning detected, clicking Advanced...</arg>
+<doc>Logs the given message to the console.</doc>
+<status status="NOT RUN" start="2026-01-19T18:31:57.219744" elapsed="0.004248"/>
+</kw>
+<kw name="Web Click Element" owner="libraries">
+<arg>id=details-button</arg>
+<status status="NOT RUN" start="2026-01-19T18:31:57.225275" elapsed="0.000125"/>
+</kw>
+<kw name="Sleep" owner="BuiltIn">
+<arg>1s</arg>
+<doc>Pauses the test executed for the given time.</doc>
+<status status="NOT RUN" start="2026-01-19T18:31:57.225757" elapsed="0.000087"/>
+</kw>
+<kw name="Web Click Element" owner="libraries">
+<arg>id=proceed-link</arg>
+<status status="NOT RUN" start="2026-01-19T18:31:57.226207" elapsed="0.000080"/>
+</kw>
+<kw name="Sleep" owner="BuiltIn">
+<arg>2s</arg>
+<doc>Pauses the test executed for the given time.</doc>
+<status status="NOT RUN" start="2026-01-19T18:31:57.226632" elapsed="0.000070"/>
+</kw>
+<kw name="Log To Console" owner="BuiltIn">
+<arg>✅ Proceeded past SSL warning</arg>
+<doc>Logs the given message to the console.</doc>
+<status status="NOT RUN" start="2026-01-19T18:31:57.226958" elapsed="0.000066"/>
+</kw>
+<status status="NOT RUN" start="2026-01-19T18:31:57.219298" elapsed="0.007811"/>
+</branch>
+<status status="NOT RUN" start="2026-01-19T18:31:57.219093" elapsed="0.008107"/>
+</if>
+<kw name="Delete All Cookies" owner="Web">
+<doc>Deletes all cookies.</doc>
+<status status="NOT RUN" start="2026-01-19T18:31:57.232001" elapsed="0.000120"/>
+</kw>
+<kw name="Execute Javascript" owner="Web">
+<arg>window.localStorage.clear();</arg>
+<doc>Executes the given JavaScript code with possible arguments.</doc>
+<status status="NOT RUN" start="2026-01-19T18:31:57.232509" elapsed="0.000096"/>
+</kw>
+<kw name="Execute Javascript" owner="Web">
+<arg>window.sessionStorage.clear();</arg>
+<doc>Executes the given JavaScript code with possible arguments.</doc>
+<status status="NOT RUN" start="2026-01-19T18:31:57.232978" elapsed="0.000091"/>
+</kw>
+<kw name="Log To Console" owner="BuiltIn">
+<arg>✅ Cookies and cache cleared</arg>
+<doc>Logs the given message to the console.</doc>
+<status status="NOT RUN" start="2026-01-19T18:31:57.233410" elapsed="0.000090"/>
+</kw>
+<kw name="Wait For Page To Be Ready" owner="web_keywords">
+<doc>Waits for page to be fully loaded including JavaScript</doc>
+<status status="NOT RUN" start="2026-01-19T18:31:57.234129" elapsed="0.000111"/>
+</kw>
+<kw name="Log To Console" owner="BuiltIn">
+<arg>✅ Page is fully loaded and ready</arg>
+<doc>Logs the given message to the console.</doc>
+<status status="NOT RUN" start="2026-01-19T18:31:57.234535" elapsed="0.000060"/>
+</kw>
+<doc>Opens web browser and navigates to Gurutattva website</doc>
+<status status="FAIL" start="2026-01-19T18:26:42.445970" elapsed="314.788812">NoSuchDriverException: Message: Unable to obtain driver for chrome; For documentation on this error, please visit: https://www.selenium.dev/documentation/webdriver/troubleshooting/errors/driver_location
+</status>
+</kw>
+<kw name="Login in with valid credentials" owner="web_keywords">
+<doc>Logs in to web application with valid credentials</doc>
+<status status="NOT RUN" start="2026-01-19T18:31:57.235151" elapsed="0.034297"/>
+</kw>
+<kw name="Click on the Audio Menu" owner="CRM_AudioPage">
+<doc>Clicks on the Audio menu in the web application and waits for submenu to expand</doc>
+<status status="NOT RUN" start="2026-01-19T18:31:57.283217" elapsed="0.000135"/>
+</kw>
+<kw name="Click on the Music Submenu" owner="CRM_AudioPage">
+<doc>Clicks on the Music submenu under Audio with fallback locators</doc>
+<status status="NOT RUN" start="2026-01-19T18:31:57.285174" elapsed="0.000100"/>
+</kw>
+<kw name="Unpublish Music Track From Edit Page And Validate In Mobile App" owner="E2EAudioPage">
+<tag>Audio</tag>
+<tag>E2E</tag>
+<tag>Integration</tag>
+<tag>Unpublish</tag>
+<doc>Unpublish a music track from the CRM edit page and validate it is not visible in the mobile app.</doc>
+<status status="NOT RUN" start="2026-01-19T18:31:57.337596" elapsed="0.000140"/>
+</kw>
+<kw name="Test Teardown" owner="test_setup_teardown" type="TEARDOWN">
+<kw name="Log To Console" owner="BuiltIn">
+<arg>===== Starting Test Teardown =====</arg>
+<doc>Logs the given message to the console.</doc>
+<status status="PASS" start="2026-01-19T18:31:57.339798" elapsed="0.003020"/>
+</kw>
+<kw name="Run Keyword If Test Failed" owner="BuiltIn">
+<kw name="Take Screenshot On Failure" owner="test_setup_teardown">
+<try>
+<branch type="TRY">
+<kw name="Create Directory" owner="OperatingSystem">
+<msg time="2026-01-19T18:31:57.375770" level="INFO" html="true">Directory '&lt;a href="file:///var/jenkins_home/workspace/Guruttava-E2E-Tests/results/Screenshot"&gt;/var/jenkins_home/workspace/Guruttava-E2E-Tests/results/Screenshot&lt;/a&gt;' already exists.</msg>
+<arg>${SCREENSHOT_DIR}</arg>
+<doc>Creates the specified directory.</doc>
+<status status="PASS" start="2026-01-19T18:31:57.352176" elapsed="0.023804"/>
+</kw>
+<kw name="Get Current Date" owner="DateTime">
+<msg time="2026-01-19T18:31:57.377413" level="INFO">${timestamp} = 20260119_183157</msg>
+<var>${timestamp}</var>
+<arg>result_format=%Y%m%d_%H%M%S</arg>
+<doc>Returns current local or UTC time with an optional increment.</doc>
+<status status="PASS" start="2026-01-19T18:31:57.376383" elapsed="0.001115"/>
+</kw>
+<kw name="Replace String" owner="String">
+<msg time="2026-01-19T18:31:57.378335" level="INFO">${safe_test_name} = Unpublish_Music_Track_And_Validate_In_Mobile_App</msg>
+<var>${safe_test_name}</var>
+<arg>${test_name}</arg>
+<arg>${SPACE}</arg>
+<arg>_</arg>
+<doc>Replaces ``search_for`` in the given ``string`` with ``replace_with``.</doc>
+<status status="PASS" start="2026-01-19T18:31:57.377887" elapsed="0.000635"/>
+</kw>
+<kw name="Replace String" owner="String">
+<msg time="2026-01-19T18:31:57.379953" level="INFO">${safe_test_name} = Unpublish_Music_Track_And_Validate_In_Mobile_App</msg>
+<var>${safe_test_name}</var>
+<arg>${safe_test_name}</arg>
+<arg>.</arg>
+<arg>_</arg>
+<doc>Replaces ``search_for`` in the given ``string`` with ``replace_with``.</doc>
+<status status="PASS" start="2026-01-19T18:31:57.379128" elapsed="0.000907"/>
+</kw>
+<kw name="Set Variable" owner="BuiltIn">
+<msg time="2026-01-19T18:31:57.381116" level="INFO">${filename} = /var/jenkins_home/workspace/Guruttava-E2E-Tests/results/Screenshot/Unpublish_Music_Track_And_Validate_In_Mobile_App_20260119_183157.png</msg>
+<var>${filename}</var>
+<arg>${SCREENSHOT_DIR}/${safe_test_name}_${timestamp}.png</arg>
+<doc>Returns the given values which can then be assigned to a variables.</doc>
+<status status="PASS" start="2026-01-19T18:31:57.380456" elapsed="0.000738"/>
+</kw>
+<kw name="Custom Capture Screenshot" owner="libraries">
+<kw name="Run Keyword And Return Status" owner="BuiltIn">
+<kw name="Capture Page Screenshot" owner="Mobile">
+<kw name="No Operation" owner="BuiltIn">
+<doc>Does absolutely nothing.</doc>
+<status status="PASS" start="2026-01-19T18:31:57.416005" elapsed="0.000368"/>
+</kw>
+<msg time="2026-01-19T18:31:57.416627" level="FAIL">No application is open</msg>
+<arg>${filename}</arg>
+<doc>Takes a screenshot of the current page and embeds it into the log.</doc>
+<status status="FAIL" start="2026-01-19T18:31:57.382999" elapsed="0.152841">No application is open</status>
+</kw>
+<msg time="2026-01-19T18:31:57.536196" level="INFO">${mobile_status} = False</msg>
+<var>${mobile_status}</var>
+<arg>Mobile.Capture Page Screenshot</arg>
+<arg>${filename}</arg>
+<doc>Runs the given keyword with given arguments and returns the status as a Boolean value.</doc>
+<status status="PASS" start="2026-01-19T18:31:57.382486" elapsed="0.153778"/>
+</kw>
+<kw name="Log To Console" owner="BuiltIn">
+<arg>✅ Mobile screenshot captured: ${filename}</arg>
+<doc>Logs the given message to the console.</doc>
+<status status="PASS" start="2026-01-19T18:31:57.536619" elapsed="0.000570"/>
+</kw>
+<if>
+<branch type="IF" condition="not ${mobile_status}">
+<kw name="Log To Console" owner="BuiltIn">
+<arg>⚠️ Mobile screenshot capture failed, capturing web screenshot...</arg>
+<doc>Logs the given message to the console.</doc>
+<status status="PASS" start="2026-01-19T18:31:57.538159" elapsed="0.000327"/>
+</kw>
+<kw name="Capture Page Screenshot" owner="Web">
+<msg time="2026-01-19T18:31:57.541433" level="INFO">Cannot capture screenshot because no browser is open.</msg>
+<arg>${filename}</arg>
+<doc>Takes a screenshot of the current page and embeds it into a log file.</doc>
+<status status="PASS" start="2026-01-19T18:31:57.538831" elapsed="0.002761"/>
+</kw>
+<status status="PASS" start="2026-01-19T18:31:57.537414" elapsed="0.004288"/>
+</branch>
+<status status="PASS" start="2026-01-19T18:31:57.537359" elapsed="0.004424"/>
+</if>
+<arg>${filename}</arg>
+<status status="PASS" start="2026-01-19T18:31:57.381680" elapsed="0.160205"/>
+</kw>
+<kw name="Log To Console" owner="BuiltIn">
+<arg>✅ Screenshot captured: ${filename}</arg>
+<doc>Logs the given message to the console.</doc>
+<status status="PASS" start="2026-01-19T18:31:57.544366" elapsed="0.000650"/>
+</kw>
+<kw name="Log" owner="BuiltIn">
+<msg time="2026-01-19T18:31:57.546160" level="INFO" html="true">&lt;a href="/var/jenkins_home/workspace/Guruttava-E2E-Tests/results/Screenshot/Unpublish_Music_Track_And_Validate_In_Mobile_App_20260119_183157.png"&gt;Screenshot for Unpublish Music Track And Validate In Mobile App&lt;/a&gt;</msg>
+<arg>&lt;a href="${filename}"&gt;Screenshot for ${test_name}&lt;/a&gt;</arg>
+<arg>HTML</arg>
+<doc>Logs the given message with the given level.</doc>
+<status status="PASS" start="2026-01-19T18:31:57.545533" elapsed="0.000807"/>
+</kw>
+<status status="PASS" start="2026-01-19T18:31:57.351699" elapsed="0.194769"/>
+</branch>
+<branch type="EXCEPT" assign="${error}">
+<kw name="Log To Console" owner="BuiltIn">
+<arg>⚠️ Screenshot capture failed: ${error}</arg>
+<doc>Logs the given message to the console.</doc>
+<status status="NOT RUN" start="2026-01-19T18:31:57.547098" elapsed="0.000110"/>
+</kw>
+<try>
+<branch type="TRY">
+<kw name="Set Variable" owner="BuiltIn">
+<var>${alt_filename}</var>
+<arg>${SCREENSHOT_DIR}/failed_${test_name}.png</arg>
+<doc>Returns the given values which can then be assigned to a variables.</doc>
+<status status="NOT RUN" start="2026-01-19T18:31:57.547778" elapsed="0.000087"/>
+</kw>
+<kw name="Capture Page Screenshot" owner="Mobile">
+<arg>${alt_filename}</arg>
+<doc>Takes a screenshot of the current page and embeds it into the log.</doc>
+<status status="NOT RUN" start="2026-01-19T18:31:57.548167" elapsed="0.000080"/>
+</kw>
+<kw name="Log To Console" owner="BuiltIn">
+<arg>✅ Alternative screenshot captured: ${alt_filename}</arg>
+<doc>Logs the given message to the console.</doc>
+<status status="NOT RUN" start="2026-01-19T18:31:57.548618" elapsed="0.000081"/>
+</kw>
+<status status="NOT RUN" start="2026-01-19T18:31:57.547466" elapsed="0.001308"/>
+</branch>
+<branch type="EXCEPT" assign="${alt_error}">
+<kw name="Log To Console" owner="BuiltIn">
+<arg>❌ All screenshot methods failed: ${alt_error}</arg>
+<doc>Logs the given message to the console.</doc>
+<status status="NOT RUN" start="2026-01-19T18:31:57.549144" elapsed="0.000043"/>
+</kw>
+<status status="NOT RUN" start="2026-01-19T18:31:57.548903" elapsed="0.000348"/>
+</branch>
+<status status="NOT RUN" start="2026-01-19T18:31:57.547391" elapsed="0.001946"/>
+</try>
+<status status="NOT RUN" start="2026-01-19T18:31:57.546674" elapsed="0.002712"/>
+</branch>
+<status status="PASS" start="2026-01-19T18:31:57.345117" elapsed="0.204348"/>
+</try>
+<arg>${TEST NAME}</arg>
+<status status="PASS" start="2026-01-19T18:31:57.344260" elapsed="0.205325"/>
+</kw>
+<arg>Take Screenshot On Failure</arg>
+<arg>${TEST NAME}</arg>
+<doc>Runs the given keyword with the given arguments, if the test failed.</doc>
+<status status="PASS" start="2026-01-19T18:31:57.343289" elapsed="0.206428"/>
+</kw>
+<kw name="Run Keyword And Ignore Error" owner="BuiltIn">
+<kw name="Web Close All Browsers" owner="libraries">
+<kw name="Close All Browsers" owner="Web">
+<doc>Closes all open browsers and resets the browser cache.</doc>
+<status status="PASS" start="2026-01-19T18:31:57.560904" elapsed="0.000332"/>
+</kw>
+<status status="PASS" start="2026-01-19T18:31:57.560130" elapsed="0.001281"/>
+</kw>
+<arg>Web Close All Browsers</arg>
+<doc>Runs the given keyword with the given arguments and ignores possible error.</doc>
+<status status="PASS" start="2026-01-19T18:31:57.550057" elapsed="0.011453"/>
+</kw>
+<kw name="Sleep" owner="BuiltIn">
+<msg time="2026-01-19T18:31:58.567705" level="INFO">Slept 1 second.</msg>
+<arg>1s</arg>
+<doc>Pauses the test executed for the given time.</doc>
+<status status="PASS" start="2026-01-19T18:31:57.561817" elapsed="1.006095"/>
+</kw>
+<kw name="Run Keyword And Ignore Error" owner="BuiltIn">
+<kw name="Close Gurutattva App" owner="keywords">
+<kw name="Log To Console" owner="BuiltIn">
+<arg>===== Closing Gurutattva App =====</arg>
+<doc>Logs the given message to the console.</doc>
+<status status="PASS" start="2026-01-19T18:31:58.570101" elapsed="0.000445"/>
+</kw>
+<kw name="Run Keyword And Return Status" owner="BuiltIn">
+<kw name="Mobile Terminate Application" owner="libraries">
+<kw name="Terminate Application" owner="Mobile">
+<kw name="No Operation" owner="BuiltIn">
+<doc>Does absolutely nothing.</doc>
+<status status="PASS" start="2026-01-19T18:31:58.572717" elapsed="0.000266"/>
+</kw>
+<msg time="2026-01-19T18:31:58.573215" level="FAIL">No application is open</msg>
+<arg>${app_id}</arg>
+<doc>Terminates the given app on the device.</doc>
+<status status="FAIL" start="2026-01-19T18:31:58.572098" elapsed="0.074610">No application is open</status>
+</kw>
+<arg>${APP_PACKAGE}</arg>
+<status status="FAIL" start="2026-01-19T18:31:58.571460" elapsed="0.075579">No application is open</status>
+</kw>
+<msg time="2026-01-19T18:31:58.647271" level="INFO">${status} = False</msg>
+<var>${status}</var>
+<arg>Mobile Terminate Application</arg>
+<arg>${APP_PACKAGE}</arg>
+<doc>Runs the given keyword with given arguments and returns the status as a Boolean value.</doc>
+<status status="PASS" start="2026-01-19T18:31:58.571001" elapsed="0.076332"/>
+</kw>
+<if>
+<branch type="IF" condition="${status}">
+<kw name="Log To Console" owner="BuiltIn">
+<arg>✅ App terminated gracefully</arg>
+<doc>Logs the given message to the console.</doc>
+<status status="NOT RUN" start="2026-01-19T18:31:58.648044" elapsed="0.000101"/>
+</kw>
+<kw name="Sleep" owner="BuiltIn">
+<arg>2s</arg>
+<doc>Pauses the test executed for the given time.</doc>
+<status status="NOT RUN" start="2026-01-19T18:31:58.648449" elapsed="0.000077"/>
+</kw>
+<status status="NOT RUN" start="2026-01-19T18:31:58.647536" elapsed="0.001070"/>
+</branch>
+<branch type="ELSE">
+<kw name="Log To Console" owner="BuiltIn">
+<arg>⚠️ Graceful termination failed, using force stop</arg>
+<doc>Logs the given message to the console.</doc>
+<status status="PASS" start="2026-01-19T18:31:58.649086" elapsed="0.000401"/>
+</kw>
+<kw name="Run Keyword And Ignore Error" owner="BuiltIn">
+<kw name="Run Process" owner="Process">
+<msg time="2026-01-19T18:31:58.652479" level="INFO">Starting process:
+adb shell am force-stop com.org.gurutattva.app</msg>
+<msg time="2026-01-19T18:31:58.653545" level="INFO">Waiting for process to complete.</msg>
+<msg time="2026-01-19T18:31:58.656626" level="INFO">Process completed.</msg>
+<arg>adb</arg>
+<arg>shell</arg>
+<arg>am</arg>
+<arg>force-stop</arg>
+<arg>${APP_PACKAGE}</arg>
+<arg>shell=True</arg>
+<doc>Runs a process and waits for it to complete.</doc>
+<status status="PASS" start="2026-01-19T18:31:58.651736" elapsed="0.005073"/>
+</kw>
+<arg>Run Process</arg>
+<arg>adb</arg>
+<arg>shell</arg>
+<arg>am</arg>
+<arg>force-stop</arg>
+<arg>${APP_PACKAGE}</arg>
+<arg>shell=True</arg>
+<doc>Runs the given keyword with the given arguments and ignores possible error.</doc>
+<status status="PASS" start="2026-01-19T18:31:58.649927" elapsed="0.007222"/>
+</kw>
+<kw name="Sleep" owner="BuiltIn">
+<msg time="2026-01-19T18:32:00.658005" level="INFO">Slept 2 seconds.</msg>
+<arg>2s</arg>
+<doc>Pauses the test executed for the given time.</doc>
+<status status="PASS" start="2026-01-19T18:31:58.657500" elapsed="2.015268"/>
+</kw>
+<status status="PASS" start="2026-01-19T18:31:58.648681" elapsed="2.024344"/>
+</branch>
+<status status="PASS" start="2026-01-19T18:31:58.647482" elapsed="2.025641"/>
+</if>
+<kw name="Run Keyword And Return Status" owner="BuiltIn">
+<kw name="Mobile Close Application" owner="libraries">
+<kw name="Close Application" owner="Mobile">
+<kw name="No Operation" owner="BuiltIn">
+<doc>Does absolutely nothing.</doc>
+<status status="PASS" start="2026-01-19T18:32:00.677335" elapsed="0.000275"/>
+</kw>
+<msg time="2026-01-19T18:32:00.677827" level="FAIL">No application is open</msg>
+<doc>Closes the current application and the webdriver session.</doc>
+<status status="FAIL" start="2026-01-19T18:32:00.674853" elapsed="0.143407">No application is open</status>
+</kw>
+<status status="FAIL" start="2026-01-19T18:32:00.674080" elapsed="0.144640">No application is open</status>
+</kw>
+<msg time="2026-01-19T18:32:00.818980" level="INFO">${close_status} = False</msg>
+<var>${close_status}</var>
+<arg>Mobile Close Application</arg>
+<doc>Runs the given keyword with given arguments and returns the status as a Boolean value.</doc>
+<status status="PASS" start="2026-01-19T18:32:00.673468" elapsed="0.145574"/>
+</kw>
+<if>
+<branch type="IF" condition="${close_status}">
+<kw name="Log To Console" owner="BuiltIn">
+<arg>✅ Mobile session closed</arg>
+<doc>Logs the given message to the console.</doc>
+<status status="NOT RUN" start="2026-01-19T18:32:00.819660" elapsed="0.000084"/>
+</kw>
+<status status="NOT RUN" start="2026-01-19T18:32:00.819224" elapsed="0.000610"/>
+</branch>
+<branch type="ELSE">
+<kw name="Log To Console" owner="BuiltIn">
+<arg>⚠️ Mobile session close had issues</arg>
+<doc>Logs the given message to the console.</doc>
+<status status="PASS" start="2026-01-19T18:32:00.820238" elapsed="0.000484"/>
+</kw>
+<status status="PASS" start="2026-01-19T18:32:00.819913" elapsed="0.000982"/>
+</branch>
+<status status="PASS" start="2026-01-19T18:32:00.819176" elapsed="0.001867"/>
+</if>
+<kw name="Run Keyword And Ignore Error" owner="BuiltIn">
+<kw name="Run Process" owner="Process">
+<msg time="2026-01-19T18:32:00.822390" level="INFO">Starting process:
+adb shell pkill -f com.org.gurutattva.app</msg>
+<msg time="2026-01-19T18:32:00.823274" level="INFO">Waiting for process to complete.</msg>
+<msg time="2026-01-19T18:32:00.847763" level="INFO">Process completed.</msg>
+<arg>adb</arg>
+<arg>shell</arg>
+<arg>pkill</arg>
+<arg>-f</arg>
+<arg>${APP_PACKAGE}</arg>
+<arg>shell=True</arg>
+<doc>Runs a process and waits for it to complete.</doc>
+<status status="PASS" start="2026-01-19T18:32:00.821886" elapsed="0.026109"/>
+</kw>
+<arg>Run Process</arg>
+<arg>adb</arg>
+<arg>shell</arg>
+<arg>pkill</arg>
+<arg>-f</arg>
+<arg>${APP_PACKAGE}</arg>
+<arg>shell=True</arg>
+<doc>Runs the given keyword with the given arguments and ignores possible error.</doc>
+<status status="PASS" start="2026-01-19T18:32:00.821366" elapsed="0.026811"/>
+</kw>
+<kw name="Sleep" owner="BuiltIn">
+<msg time="2026-01-19T18:32:01.853539" level="INFO">Slept 1 second.</msg>
+<arg>1s</arg>
+<doc>Pauses the test executed for the given time.</doc>
+<status status="PASS" start="2026-01-19T18:32:00.848519" elapsed="1.005212"/>
+</kw>
+<kw name="Log To Console" owner="BuiltIn">
+<arg>===== Gurutattva App Closed =====</arg>
+<doc>Logs the given message to the console.</doc>
+<status status="PASS" start="2026-01-19T18:32:01.854101" elapsed="0.000519"/>
+</kw>
+<doc>Safely closes app with proper cleanup sequence</doc>
+<status status="PASS" start="2026-01-19T18:31:58.569303" elapsed="3.285485"/>
+</kw>
+<arg>Close Gurutattva App</arg>
+<doc>Runs the given keyword with the given arguments and ignores possible error.</doc>
+<status status="PASS" start="2026-01-19T18:31:58.568445" elapsed="3.286444"/>
+</kw>
+<kw name="Run Keyword And Ignore Error" owner="BuiltIn">
+<kw name="Mobile Close Application" owner="libraries">
+<kw name="Close Application" owner="Mobile">
+<kw name="No Operation" owner="BuiltIn">
+<doc>Does absolutely nothing.</doc>
+<status status="PASS" start="2026-01-19T18:32:01.856463" elapsed="0.000139"/>
+</kw>
+<msg time="2026-01-19T18:32:01.856773" level="FAIL">No application is open</msg>
+<errors>
+<msg time="2026-01-19T18:21:10.548481" level="WARN">Error in file '/var/jenkins_home/workspace/Guruttava-E2E-Tests/pages/E2EAudioPage.robot' on line 4800: The '[Return]' setting is deprecated. Use the 'RETURN' statement instead.</msg>
+<msg time="2026-01-19T18:21:10.561554" level="WARN">Error in file '/var/jenkins_home/workspace/Guruttava-E2E-Tests/pages/E2EAudioPage.robot' on line 4946: The '[Return]' setting is deprecated. Use the 'RETURN' statement instead.</msg>
+<msg time="2026-01-19T18:21:10.562030" level="WARN">Error in file '/var/jenkins_home/workspace/Guruttava-E2E-Tests/pages/E2EAudioPage.robot' on line 4962: The '[Return]' setting is deprecated. Use the 'RETURN' statement instead.</msg>
+<msg time="2026-01-19T18:21:10.562597" level="WARN">Error in file '/var/jenkins_home/workspace/Guruttava-E2E-Tests/pages/E2EAudioPage.robot' on line 4993: The '[Return]' setting is deprecated. Use the 'RETURN' statement instead.</msg>
+<msg time="2026-01-19T18:21:10.577487" level="WARN">Error in file '/var/jenkins_home/workspace/Guruttava-E2E-Tests/pages/E2EAudioPage.robot' on line 5533: The '[Return]' setting is deprecated. Use the 'RETURN' statement instead.</msg>
+<msg time="2026-01-19T18:21:10.579447" level="WARN">Error in file '/var/jenkins_home/workspace/Guruttava-E2E-Tests/pages/E2EAudioPage.robot' on line 5644: The '[Return]' setting is deprecated. Use the 'RETURN' statement instead.</msg>
+<msg time="2026-01-19T18:21:14.792430" level="WARN">Error in file '/var/jenkins_home/workspace/Guruttava-E2E-Tests/pages/E2ENewsPage.robot' on line 798: The '[Return]' setting is deprecated. Use the 'RETURN' statement instead.</msg>
+<msg time="2026-01-19T18:32:02.297633" level="ERROR">Execution stopped by user.</msg>
+</errors>
+</robot>

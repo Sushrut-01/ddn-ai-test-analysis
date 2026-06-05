@@ -1,0 +1,425 @@
+// Jenkinsfile for DDN Storage Test Automation
+// Supports: Web API, Selenium, and E2E Testing
+// Multi-Project Architecture Integration
+
+pipeline {
+    agent any
+
+    environment {
+        // Project Context (CRITICAL for multi-project isolation)
+        PROJECT_SLUG = 'ddn'
+        PROJECT_ID = '1'  // DDN project ID from database
+
+        // Test Configuration
+        SELENIUM_HUB = 'http://localhost:4444'
+        ROBOT_OPTIONS = '--outputdir results'
+
+        // Python Workflow API (Manual Trigger Service)
+        TRIGGER_API_URL = 'http://host.docker.internal:5004'
+
+        // MongoDB Configuration
+        MONGODB_URI = credentials('mongodb-uri')
+
+        // Build metadata
+        BUILD_TIMESTAMP = sh(script: 'date +%Y%m%d_%H%M%S', returnStdout: true).trim()
+    }
+
+    parameters {
+        choice(
+            name: 'TEST_TYPE',
+            choices: ['All', 'Smoke', 'Regression', 'Sanity', 'Performance'],
+            description: 'Select test type to run'
+        )
+        choice(
+            name: 'TEST_SUITE',
+            choices: ['All', 'Basic', 'Advanced', 'API', 'UI'],
+            description: 'Select test suite'
+        )
+        booleanParam(
+            name: 'SEND_NOTIFICATIONS',
+            defaultValue: true,
+            description: 'Send notifications on completion'
+        )
+        booleanParam(
+            name: 'RUN_PERFORMANCE_TESTS',
+            defaultValue: false,
+            description: 'Include performance benchmarks'
+        )
+    }
+
+    stages {
+        stage('Checkout') {
+            steps {
+                script {
+                    echo "📥 Checking out DDN test repository"
+                }
+                git branch: 'main',
+                    url: 'https://github.com/Sushrut-01/ddn-jenkins-testing.git'
+            }
+        }
+
+        stage('Setup Environment') {
+            steps {
+                script {
+                    echo "🔧 Setting up Python environment and dependencies"
+                }
+                sh '''
+                    # Install Robot Framework dependencies
+                    python3 -m pip install --quiet --upgrade pip --break-system-packages 2>/dev/null || python3 -m pip install --quiet --upgrade pip
+
+                    # Install required packages
+                    python3 -m pip install --quiet --break-system-packages \
+                        robotframework \
+                        robotframework-seleniumlibrary \
+                        robotframework-requests \
+                        pymongo \
+                        python-dotenv \
+                        boto3 \
+                        requests 2>/dev/null || \
+                    python3 -m pip install --quiet \
+                        robotframework \
+                        robotframework-seleniumlibrary \
+                        robotframework-requests \
+                        pymongo \
+                        python-dotenv \
+                        boto3 \
+                        requests
+
+                    # Verify installations
+                    robot --version
+                    python3 --version
+                '''
+            }
+        }
+
+        stage('Verify Selenium Hub') {
+            when {
+                expression {
+                    params.TEST_SUITE in ['UI', 'All']
+                }
+            }
+            steps {
+                script {
+                    echo "🌐 Verifying Selenium Grid connection"
+                }
+                sh '''
+                    # Check if Selenium Hub is accessible
+                    curl -f ${SELENIUM_HUB}/wd/hub/status || {
+                        echo "⚠️  Selenium Hub not accessible at ${SELENIUM_HUB}"
+                        echo "Tests will run in headless mode"
+                    }
+                '''
+            }
+        }
+
+        stage('Run Tests - Basic') {
+            when {
+                expression {
+                    params.TEST_SUITE == 'Basic' || params.TEST_SUITE == 'All'
+                }
+            }
+            steps {
+                script {
+                    echo "🧪 Running DDN Basic Tests"
+                }
+                sh '''
+                    export JOB_NAME="${JOB_NAME}"
+                    export BUILD_NUMBER="${BUILD_NUMBER}"
+                    export BUILD_URL="${BUILD_URL}"
+                    export MONGODB_URI="${MONGODB_URI}"
+
+                    python3 -m robot \
+                        --outputdir results/basic \
+                        --xunit results/basic/xunit.xml \
+                        --listener implementation.mongodb_robot_listener.MongoDBListener \
+                        --name "DDN_Basic_Tests" \
+                        --variable TEST_TYPE:${TEST_TYPE} \
+                        ${ROBOT_OPTIONS} \
+                        robot-tests/ddn_basic_tests.robot || true
+                '''
+            }
+        }
+
+        stage('Run Tests - Advanced') {
+            when {
+                expression {
+                    params.TEST_SUITE == 'Advanced' || params.TEST_SUITE == 'All'
+                }
+            }
+            steps {
+                script {
+                    echo "🚀 Running DDN Advanced Tests"
+                }
+                sh '''
+                    export JOB_NAME="${JOB_NAME}"
+                    export BUILD_NUMBER="${BUILD_NUMBER}"
+                    export BUILD_URL="${BUILD_URL}"
+                    export MONGODB_URI="${MONGODB_URI}"
+
+                    python3 -m robot \
+                        --outputdir results/advanced \
+                        --xunit results/advanced/xunit.xml \
+                        --listener implementation.mongodb_robot_listener.MongoDBListener \
+                        --name "DDN_Advanced_Tests" \
+                        --variable TEST_TYPE:${TEST_TYPE} \
+                        ${ROBOT_OPTIONS} \
+                        robot-tests/ddn_advanced_tests.robot || true
+                '''
+            }
+        }
+
+        stage('Run Tests - API') {
+            when {
+                expression {
+                    params.TEST_SUITE == 'API' || params.TEST_SUITE == 'All'
+                }
+            }
+            steps {
+                script {
+                    echo "🔌 Running DDN API Tests"
+                }
+                sh '''
+                    export JOB_NAME="${JOB_NAME}"
+                    export BUILD_NUMBER="${BUILD_NUMBER}"
+                    export BUILD_URL="${BUILD_URL}"
+                    export MONGODB_URI="${MONGODB_URI}"
+
+                    python3 -m robot \
+                        --outputdir results/api \
+                        --xunit results/api/xunit.xml \
+                        --listener implementation.mongodb_robot_listener.MongoDBListener \
+                        --name "DDN_API_Tests" \
+                        --variable TEST_TYPE:${TEST_TYPE} \
+                        --include API \
+                        ${ROBOT_OPTIONS} \
+                        robot-tests/ || true
+                '''
+            }
+        }
+
+        stage('Run Tests - UI') {
+            when {
+                expression {
+                    params.TEST_SUITE == 'UI' || params.TEST_SUITE == 'All'
+                }
+            }
+            steps {
+                script {
+                    echo "🖥️  Running DDN UI Tests"
+                }
+                sh '''
+                    export JOB_NAME="${JOB_NAME}"
+                    export BUILD_NUMBER="${BUILD_NUMBER}"
+                    export BUILD_URL="${BUILD_URL}"
+                    export MONGODB_URI="${MONGODB_URI}"
+
+                    python3 -m robot \
+                        --outputdir results/ui \
+                        --xunit results/ui/xunit.xml \
+                        --listener implementation.mongodb_robot_listener.MongoDBListener \
+                        --name "DDN_UI_Tests" \
+                        --variable TEST_TYPE:${TEST_TYPE} \
+                        --include UI \
+                        ${ROBOT_OPTIONS} \
+                        robot-tests/ || true
+                '''
+            }
+        }
+
+        stage('Consolidate Results') {
+            steps {
+                script {
+                    echo "📊 Consolidating Robot Framework test results"
+
+                    // Merge all output.xml files if multiple test suites ran
+                    sh '''
+                        mkdir -p results
+
+                        # Find all output.xml files
+                        find results -name "output.xml" -type f > output_files.txt
+
+                        # If multiple files exist, use rebot to merge them
+                        if [ $(cat output_files.txt | wc -l) -gt 1 ]; then
+                            echo "Merging multiple test results..."
+                            python3 -m robot.rebot \
+                                --outputdir results \
+                                --name "DDN_All_Tests" \
+                                --merge \
+                                $(cat output_files.txt)
+                        elif [ $(cat output_files.txt | wc -l) -eq 1 ]; then
+                            # Copy single output to root results directory
+                            cp $(cat output_files.txt) results/output.xml
+                        fi
+                    '''
+                }
+            }
+        }
+
+        stage('Parse Results') {
+            steps {
+                script {
+                    echo "📊 Parsing Robot Framework test results"
+
+                    sh '''
+                        python3 << 'PYTHON_SCRIPT'
+import xml.etree.ElementTree as ET
+import sys
+
+try:
+    tree = ET.parse('results/output.xml')
+    root = tree.getroot()
+
+    stats = root.find('.//statistics/total/stat')
+    if stats is not None:
+        passed = int(stats.get('pass', 0))
+        failed = int(stats.get('fail', 0))
+        total = passed + failed
+
+        print(f"TOTAL_TESTS={total}")
+        print(f"PASSED_TESTS={passed}")
+        print(f"FAILED_TESTS={failed}")
+
+        # Write to environment file for Jenkins
+        with open('test_stats.txt', 'w') as f:
+            f.write(f"TOTAL_TESTS={total}\\n")
+            f.write(f"PASSED_TESTS={passed}\\n")
+            f.write(f"FAILED_TESTS={failed}\\n")
+
+        sys.exit(0 if failed == 0 else 1)
+    else:
+        print("ERROR: Could not parse statistics")
+        sys.exit(1)
+
+except Exception as e:
+    print(f"ERROR: {e}")
+    # Write defaults
+    with open('test_stats.txt', 'w') as f:
+        f.write("TOTAL_TESTS=0\\n")
+        f.write("PASSED_TESTS=0\\n")
+        f.write("FAILED_TESTS=0\\n")
+    sys.exit(1)
+PYTHON_SCRIPT
+                    '''
+
+                    // Load test statistics
+                    def statsFile = readFile('test_stats.txt')
+                    def stats = [:]
+                    statsFile.split('\\n').each { line ->
+                        if (line.contains('=')) {
+                            def parts = line.split('=')
+                            stats[parts[0]] = parts[1]
+                        }
+                    }
+
+                    env.TOTAL_TESTS = stats['TOTAL_TESTS'] ?: '0'
+                    env.PASSED_TESTS = stats['PASSED_TESTS'] ?: '0'
+                    env.FAILED_TESTS = stats['FAILED_TESTS'] ?: '0'
+
+                    echo "📊 Test Results: ${env.TOTAL_TESTS} total, ${env.PASSED_TESTS} passed, ${env.FAILED_TESTS} failed"
+                }
+            }
+        }
+
+        stage('Upload Results to Platform') {
+            when {
+                expression {
+                    env.FAILED_TESTS?.toInteger() > 0
+                }
+            }
+            steps {
+                script {
+                    echo "📤 Uploading test results to DDN AI Platform"
+                }
+                sh '''
+                    # Call robot_framework_parser.py to parse and upload results
+                    python3 ${WORKSPACE}/../../implementation/robot_framework_parser.py \
+                        --output results/output.xml \
+                        --build-id ${BUILD_TAG} \
+                        --project-id ${PROJECT_ID} \
+                        --project-slug ${PROJECT_SLUG} \
+                        --platform Web \
+                        --test-type ${TEST_TYPE} \
+                        --mongodb-uri "${MONGODB_URI}" \
+                        --api-url ${TRIGGER_API_URL}/api/trigger-analysis || {
+                            echo "⚠️  Result upload failed - continuing anyway"
+                        }
+                '''
+            }
+        }
+    }
+
+    post {
+        always {
+            script {
+                echo "📝 Publishing Robot Framework reports"
+
+                // Publish Robot Framework reports
+                robot outputPath: 'results',
+                      reportFileName: 'report.html',
+                      logFileName: 'log.html',
+                      outputFileName: 'output.xml',
+                      passThreshold: 80.0,
+                      unstableThreshold: 70.0,
+                      onlyCritical: false
+
+                // Archive test artifacts
+                archiveArtifacts artifacts: 'results/**/*', allowEmptyArchive: true
+
+                // Trigger Python workflow API with PROJECT context on failures
+                if (currentBuild.result == 'FAILURE' || env.FAILED_TESTS?.toInteger() > 0) {
+                    echo "❌ Tests failed - triggering Python workflow analysis"
+
+                    def payload = [
+                        project_slug: env.PROJECT_SLUG,
+                        project_id: env.PROJECT_ID.toInteger(),
+                        build_id: env.BUILD_TAG,
+                        job_name: env.JOB_NAME,
+                        build_number: env.BUILD_NUMBER.toInteger(),
+                        status: "FAILURE",
+                        total_tests: env.TOTAL_TESTS?.toInteger() ?: 0,
+                        passed_tests: env.PASSED_TESTS?.toInteger() ?: 0,
+                        failed_tests: env.FAILED_TESTS?.toInteger() ?: 0,
+                        platform: 'Web',
+                        test_type: params.TEST_TYPE ?: 'All',
+                        timestamp: new Date().format("yyyy-MM-dd'T'HH:mm:ss'Z'"),
+                        build_url: env.BUILD_URL,
+                        robot_report_url: "${env.BUILD_URL}robot/report/report.html",
+                        trigger_source: "jenkins",
+                        triggered_by_user: env.BUILD_USER_ID ?: "jenkins"
+                    ]
+
+                    try {
+                        def response = httpRequest(
+                            url: "${env.TRIGGER_API_URL}/api/trigger-analysis",
+                            httpMode: 'POST',
+                            contentType: 'APPLICATION_JSON',
+                            requestBody: groovy.json.JsonOutput.toJson(payload),
+                            validResponseCodes: '200:299',
+                            timeout: 60
+                        )
+                        echo "✅ Analysis triggered successfully"
+                    } catch (Exception e) {
+                        echo "⚠️  Failed to trigger analysis: ${e.message}"
+                    }
+                }
+            }
+        }
+
+        success {
+            echo "✅ All DDN tests passed for ${params.TEST_SUITE}!"
+        }
+
+        failure {
+            echo "❌ Tests failed - Python workflow analysis triggered"
+        }
+
+        unstable {
+            echo "⚠️  Tests unstable - some failures detected"
+        }
+
+        cleanup {
+            // Cleanup temporary files
+            sh 'rm -f test_stats.txt output_files.txt || true'
+        }
+    }
+}

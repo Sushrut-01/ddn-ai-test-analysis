@@ -1,0 +1,33 @@
+# DDN AI - Layer 2: ML/AI Dependencies (Heavy - ~2GB)
+# Install: pip install -r requirements-ml.txt
+# Use case: AI analysis, embeddings, LLM integration
+# Prerequisite: requirements-base.txt
+
+# CRITICAL: numpy 2.x breaks compatibility - stay on 1.24.x
+numpy>=1.24.0,<1.25.0
+scipy>=1.11.0,<1.12.0
+
+# NLP & PII Detection
+spacy==3.7.5
+thinc==8.2.5
+presidio-analyzer>=2.2.354,<3.0.0
+presidio-anonymizer>=2.2.354,<3.0.0
+
+# Embeddings & Retrieval
+rank-bm25==0.2.2
+sentence-transformers>=2.2.2,<6.0.0
+
+# LangChain & LangGraph
+langgraph==0.2.45
+langchain==0.3.13
+langchain-anthropic==0.3.5
+langchain-openai==0.2.14
+langchain-pinecone==0.2.0
+langchain-community==0.3.13
+
+# AI Providers
+anthropic>=0.41.0
+openai>=1.58.1
+
+# Vector Database
+pinecone>=5.0.0

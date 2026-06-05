@@ -1,16 +1,40 @@
 import React from 'react'
 import { Routes, Route } from 'react-router-dom'
-import { ThemeProvider, createTheme } from '@mui/material/styles'
+import { ThemeProvider as MuiThemeProvider, createTheme } from '@mui/material/styles'
 import CssBaseline from '@mui/material/CssBaseline'
+import { ThemeProvider as ColorThemeProvider } from './theme/ThemeContext'
 import Layout from './components/Layout'
-import Dashboard from './pages/Dashboard'
-import Test from './Test'
-import Failures from './pages/Failures'
-import FailureDetails from './pages/FailureDetails'
-import Analytics from './pages/Analytics'
-import ManualTrigger from './pages/ManualTrigger'
-import KnowledgeManagement from './pages/KnowledgeManagement'
-import TriggerAnalysis from './pages/TriggerAnalysis' // Task 0F.7: Bulk analysis page
+
+// Production Pages (previously Preview pages)
+import Dashboard from './pages/DashboardPreviewNew'
+import Failures from './pages/FailuresPreview'
+import FailureDetails from './pages/FailureDetailsPreview'
+import Analytics from './pages/AnalyticsPreview'
+import ManualTrigger from './pages/ManualTriggerPreview'
+import BulkTrigger from './pages/TriggerAnalysisPreview'
+import Knowledge from './pages/KnowledgeManagementPreview'
+import Services from './pages/ServicesMonitoringPreview'
+import Pipeline from './pages/PipelineStatusPreview'
+import JiraBugs from './pages/JiraBugsPreview'
+import PRWorkflow from './pages/PRWorkflowPreview'
+import AIChatbot from './pages/AIChatbotPreview'
+import TestGenerator from './pages/TestCaseGeneratorPreview'
+import Users from './pages/UserManagementPreview'
+import Configuration from './pages/ConfigurationPreview'
+import Notifications from './pages/NotificationsCenterPreview'
+import AuditLog from './pages/AuditLogPreview'
+import RAGApproval from './pages/RAGApprovalPreview'
+import AIRootCause from './pages/AIRootCausePreview'
+import CodeHealing from './pages/FailuresPendingPreview'
+import CopilotPage from './pages/CopilotPage'
+import ProjectManagement from './pages/ProjectManagement'
+
+// Auth Pages
+import LoginPage from './pages/LoginPage'
+import SignupPage from './pages/SignupPage'
+import ForgotPasswordPage from './pages/ForgotPasswordPage'
+
+// Utils
 import ErrorBoundary from './ErrorBoundary'
 
 const theme = createTheme({
@@ -38,23 +62,61 @@ const theme = createTheme({
 
 function App() {
   return (
-    <ThemeProvider theme={theme}>
-      <CssBaseline />
-      <Layout>
-        <ErrorBoundary>
-          <Routes>
-            <Route path="/" element={<Dashboard />} />
-            <Route path="/test" element={<Test />} />
-            <Route path="/failures" element={<Failures />} />
-            <Route path="/failures/:buildId" element={<FailureDetails />} />
-            <Route path="/analytics" element={<Analytics />} />
-            <Route path="/manual-trigger" element={<ManualTrigger />} />
-            <Route path="/trigger-analysis" element={<TriggerAnalysis />} />
-            <Route path="/knowledge" element={<KnowledgeManagement />} />
-          </Routes>
-        </ErrorBoundary>
-      </Layout>
-    </ThemeProvider>
+    <ColorThemeProvider>
+      <MuiThemeProvider theme={theme}>
+        <CssBaseline />
+        <Routes>
+          {/* Auth pages - outside Layout */}
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/signup" element={<SignupPage />} />
+          <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+
+          {/* All other routes with Layout */}
+          <Route path="/*" element={
+            <Layout>
+              <ErrorBoundary>
+                <Routes>
+                  {/* Dashboard & Monitoring */}
+                  <Route path="/" element={<Dashboard />} />
+                  <Route path="/dashboard" element={<Dashboard />} />
+                  <Route path="/pipeline" element={<Pipeline />} />
+                  <Route path="/services" element={<Services />} />
+
+                  {/* Analysis & Failures */}
+                  <Route path="/failures" element={<Dashboard />} /> {/* Redirect to Overview */}
+                  <Route path="/failures/:id" element={<FailureDetails />} /> {/* AI Analysis detail page */}
+                  <Route path="/bulk-trigger" element={<BulkTrigger />} /> {/* Manual Trigger Flow */}
+                  <Route path="/rag-approval" element={<RAGApproval />} /> {/* RAG HITL Review Queue */}
+                  <Route path="/approval-flow" element={<Failures />} /> {/* Approval Flow - CODE_ERROR items approved for AI */}
+                  <Route path="/ai-root-cause" element={<AIRootCause />} /> {/* AI Root Cause Analysis - dedicated page */}
+                  <Route path="/code-healing" element={<CodeHealing />} /> {/* Code Healing Pipeline - PR, Build, Jira flow */}
+                  <Route path="/manual-trigger" element={<ManualTrigger />} /> {/* Trigger Records */}
+                  <Route path="/analytics" element={<Analytics />} />
+
+                  {/* Integrations */}
+                  <Route path="/jira-bugs" element={<JiraBugs />} />
+                  <Route path="/pr-workflow" element={<PRWorkflow />} />
+
+                  {/* AI Tools */}
+                  <Route path="/ai-chatbot" element={<AIChatbot />} />
+                  <Route path="/test-generator" element={<TestGenerator />} />
+                  <Route path="/knowledge" element={<Knowledge />} />
+                  <Route path="/copilot" element={<CopilotPage />} />
+
+                  {/* Administration */}
+                  <Route path="/users" element={<Users />} />
+                  <Route path="/config" element={<Configuration />} />
+                  <Route path="/notifications" element={<Notifications />} />
+                  <Route path="/audit-log" element={<AuditLog />} />
+                  <Route path="/projects/manage" element={<ProjectManagement />} />
+                  <Route path="/projects/:id" element={<ProjectManagement />} />
+                </Routes>
+              </ErrorBoundary>
+            </Layout>
+          } />
+        </Routes>
+      </MuiThemeProvider>
+    </ColorThemeProvider>
   )
 }
 

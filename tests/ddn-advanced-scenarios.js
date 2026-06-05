@@ -136,7 +136,12 @@ describe('Domain-Based Isolation and Management Tests', function() {
                 product: 'EXAScaler-EMF',
                 status: 'FAILURE',
                 error_message: error.message,
-                stack_trace: error.stack
+                stack_trace: error.stack,
+                // BUG #4 FIX: Add suite metadata for dashboard reporting
+                suite_name: 'Domain-Based Isolation and Management Tests',
+                pass_count: 0,
+                fail_count: 1,
+                total_count: 1
             });
             throw error;
         }
@@ -174,7 +179,12 @@ describe('Domain-Based Isolation and Management Tests', function() {
                     status: 'FAILURE',
                     error_message: `Expected 403/401, got: ${error.message}`,
                     stack_trace: error.stack,
-                    security_impact: 'HIGH - Cross-domain access may be possible'
+                    security_impact: 'HIGH - Cross-domain access may be possible',
+                    // BUG #4 FIX: Add suite metadata for dashboard reporting
+                    suite_name: 'Domain-Based Isolation and Management Tests',
+                    pass_count: 0,
+                    fail_count: 1,
+                    total_count: 1
                 });
                 throw error;
             }
@@ -213,7 +223,12 @@ describe('Domain-Based Isolation and Management Tests', function() {
                 product: 'EXAScaler',
                 status: 'FAILURE',
                 error_message: error.message,
-                stack_trace: error.stack
+                stack_trace: error.stack,
+                // BUG #4 FIX: Add suite metadata for dashboard reporting
+                suite_name: 'Domain-Based Isolation and Management Tests',
+                pass_count: 0,
+                fail_count: 1,
+                total_count: 1
             });
             throw error;
         }
@@ -268,7 +283,17 @@ describe('Multi-Tenancy and Namespace Isolation Tests', function() {
                 product: 'EXAScaler',
                 status: 'FAILURE',
                 error_message: error.message,
-                stack_trace: error.stack
+                stack_trace: error.stack,
+                // BUG #4 FIX: Add suite metadata for dashboard reporting
+                suite_name: 'Multi-Tenancy and Namespace Isolation Tests',
+                pass_count: 0,
+                fail_count: 1,
+                total_count: 1,
+                // BUG #4 FIX: Add suite metadata for dashboard reporting
+                suite_name: 'Multi-Tenancy and Namespace Isolation Tests',
+                pass_count: 0,
+                fail_count: 1,
+                total_count: 1
             });
             throw error;
         }
@@ -321,7 +346,17 @@ describe('Multi-Tenancy and Namespace Isolation Tests', function() {
                 product: 'EXAScaler',
                 status: 'FAILURE',
                 error_message: error.message,
-                stack_trace: error.stack
+                stack_trace: error.stack,
+                // BUG #4 FIX: Add suite metadata for dashboard reporting
+                suite_name: 'Multi-Tenancy and Namespace Isolation Tests',
+                pass_count: 0,
+                fail_count: 1,
+                total_count: 1,
+                // BUG #4 FIX: Add suite metadata for dashboard reporting
+                suite_name: 'Multi-Tenancy and Namespace Isolation Tests',
+                pass_count: 0,
+                fail_count: 1,
+                total_count: 1
             });
             throw error;
         }
@@ -359,7 +394,17 @@ describe('Multi-Tenancy and Namespace Isolation Tests', function() {
                     status: 'FAILURE',
                     error_message: error.message,
                     stack_trace: error.stack,
-                    security_impact: 'CRITICAL - Namespace isolation breach'
+                // BUG #4 FIX: Add suite metadata for dashboard reporting
+                suite_name: 'Multi-Tenancy and Namespace Isolation Tests',
+                pass_count: 0,
+                fail_count: 1,
+                total_count: 1,
+                    security_impact: 'CRITICAL - Namespace isolation breach',
+                    // BUG #4 FIX: Add suite metadata for dashboard reporting
+                    suite_name: 'Multi-Tenancy and Namespace Isolation Tests',
+                    pass_count: 0,
+                    fail_count: 1,
+                    total_count: 1
                 });
                 throw error;
             }
@@ -397,7 +442,17 @@ describe('Multi-Tenancy and Namespace Isolation Tests', function() {
                 status: 'FAILURE',
                 error_message: error.message,
                 stack_trace: error.stack,
-                security_impact: 'HIGH - Root privilege escalation possible'
+                // BUG #4 FIX: Add suite metadata for dashboard reporting
+                suite_name: 'Multi-Tenancy and Namespace Isolation Tests',
+                pass_count: 0,
+                fail_count: 1,
+                total_count: 1,
+                security_impact: 'HIGH - Root privilege escalation possible',
+                // BUG #4 FIX: Add suite metadata for dashboard reporting
+                suite_name: 'Multi-Tenancy and Namespace Isolation Tests',
+                pass_count: 0,
+                fail_count: 1,
+                total_count: 1
             });
             throw error;
         }
@@ -454,7 +509,17 @@ describe('Quota Management and Enforcement Tests', function() {
                 product: 'EXAScaler',
                 status: 'FAILURE',
                 error_message: error.message,
-                stack_trace: error.stack
+                stack_trace: error.stack,
+                // BUG #4 FIX: Add suite metadata for dashboard reporting
+                suite_name: 'Quota Management and Enforcement Tests',
+                pass_count: 0,
+                fail_count: 1,
+                total_count: 1,
+                // BUG #4 FIX: Add suite metadata for dashboard reporting
+                suite_name: 'Quota Management and Enforcement Tests',
+                pass_count: 0,
+                fail_count: 1,
+                total_count: 1
             });
             throw error;
         }
@@ -492,7 +557,12 @@ describe('Quota Management and Enforcement Tests', function() {
                     status: 'FAILURE',
                     error_message: `Expected quota error, got: ${error.message}`,
                     stack_trace: error.stack,
-                    data_integrity_risk: 'HIGH - Quota limits not enforced'
+                    data_integrity_risk: 'HIGH - Quota limits not enforced',
+                    // BUG #4 FIX: Add suite metadata for dashboard reporting
+                    suite_name: 'Quota Management and Enforcement Tests',
+                    pass_count: 0,
+                    fail_count: 1,
+                    total_count: 1
                 });
                 throw error;
             }
@@ -526,7 +596,17 @@ describe('Quota Management and Enforcement Tests', function() {
                 product: 'EXAScaler',
                 status: 'FAILURE',
                 error_message: error.message,
-                stack_trace: error.stack
+                stack_trace: error.stack,
+                // BUG #4 FIX: Add suite metadata for dashboard reporting
+                suite_name: 'Quota Management and Enforcement Tests',
+                pass_count: 0,
+                fail_count: 1,
+                total_count: 1,
+                // BUG #4 FIX: Add suite metadata for dashboard reporting
+                suite_name: 'Quota Management and Enforcement Tests',
+                pass_count: 0,
+                fail_count: 1,
+                total_count: 1
             });
             throw error;
         }
@@ -558,7 +638,12 @@ describe('Quota Management and Enforcement Tests', function() {
                 product: 'EXAScaler',
                 status: 'FAILURE',
                 error_message: error.message,
-                stack_trace: error.stack
+                stack_trace: error.stack,
+                // BUG #4 FIX: Add suite metadata for dashboard reporting
+                suite_name: 'Quota Management and Enforcement Tests',
+                pass_count: 0,
+                fail_count: 1,
+                total_count: 1
             });
             throw error;
         }
@@ -624,7 +709,12 @@ describe('S3 Protocol Multi-Tenancy Tests', function() {
                 product: 'EXAScaler-S3',
                 status: 'FAILURE',
                 error_message: error.message,
-                stack_trace: error.stack
+                stack_trace: error.stack,
+                // BUG #4 FIX: Add suite metadata for dashboard reporting
+                suite_name: 'S3 Protocol Multi-Tenancy Tests',
+                pass_count: 0,
+                fail_count: 1,
+                total_count: 1
             });
             throw error;
         }
@@ -690,7 +780,12 @@ describe('S3 Protocol Multi-Tenancy Tests', function() {
                     product: 'EXAScaler-S3',
                     status: 'FAILURE',
                     error_message: 'S3 quota not enforced - large upload succeeded',
-                    stack_trace: error.stack
+                    stack_trace: error.stack,
+                // BUG #4 FIX: Add suite metadata for dashboard reporting
+                suite_name: 'S3 Protocol Multi-Tenancy Tests',
+                pass_count: 0,
+                fail_count: 1,
+                total_count: 1
                 });
                 throw error;
             }
@@ -738,7 +833,12 @@ describe('S3 Protocol Multi-Tenancy Tests', function() {
                 product: 'EXAScaler-S3',
                 status: 'FAILURE',
                 error_message: error.message,
-                stack_trace: error.stack
+                stack_trace: error.stack,
+                // BUG #4 FIX: Add suite metadata for dashboard reporting
+                suite_name: 'S3 Protocol Multi-Tenancy Tests',
+                pass_count: 0,
+                fail_count: 1,
+                total_count: 1
             });
             throw error;
         }
@@ -779,7 +879,12 @@ describe('Kerberos Authentication and Security Tests', function() {
                 product: 'EXAScaler',
                 status: 'FAILURE',
                 error_message: error.message,
-                stack_trace: error.stack
+                stack_trace: error.stack,
+                // BUG #4 FIX: Add suite metadata for dashboard reporting
+                suite_name: 'Kerberos Authentication and Security Tests',
+                pass_count: 0,
+                fail_count: 1,
+                total_count: 1
             });
             throw error;
         }
@@ -816,6 +921,11 @@ describe('Kerberos Authentication and Security Tests', function() {
                     status: 'FAILURE',
                     error_message: error.message,
                     stack_trace: error.stack,
+                // BUG #4 FIX: Add suite metadata for dashboard reporting
+                suite_name: 'Kerberos Authentication and Security Tests',
+                pass_count: 0,
+                fail_count: 1,
+                total_count: 1,
                     security_impact: 'CRITICAL - NID spoofing possible'
                 });
                 throw error;
@@ -867,7 +977,12 @@ describe('Data Governance and Compliance Tests', function() {
                 product: 'EXAScaler-EMF',
                 status: 'FAILURE',
                 error_message: error.message,
-                stack_trace: error.stack
+                stack_trace: error.stack,
+                // BUG #4 FIX: Add suite metadata for dashboard reporting
+                suite_name: 'Data Governance and Compliance Tests',
+                pass_count: 0,
+                fail_count: 1,
+                total_count: 1
             });
             throw error;
         }
@@ -895,7 +1010,12 @@ describe('Data Governance and Compliance Tests', function() {
                 product: 'EXAScaler',
                 status: 'FAILURE',
                 error_message: error.message,
-                stack_trace: error.stack
+                stack_trace: error.stack,
+                // BUG #4 FIX: Add suite metadata for dashboard reporting
+                suite_name: 'Data Governance and Compliance Tests',
+                pass_count: 0,
+                fail_count: 1,
+                total_count: 1
             });
             throw error;
         }
@@ -926,7 +1046,12 @@ describe('Data Governance and Compliance Tests', function() {
                 product: 'EXAScaler-EMF',
                 status: 'FAILURE',
                 error_message: error.message,
-                stack_trace: error.stack
+                stack_trace: error.stack,
+                // BUG #4 FIX: Add suite metadata for dashboard reporting
+                suite_name: 'Data Governance and Compliance Tests',
+                pass_count: 0,
+                fail_count: 1,
+                total_count: 1
             });
             throw error;
         }

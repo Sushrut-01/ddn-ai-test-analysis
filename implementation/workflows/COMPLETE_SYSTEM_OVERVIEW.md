@@ -226,7 +226,7 @@ mcp-configs/
 ### **Step 2: Configure Credentials**
 
 Each workflow needs:
-- **MongoDB**: Connection string (`mongodb://localhost:27017/ddn`)
+- **MongoDB**: set `MONGODB_URI` to your MongoDB connection string (Atlas recommended)
 - **Anthropic API**: API key (`sk-ant-...`)
 - **Teams Webhook**: URL (`https://outlook.office.com/webhook/...`)
 

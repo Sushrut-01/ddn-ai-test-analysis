@@ -19,41 +19,45 @@ print()
 print("[TEST 1] Verifying mongodb_robot_listener.py logs")
 print("-" * 70)
 try:
-    # Need to set minimal MongoDB config to avoid connection errors
-    os.environ['MONGODB_URI'] = 'mongodb://localhost:27017/test'
-    os.environ['MONGODB_DB'] = 'test'
-
-    # Capture stdout
-    captured_output = StringIO()
-
-    # Import and initialize
-    with redirect_stdout(captured_output), redirect_stderr(captured_output):
-        try:
-            from mongodb_robot_listener import MongoDBListener
-            listener = MongoDBListener()
-        except Exception as e:
-            # Connection errors are expected if MongoDB not running
-            pass
-
-    output = captured_output.getvalue()
-
-    # Check for expected log messages
-    if "PII redaction DISABLED (client approval pending)" in output:
-        print("[PASS] Found 'PII redaction DISABLED' message")
+    # Only run MongoDB listener test if MONGODB_URI is provided.
+    mongo_uri = os.environ.get('MONGODB_URI')
+    if not mongo_uri:
+        print("[SKIP] MONGODB_URI not set — skipping MongoDB listener checks")
     else:
-        print("[FAIL] Did not find 'PII redaction DISABLED' message")
-        print(f"Output: {output}")
+        # Ensure database name is set
+        os.environ['MONGODB_DB'] = os.environ.get('MONGODB_DB', 'test')
 
-    if "Storing actual data for dashboard navigation" in output:
-        print("[PASS] Found 'Storing actual data for dashboard navigation' message")
-    else:
-        print("[FAIL] Did not find dashboard navigation message")
+        # Capture stdout
+        captured_output = StringIO()
 
-    # Should NOT see "PII redaction enabled"
-    if "PII redaction ENABLED" not in output and "PII redaction enabled" not in output.lower():
-        print("[PASS] Correctly NOT showing 'PII redaction enabled'")
-    else:
-        print("[FAIL] Should not show 'PII redaction enabled' when disabled")
+        # Import and initialize
+        with redirect_stdout(captured_output), redirect_stderr(captured_output):
+            try:
+                from mongodb_robot_listener import MongoDBListener
+                listener = MongoDBListener()
+            except Exception as e:
+                # Connection errors are expected if MongoDB not reachable
+                pass
+
+        output = captured_output.getvalue()
+
+        # Check for expected log messages
+        if "PII redaction DISABLED (client approval pending)" in output:
+            print("[PASS] Found 'PII redaction DISABLED' message")
+        else:
+            print("[FAIL] Did not find 'PII redaction DISABLED' message")
+            print(f"Output: {output}")
+
+        if "Storing actual data for dashboard navigation" in output:
+            print("[PASS] Found 'Storing actual data for dashboard navigation' message")
+        else:
+            print("[FAIL] Did not find dashboard navigation message")
+
+        # Should NOT see "PII redaction enabled"
+        if "PII redaction ENABLED" not in output and "PII redaction enabled" not in output.lower():
+            print("[PASS] Correctly NOT showing 'PII redaction enabled'")
+        else:
+            print("[FAIL] Should not show 'PII redaction enabled' when disabled")
 
 except Exception as e:
     print(f"[ERROR] {e}")

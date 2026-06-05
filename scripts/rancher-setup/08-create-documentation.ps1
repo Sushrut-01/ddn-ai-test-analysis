@@ -150,7 +150,10 @@ OPENAI_API_KEY=your_key_here
 GEMINI_API_KEY=your_key_here
 
 # Databases
-MONGO_URI=mongodb://admin:password@ddn-mongodb:27017/
+# Use `MONGODB_URI` to provide your MongoDB connection string (Atlas recommended).
+# Example (Atlas):
+# mongodb+srv://<user>:<pass>@cluster0.xxxxx.mongodb.net/ddn_ai_project?retryWrites=true&w=majority
+MONGODB_URI=mongodb+srv://<user>:<pass>@cluster0.xxxxx.mongodb.net/ddn_ai_project?retryWrites=true&w=majority
 POSTGRES_HOST=ddn-postgres
 POSTGRES_PORT=5432
 

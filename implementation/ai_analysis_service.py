@@ -1112,6 +1112,51 @@ def store_in_pinecone(failure_id, error_message, metadata):
 # POSTGRESQL STORAGE
 # ============================================================================
 
+def update_mongodb_analysis_status(failure_id, analysis_id, analysis_status='completed'):
+    """
+    Update MongoDB failure record with AI analysis status
+    This enables dashboard to filter failures by analysis completion
+
+    Args:
+        failure_id: MongoDB failure ID (string or ObjectId)
+        analysis_id: PostgreSQL analysis ID
+        analysis_status: Status string ('completed', 'error', 'pending')
+    """
+    try:
+        from bson import ObjectId
+
+        # Convert to ObjectId if string
+        if isinstance(failure_id, str):
+            try:
+                failure_oid = ObjectId(failure_id)
+            except:
+                failure_oid = failure_id
+        else:
+            failure_oid = failure_id
+
+        # Update MongoDB failure record with analysis tracking
+        result = failures_collection.update_one(
+            {'_id': failure_oid},
+            {'$set': {
+                'analysis_status': analysis_status,
+                'analysis_id': analysis_id,
+                'analyzed_at': datetime.utcnow(),
+                'analysis_synced': True
+            }}
+        )
+
+        if result.modified_count > 0:
+            logger.info(f"[MongoDB Sync] Updated failure {failure_id} with analysis_status={analysis_status}")
+        else:
+            logger.warning(f"[MongoDB Sync] No document found to update for failure {failure_id}")
+
+        return result.modified_count > 0
+
+    except Exception as e:
+        logger.error(f"[MongoDB Sync] Failed to update failure {failure_id}: {str(e)}")
+        return False
+
+
 def save_analysis_to_postgres(failure_id, analysis, similar_failures):
     """
     Save AI analysis to PostgreSQL
@@ -1420,6 +1465,10 @@ def analyze_failure():
         # Step 3: Save to PostgreSQL
         analysis_id = save_analysis_to_postgres(failure_id, analysis, similar_failures)
 
+        # Step 3.5: Sync MongoDB with analysis status
+        analysis_status = 'completed' if analysis.get('ai_status') not in ['FAILED', 'UNAVAILABLE', 'QUOTA_EXCEEDED'] else 'error'
+        update_mongodb_analysis_status(failure_id, analysis_id, analysis_status)
+
         # Step 4: Store in Pinecone for future similarity search
         metadata = {
             'test_name': failure.get('test_name', ''),
@@ -1478,6 +1527,10 @@ def analyze_batch():
             similar_failures = search_similar_failures(error_message)
             analysis = analyze_failure_with_gemini(failure)
             analysis_id = save_analysis_to_postgres(failure_id, analysis, similar_failures)
+
+            # Sync MongoDB with analysis status
+            analysis_status = 'completed' if analysis.get('ai_status') not in ['FAILED', 'UNAVAILABLE', 'QUOTA_EXCEEDED'] else 'error'
+            update_mongodb_analysis_status(failure_id, analysis_id, analysis_status)
 
             # Store in Pinecone
             metadata = {

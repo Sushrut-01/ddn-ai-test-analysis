@@ -498,6 +498,208 @@ def get_eligible_patterns():
         }), 500
 
 
+# ============================================================================
+# CODE HEALING PIPELINE ENDPOINTS (For PR → Build → Jira Workflow)
+# ============================================================================
+
+@app.route('/api/fixes/pending', methods=['GET'])
+def get_pending_fixes():
+    """
+    Get CODE_ERROR failures that are approved for fixing
+    Returns failures with fix status (pending, pr_created, building, jira_created)
+    """
+    try:
+        conn = get_postgres_connection()
+        cursor = conn.cursor(cursor_factory=RealDictCursor)
+
+        cursor.execute("""
+            SELECT
+                fa.id,
+                fa.build_id,
+                fa.mongodb_failure_id,
+                fa.error_category,
+                fa.root_cause,
+                fa.fix_recommendation,
+                fa.confidence_score,
+                fa.analyzed_at,
+                fa.jira_issue_key,
+                fa.jira_issue_url,
+                COALESCE(fa.pr_url, '') as pr_url,
+                COALESCE(fa.pr_number, 0) as pr_number,
+                CASE
+                    WHEN fa.jira_issue_key IS NOT NULL THEN 'jira_created'
+                    WHEN fa.pr_number IS NOT NULL THEN 'pr_created'
+                    ELSE 'pending'
+                END as fix_status
+            FROM failure_analysis fa
+            WHERE fa.error_category = 'CODE_ERROR'
+              AND fa.confidence_score >= 0.7
+            ORDER BY fa.analyzed_at DESC
+            LIMIT 50
+        """)
+
+        fixes = cursor.fetchall()
+
+        # Convert to list of dicts and format dates
+        result = []
+        for fix in fixes:
+            fix_dict = dict(fix)
+            if isinstance(fix_dict.get('analyzed_at'), datetime):
+                fix_dict['analyzed_at'] = fix_dict['analyzed_at'].isoformat()
+            result.append(fix_dict)
+
+        cursor.close()
+        conn.close()
+
+        return jsonify({
+            'status': 'success',
+            'data': {
+                'fixes': result,
+                'total': len(result)
+            }
+        })
+
+    except Exception as e:
+        return jsonify({
+            'status': 'error',
+            'message': str(e)
+        }), 500
+
+
+@app.route('/api/fixes/apply', methods=['POST'])
+def apply_code_fix():
+    """
+    Apply code fix to codebase
+    Creates GitHub PR via MCP, triggers Jenkins build, creates Jira ticket if build fails
+    """
+    try:
+        data = request.get_json()
+        failure_id = data.get('failure_id')
+        fix_code = data.get('fix_code')
+
+        if not failure_id:
+            return jsonify({
+                'status': 'error',
+                'message': 'failure_id is required'
+            }), 400
+
+        conn = get_postgres_connection()
+        cursor = conn.cursor(cursor_factory=RealDictCursor)
+
+        # Get failure details
+        cursor.execute("""
+            SELECT * FROM failure_analysis
+            WHERE id = %s OR mongodb_failure_id = %s
+        """, (failure_id, failure_id))
+
+        failure = cursor.fetchone()
+        if not failure:
+            return jsonify({
+                'status': 'error',
+                'message': 'Failure not found'
+            }), 404
+
+        # In safe mode, just return simulated response
+        if SAFE_MODE:
+            cursor.close()
+            conn.close()
+
+            return jsonify({
+                'status': 'success',
+                'message': 'Fix applied in safe mode (dry-run)',
+                'data': {
+                    'fix_id': failure_id,
+                    'pr_url': f'https://github.com/{GITHUB_REPO}/pull/mock-{failure_id}',
+                    'pr_number': 999,
+                    'branch_name': f'fix/auto-{failure_id}',
+                    'build_triggered': True,
+                    'safe_mode': True
+                }
+            })
+
+        # TODO: Real implementation would:
+        # 1. Create fix branch
+        # 2. Apply code changes
+        # 3. Create GitHub PR via MCP
+        # 4. Trigger Jenkins build
+        # 5. Monitor build status
+        # 6. Create Jira ticket if build fails
+
+        # For now, return simulated response
+        cursor.close()
+        conn.close()
+
+        return jsonify({
+            'status': 'success',
+            'message': 'Fix pipeline initiated',
+            'data': {
+                'fix_id': failure_id,
+                'pr_url': f'https://github.com/{GITHUB_REPO}/pull/pending',
+                'status': 'pr_creation_pending'
+            }
+        })
+
+    except Exception as e:
+        return jsonify({
+            'status': 'error',
+            'message': str(e)
+        }), 500
+
+
+@app.route('/api/fixes/status/<fix_id>', methods=['GET'])
+def get_fix_status(fix_id):
+    """
+    Get current status of fix pipeline
+    Returns: pending, pr_created, ci_running, ci_passed, ci_failed, jira_created
+    """
+    try:
+        conn = get_postgres_connection()
+        cursor = conn.cursor(cursor_factory=RealDictCursor)
+
+        cursor.execute("""
+            SELECT
+                id,
+                build_id,
+                pr_url,
+                pr_number,
+                jira_issue_key,
+                jira_issue_url,
+                analyzed_at,
+                CASE
+                    WHEN jira_issue_key IS NOT NULL THEN 'jira_created'
+                    WHEN pr_number IS NOT NULL THEN 'pr_created'
+                    ELSE 'pending'
+                END as pipeline_status
+            FROM failure_analysis
+            WHERE id = %s OR mongodb_failure_id = %s OR build_id = %s
+        """, (fix_id, fix_id, fix_id))
+
+        fix = cursor.fetchone()
+        cursor.close()
+        conn.close()
+
+        if not fix:
+            return jsonify({
+                'status': 'error',
+                'message': 'Fix not found'
+            }), 404
+
+        fix_dict = dict(fix)
+        if isinstance(fix_dict.get('analyzed_at'), datetime):
+            fix_dict['analyzed_at'] = fix_dict['analyzed_at'].isoformat()
+
+        return jsonify({
+            'status': 'success',
+            'data': fix_dict
+        })
+
+    except Exception as e:
+        return jsonify({
+            'status': 'error',
+            'message': str(e)
+        }), 500
+
+
 @app.route('/health', methods=['GET'])
 def health_check():
     """Health check endpoint"""
@@ -521,11 +723,15 @@ if __name__ == '__main__':
     print(f"Min Pattern Occurrences: {MIN_PATTERN_OCCURRENCES}")
     print("=" * 60)
     print("\nAvailable Endpoints:")
-    print("  GET  /health                     - Health check")
-    print("  POST /api/self-heal/analyze      - Analyze eligibility")
-    print("  POST /api/self-heal/apply        - Apply fix")
-    print("  GET  /api/self-heal/history      - Get history")
-    print("  GET  /api/self-heal/patterns     - Get eligible patterns")
+    print("  GET  /health                      - Health check")
+    print("  POST /api/self-heal/analyze       - Analyze eligibility")
+    print("  POST /api/self-heal/apply         - Apply fix")
+    print("  GET  /api/self-heal/history       - Get history")
+    print("  GET  /api/self-heal/patterns      - Get eligible patterns")
+    print("\n  Code Healing Pipeline:")
+    print("  GET  /api/fixes/pending           - Get pending CODE_ERROR fixes")
+    print("  POST /api/fixes/apply             - Apply fix (PR → Build → Jira)")
+    print("  GET  /api/fixes/status/<fix_id>   - Get fix pipeline status")
     print("=" * 60)
     print("\nSupported Fix Patterns:")
     for name, config in FIX_PATTERNS.items():

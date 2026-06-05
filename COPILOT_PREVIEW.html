@@ -1,0 +1,738 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DDN AI Copilot - Preview</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+            background: #1e1e1e;
+            color: #cccccc;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .container {
+            display: flex;
+            height: 100vh;
+        }
+
+        /* Left Panel - Code Editor */
+        .editor-panel {
+            flex: 1;
+            background: #1e1e1e;
+            display: flex;
+            flex-direction: column;
+            border-right: 1px solid #333;
+        }
+
+        .editor-header {
+            background: #252526;
+            padding: 10px 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            border-bottom: 1px solid #333;
+        }
+
+        .tab {
+            background: #2d2d30;
+            padding: 8px 15px;
+            border-radius: 4px 4px 0 0;
+            font-size: 13px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .tab-icon {
+            font-size: 16px;
+        }
+
+        .editor-content {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        .code-line {
+            display: flex;
+            gap: 15px;
+        }
+
+        .line-number {
+            color: #858585;
+            user-select: none;
+            min-width: 30px;
+            text-align: right;
+        }
+
+        .code-text {
+            flex: 1;
+        }
+
+        .keyword { color: #569cd6; }
+        .string { color: #ce9178; }
+        .function { color: #dcdcaa; }
+        .comment { color: #6a9955; font-style: italic; }
+        .variable { color: #9cdcfe; }
+
+        /* Copilot Suggestion */
+        .copilot-suggestion {
+            color: #808080;
+            position: relative;
+            display: inline;
+        }
+
+        .copilot-suggestion::before {
+            content: "⚡";
+            color: #f59e0b;
+            margin-right: 5px;
+            font-size: 12px;
+        }
+
+        /* Right Panel - Copilot Chat */
+        .copilot-panel {
+            width: 400px;
+            background: #252526;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .copilot-header {
+            background: #2d2d30;
+            padding: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            border-bottom: 1px solid #333;
+        }
+
+        .copilot-icon {
+            width: 24px;
+            height: 24px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+        }
+
+        .copilot-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: #cccccc;
+        }
+
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .message {
+            display: flex;
+            gap: 10px;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .message-avatar {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            flex-shrink: 0;
+        }
+
+        .user-avatar {
+            background: #0e639c;
+        }
+
+        .ai-avatar {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        .message-content {
+            flex: 1;
+            background: #2d2d30;
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 13px;
+            line-height: 1.5;
+        }
+
+        .message.user .message-content {
+            background: #094771;
+        }
+
+        .code-block {
+            background: #1e1e1e;
+            border: 1px solid #3c3c3c;
+            border-radius: 6px;
+            padding: 12px;
+            margin: 10px 0;
+            font-family: 'Consolas', monospace;
+            font-size: 12px;
+            overflow-x: auto;
+        }
+
+        .code-block-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #3c3c3c;
+        }
+
+        .code-language {
+            color: #808080;
+            font-size: 11px;
+            text-transform: uppercase;
+        }
+
+        .copy-btn {
+            background: #3c3c3c;
+            border: none;
+            color: #cccccc;
+            padding: 4px 8px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 11px;
+            transition: background 0.2s;
+        }
+
+        .copy-btn:hover {
+            background: #505050;
+        }
+
+        .suggestions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 10px;
+        }
+
+        .suggestion-chip {
+            background: #3c3c3c;
+            padding: 6px 12px;
+            border-radius: 16px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: 1px solid #3c3c3c;
+        }
+
+        .suggestion-chip:hover {
+            background: #505050;
+            border-color: #667eea;
+        }
+
+        .chat-input-container {
+            padding: 15px;
+            background: #2d2d30;
+            border-top: 1px solid #333;
+        }
+
+        .chat-input-wrapper {
+            display: flex;
+            gap: 10px;
+            background: #3c3c3c;
+            border-radius: 8px;
+            padding: 10px;
+            align-items: center;
+        }
+
+        .chat-input {
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: #cccccc;
+            font-size: 13px;
+            outline: none;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+        }
+
+        .send-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            color: white;
+            width: 32px;
+            height: 32px;
+            border-radius: 6px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: opacity 0.2s;
+        }
+
+        .send-btn:hover {
+            opacity: 0.8;
+        }
+
+        .send-btn:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+        }
+
+        .typing-indicator {
+            display: flex;
+            gap: 4px;
+            padding: 10px;
+        }
+
+        .typing-dot {
+            width: 8px;
+            height: 8px;
+            background: #808080;
+            border-radius: 50%;
+            animation: typing 1.4s infinite;
+        }
+
+        .typing-dot:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        .typing-dot:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+
+        @keyframes typing {
+            0%, 60%, 100% {
+                transform: translateY(0);
+                opacity: 0.7;
+            }
+            30% {
+                transform: translateY(-10px);
+                opacity: 1;
+            }
+        }
+
+        .feature-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            background: rgba(102, 126, 234, 0.2);
+            border: 1px solid rgba(102, 126, 234, 0.3);
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 11px;
+            color: #667eea;
+            margin-top: 8px;
+        }
+
+        .inline-suggestion-demo {
+            background: rgba(102, 126, 234, 0.1);
+            border-left: 3px solid #667eea;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+        }
+
+        /* Action Buttons in Chat */
+        .action-buttons {
+            display: flex;
+            gap: 8px;
+            margin-top: 10px;
+        }
+
+        .action-btn {
+            background: #3c3c3c;
+            border: 1px solid #505050;
+            color: #cccccc;
+            padding: 6px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .action-btn:hover {
+            background: #505050;
+            border-color: #667eea;
+        }
+
+        .action-btn.primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            color: white;
+        }
+
+        .action-btn.primary:hover {
+            opacity: 0.8;
+        }
+
+        /* Context Panel */
+        .context-panel {
+            background: #1e1e1e;
+            border: 1px solid #3c3c3c;
+            border-radius: 6px;
+            padding: 10px;
+            margin: 10px 0;
+            font-size: 12px;
+        }
+
+        .context-header {
+            color: #808080;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+
+        .context-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px;
+            background: #2d2d30;
+            border-radius: 4px;
+            margin-top: 4px;
+        }
+
+        .context-icon {
+            color: #667eea;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Editor Panel -->
+        <div class="editor-panel">
+            <div class="editor-header">
+                <div class="tab">
+                    <span class="tab-icon">📄</span>
+                    <span>test_failure_analyzer.py</span>
+                </div>
+            </div>
+            <div class="editor-content">
+                <div class="code-line">
+                    <span class="line-number">1</span>
+                    <span class="code-text"><span class="keyword">import</span> <span class="variable">pytest</span></span>
+                </div>
+                <div class="code-line">
+                    <span class="line-number">2</span>
+                    <span class="code-text"><span class="keyword">from</span> <span class="variable">ai_analyzer</span> <span class="keyword">import</span> <span class="function">analyze_failure</span></span>
+                </div>
+                <div class="code-line">
+                    <span class="line-number">3</span>
+                    <span class="code-text"></span>
+                </div>
+                <div class="code-line">
+                    <span class="line-number">4</span>
+                    <span class="code-text"><span class="keyword">def</span> <span class="function">test_code_error_analysis</span>():</span>
+                </div>
+                <div class="code-line">
+                    <span class="line-number">5</span>
+                    <span class="code-text">    <span class="comment"># Test AI analysis for code errors</span></span>
+                </div>
+                <div class="code-line">
+                    <span class="line-number">6</span>
+                    <span class="code-text">    <span class="variable">error_log</span> = <span class="string">"NullPointerException at line 45"</span></span>
+                </div>
+                <div class="code-line">
+                    <span class="line-number">7</span>
+                    <span class="code-text">    <span class="variable">result</span> = <span class="copilot-suggestion">analyze_failure(error_log, category="CODE_ERROR")</span></span>
+                </div>
+                <div class="code-line">
+                    <span class="line-number">8</span>
+                    <span class="code-text"></span>
+                </div>
+                <div class="code-line">
+                    <span class="line-number">9</span>
+                    <span class="code-text">    <span class="comment"># Copilot suggestion: Add assertions</span></span>
+                </div>
+                <div class="code-line">
+                    <span class="line-number">10</span>
+                    <span class="code-text">    <span class="copilot-suggestion">assert result.confidence_score > 0.8</span></span>
+                </div>
+                <div class="code-line">
+                    <span class="line-number">11</span>
+                    <span class="code-text">    <span class="copilot-suggestion">assert result.category == "CODE_ERROR"</span></span>
+                </div>
+                <div class="code-line">
+                    <span class="line-number">12</span>
+                    <span class="code-text">    <span class="copilot-suggestion">assert result.root_cause is not None</span></span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Copilot Chat Panel -->
+        <div class="copilot-panel">
+            <div class="copilot-header">
+                <div class="copilot-icon">✨</div>
+                <div class="copilot-title">DDN AI Copilot</div>
+            </div>
+
+            <div class="chat-messages" id="chatMessages">
+                <!-- Welcome Message -->
+                <div class="message ai">
+                    <div class="message-avatar ai-avatar">🤖</div>
+                    <div class="message-content">
+                        <strong>Welcome to DDN AI Copilot!</strong>
+                        <p style="margin-top: 8px;">I can help you with:</p>
+                        <div class="suggestions">
+                            <div class="suggestion-chip">🔍 Analyze test failures</div>
+                            <div class="suggestion-chip">🐛 Debug code errors</div>
+                            <div class="suggestion-chip">📝 Write test cases</div>
+                            <div class="suggestion-chip">💡 Suggest fixes</div>
+                            <div class="suggestion-chip">📊 Review analytics</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- User Question -->
+                <div class="message user">
+                    <div class="message-avatar user-avatar">👤</div>
+                    <div class="message-content">
+                        How can I improve the test coverage for the failure analyzer?
+                    </div>
+                </div>
+
+                <!-- AI Response with Code -->
+                <div class="message ai">
+                    <div class="message-avatar ai-avatar">🤖</div>
+                    <div class="message-content">
+                        <p>Great question! Here are some suggestions to improve test coverage for your failure analyzer:</p>
+
+                        <div class="inline-suggestion-demo">
+                            <strong>💡 Inline Suggestion Active</strong>
+                            <p style="margin-top: 5px; font-size: 12px;">I've added assertions in your editor (lines 10-12). Press <kbd>Tab</kbd> to accept.</p>
+                        </div>
+
+                        <div class="code-block">
+                            <div class="code-block-header">
+                                <span class="code-language">Python</span>
+                                <button class="copy-btn" onclick="copyCode(this)">📋 Copy</button>
+                            </div>
+                            <pre><code><span class="keyword">def</span> <span class="function">test_confidence_thresholds</span>():
+    <span class="comment"># Test different confidence levels</span>
+    <span class="keyword">for</span> confidence <span class="keyword">in</span> [0.5, 0.7, 0.9]:
+        result = analyze_failure(
+            error_log=<span class="string">"Sample error"</span>,
+            min_confidence=confidence
+        )
+        <span class="keyword">assert</span> result.confidence_score >= confidence</code></pre>
+                        </div>
+
+                        <div class="context-panel">
+                            <div class="context-header">📁 Context Used:</div>
+                            <div class="context-item">
+                                <span class="context-icon">📄</span>
+                                <span>test_failure_analyzer.py</span>
+                            </div>
+                            <div class="context-item">
+                                <span class="context-icon">📦</span>
+                                <span>ai_analyzer module</span>
+                            </div>
+                        </div>
+
+                        <div class="action-buttons">
+                            <button class="action-btn primary" onclick="acceptSuggestion()">✓ Insert at Cursor</button>
+                            <button class="action-btn" onclick="showMore()">📝 Show More Tests</button>
+                            <button class="action-btn" onclick="explainCode()">💬 Explain</button>
+                        </div>
+
+                        <div class="feature-badge">
+                            🚀 AI-powered by Gemini Flash 2.0
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Context-aware suggestion -->
+                <div class="message ai">
+                    <div class="message-avatar ai-avatar">🤖</div>
+                    <div class="message-content">
+                        <p><strong>Pro Tip:</strong> Based on your current codebase, I noticed you're missing edge case tests for:</p>
+                        <ul style="margin-left: 20px; margin-top: 8px;">
+                            <li>Empty error logs</li>
+                            <li>Multiple concurrent failures</li>
+                            <li>Invalid category values</li>
+                        </ul>
+                        <p style="margin-top: 8px;">Would you like me to generate these test cases?</p>
+                        <div class="action-buttons">
+                            <button class="action-btn primary" onclick="generateTests()">✓ Yes, Generate Tests</button>
+                            <button class="action-btn" onclick="dismiss()">Not Now</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="chat-input-container">
+                <div class="chat-input-wrapper">
+                    <input
+                        type="text"
+                        class="chat-input"
+                        placeholder="Ask DDN AI Copilot anything..."
+                        id="chatInput"
+                        onkeypress="handleKeyPress(event)"
+                    />
+                    <button class="send-btn" onclick="sendMessage()">
+                        ▶
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function copyCode(btn) {
+            const codeBlock = btn.closest('.code-block').querySelector('code');
+            navigator.clipboard.writeText(codeBlock.textContent);
+            btn.textContent = '✓ Copied!';
+            setTimeout(() => {
+                btn.textContent = '📋 Copy';
+            }, 2000);
+        }
+
+        function acceptSuggestion() {
+            alert('✓ Code inserted at cursor position!');
+        }
+
+        function showMore() {
+            addAIMessage('Here are additional test cases for edge scenarios:\n\n' +
+                '```python\n' +
+                'def test_empty_error_log():\n' +
+                '    result = analyze_failure("")\n' +
+                '    assert result.category == "UNKNOWN"\n' +
+                '\n' +
+                'def test_invalid_category():\n' +
+                '    with pytest.raises(ValueError):\n' +
+                '        analyze_failure(error_log, category="INVALID")\n' +
+                '```');
+        }
+
+        function explainCode() {
+            addAIMessage('This test iterates through different confidence threshold values (50%, 70%, 90%) and verifies that the analyzer respects the minimum confidence requirement. This ensures the AI model maintains quality standards at various sensitivity levels.');
+        }
+
+        function generateTests() {
+            addTypingIndicator();
+            setTimeout(() => {
+                removeTypingIndicator();
+                addAIMessage('I\'ve generated comprehensive edge case tests! Check your editor for the new test functions. Would you like me to explain any of them?');
+            }, 2000);
+        }
+
+        function dismiss() {
+            alert('Suggestion dismissed. You can always ask me later!');
+        }
+
+        function handleKeyPress(event) {
+            if (event.key === 'Enter') {
+                sendMessage();
+            }
+        }
+
+        function sendMessage() {
+            const input = document.getElementById('chatInput');
+            const message = input.value.trim();
+
+            if (!message) return;
+
+            // Add user message
+            addUserMessage(message);
+            input.value = '';
+
+            // Simulate AI response
+            addTypingIndicator();
+            setTimeout(() => {
+                removeTypingIndicator();
+                addAIMessage(getAIResponse(message));
+            }, 1500);
+        }
+
+        function addUserMessage(text) {
+            const messagesDiv = document.getElementById('chatMessages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'message user';
+            messageDiv.innerHTML = `
+                <div class="message-avatar user-avatar">👤</div>
+                <div class="message-content">${text}</div>
+            `;
+            messagesDiv.appendChild(messageDiv);
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        }
+
+        function addAIMessage(text) {
+            const messagesDiv = document.getElementById('chatMessages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'message ai';
+            messageDiv.innerHTML = `
+                <div class="message-avatar ai-avatar">🤖</div>
+                <div class="message-content">${text}</div>
+            `;
+            messagesDiv.appendChild(messageDiv);
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        }
+
+        function addTypingIndicator() {
+            const messagesDiv = document.getElementById('chatMessages');
+            const typingDiv = document.createElement('div');
+            typingDiv.className = 'message ai typing';
+            typingDiv.id = 'typingIndicator';
+            typingDiv.innerHTML = `
+                <div class="message-avatar ai-avatar">🤖</div>
+                <div class="message-content">
+                    <div class="typing-indicator">
+                        <div class="typing-dot"></div>
+                        <div class="typing-dot"></div>
+                        <div class="typing-dot"></div>
+                    </div>
+                </div>
+            `;
+            messagesDiv.appendChild(typingDiv);
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        }
+
+        function removeTypingIndicator() {
+            const typing = document.getElementById('typingIndicator');
+            if (typing) typing.remove();
+        }
+
+        function getAIResponse(userMessage) {
+            const responses = {
+                'help': 'I can help you with test analysis, code debugging, writing tests, and reviewing your DDN AI system. What would you like to work on?',
+                'test': 'I can generate comprehensive test cases for your failure analyzer. What specific functionality would you like to test?',
+                'analyze': 'I\'ll analyze the current test failures in your system. Based on recent data, you have 3 critical failures that need attention. Would you like me to provide root cause analysis?',
+                'default': 'I understand you\'re asking about: "' + userMessage + '". Let me help you with that. Based on your DDN AI project context, I can provide specific guidance. What aspect would you like to explore further?'
+            };
+
+            const lowerMessage = userMessage.toLowerCase();
+            for (const key in responses) {
+                if (lowerMessage.includes(key)) {
+                    return responses[key];
+                }
+            }
+            return responses.default;
+        }
+
+        // Auto-scroll chat on load
+        document.getElementById('chatMessages').scrollTop = document.getElementById('chatMessages').scrollHeight;
+    </script>
+</body>
+</html>

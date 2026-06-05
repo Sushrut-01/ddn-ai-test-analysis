@@ -21,7 +21,9 @@
     "test:compliance": "mocha ddn-advanced-scenarios.js --grep 'Compliance'",
     "test:security": "mocha ddn-advanced-scenarios.js --grep 'Security|Isolation|Authentication'",
     "test:watch": "mocha '*.js' --timeout 60000 --watch",
-    "test:jenkins": "mocha '*.js' --timeout 60000 --reporter mocha-junit-reporter --reporter-options mochaFile=./test-results/results.xml"
+    "test:jenkins": "mocha '*.js' --timeout 60000 --reporter mocha-junit-reporter --reporter-options mochaFile=./test-results/results.xml",
+    "test:ui": "cd tests/ui && npm ci && npx playwright test",
+    "test:ci:ui": "cd tests/ui && npm ci --silent && npx playwright test --reporter=junit"
   },
   "keywords": [
     "ddn",
